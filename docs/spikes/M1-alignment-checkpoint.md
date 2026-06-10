@@ -46,6 +46,20 @@ a grade-distance penalty at align time is straightforward. Decision: penalty
 Hold M2 (full OpenStax + scale) until (1)–(3) are addressed — they're cheap and
 all live in the align stage / splitter. Re-run this checkpoint after fixes on a
 ratios/fractions chapter (so probes like `6.RP.A.3`, `6.NS.A.1` have real
-content). The full embed run is currently capacity-blocked on the Mac Studio
-(competing job: ~6 min/batch, timeouts) — only 100/1248 chunks embedded so far;
-embed is idempotent and resumes.
+content).
+
+## Resolution — fixes applied 2026-06-10 (D18)
+All three implemented and re-validated on the same 100 chunks:
+- **(1) Source-aware bands** in `oer_shared.coverage`; embedding annotate flag at 0.78.
+- **(2) Generic exercise exclusion** (`align._is_generic_exercise`) — 8 Writing/Self-Check chunks skipped.
+- **(3) Grade penalty** (`oer_ingestion.grades`, 0.02/grade-year) at align time.
+
+Re-run result: 100 chunks → 330 alignments (was 436), 7 reach the new strong band
+(was 0 at 0.85), 8 generic chunks skipped. **Top matches are now grade-appropriate**
+(8.EE.3, 5.NBT.B.6, 7.NS.1, 4.NBT.A.1 — grades 4–8 for a 6–8 book); the
+Kindergarten/1st-grade matches that polluted the top are gone. Covered by tests in
+`test_grades.py`, `test_coverage.py`, `test_align_helpers.py`.
+
+**Still pending:** full embed run is capacity-blocked on the Mac Studio (competing
+job: ~6 min/batch, timeouts) — only 100/1248 chunks embedded; embed is idempotent
+and resumes. Re-run the topic probes (`6.RP.A.3` etc.) once embeddings are complete.
