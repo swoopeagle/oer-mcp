@@ -1,0 +1,18 @@
+[project]
+name = "oer-ingestion"
+version = "0.1.0"
+description = "Seven-stage ingestion pipeline and source adapters for the OER MCP"
+requires-python = ">=3.11"
+dependencies = [
+    "oer-shared",
+    "httpx>=0.27",
+    "lxml>=5.0",
+    "numpy>=1.26",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/oer_ingestion"]

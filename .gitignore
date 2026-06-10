@@ -1,0 +1,19 @@
+# Data artifacts — databases are distributed via Hugging Face, never git
+data/
+*.db
+*.db-shm
+*.db-wal
+
+# Raw content snapshots (PRD §11) — large, kept locally / object storage
+**/raw/snapshots/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# OS
+.DS_Store
