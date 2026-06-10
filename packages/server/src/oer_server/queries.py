@@ -68,6 +68,72 @@ def get_chunk(
     return {"chunk_id": chunk_id, "result": "not_found"}
 
 
+# Confidence hierarchy (PRD §10): human > publisher_guide > embedding,
+# then by score. Applied as an ORDER BY key across attached schemas.
+_SOURCE_RANK = "CASE a.alignment_source WHEN 'human' THEN 3 WHEN 'publisher_guide' THEN 2 ELSE 1 END"
+
+
+def fetch_for_standard(
+    conn: sqlite3.Connection,
+    standard_id: str,
+    *,
+    source: str | None = None,
+    content_type: str | None = None,
+    limit: int = 3,
+    include_content: bool = True,
+) -> list[dict] | dict:
+    """Return OER chunks aligned to a StandardGraph standard ID, ranked by the
+    confidence hierarchy then alignment score, spanning attached databases."""
+    rows: list[tuple] = []
+    for schema in attached_schemas(conn):
+        clauses = ["a.standard_id = ?", "a.stale = 0", "c.stale = 0"]
+        params: list = [standard_id]
+        if source:
+            clauses.append("c.source_id = ?")
+            params.append(source)
+        if content_type:
+            clauses.append("c.content_type = ?")
+            params.append(content_type)
+        q = f"""
+            SELECT c.id, c.source_id, c.title, c.content_type, c.grade_band,
+                   c.content, c.source_url, c.attribution,
+                   a.alignment_score, a.alignment_source, a.coverage_notes,
+                   {_SOURCE_RANK} AS rank
+            FROM {schema}.standard_alignments a
+            JOIN {schema}.chunks c ON c.id = a.chunk_id
+            WHERE {' AND '.join(clauses)}
+        """
+        rows.extend(conn.execute(q, params).fetchall())
+
+    if not rows:
+        sources = [s.id for s in list_sources(conn).sources]
+        return {
+            "standard_id": standard_id,
+            "result": "no_content",
+            "reason": "No OER content aligned to this standard yet.",
+            "available_sources": sources,
+        }
+
+    rows.sort(key=lambda r: (r["rank"], r["alignment_score"]), reverse=True)
+    out = []
+    for r in rows[:limit]:
+        result = ChunkResult(
+            chunk_id=r["id"],
+            source=r["source_id"],
+            title=r["title"],
+            content_type=r["content_type"],
+            grade_band=r["grade_band"],
+            alignment_score=round(r["alignment_score"], 4),
+            alignment_source=r["alignment_source"],
+            coverage_notes=r["coverage_notes"],
+            content=r["content"] if include_content else None,
+            source_url=r["source_url"],
+            attribution=r["attribution"],
+        )
+        out.append(result.model_dump(exclude_none=False))
+    return out
+
+
 def _adjacent(conn, schema, row) -> dict:
     """Preceding/following chunk IDs within the same book, by rowid order."""
     prev = conn.execute(

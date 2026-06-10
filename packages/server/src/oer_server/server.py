@@ -44,6 +44,31 @@ def list_sources() -> dict:
 
 
 @mcp.tool()
+def fetch_for_standard(
+    standard_id: str,
+    source: str | None = None,
+    content_type: str | None = None,
+    limit: int = 3,
+    include_content: bool = True,
+) -> list[dict] | dict:
+    """Return OER content that teaches a given curriculum standard, by its
+    StandardGraph ID (e.g. 'CCSS.MATH.6.RP.A.3'). Results are ranked by
+    alignment confidence (human > publisher guide > embedding) then score.
+    Optionally filter by source or content_type (exposition / worked_example /
+    exercise_set / summary). Every result carries an attribution string to
+    preserve in downstream output."""
+    from . import queries
+
+    try:
+        return queries.fetch_for_standard(
+            get_conn(), standard_id, source=source, content_type=content_type,
+            limit=limit, include_content=include_content,
+        )
+    except Exception as exc:
+        return {"error": type(exc).__name__, "detail": str(exc)}
+
+
+@mcp.tool()
 def get_chunk(chunk_id: str, include_adjacent: bool = False) -> dict:
     """Retrieve a specific OER content chunk by its ID — full content,
     attribution (preserve this in any downstream output), and the curriculum

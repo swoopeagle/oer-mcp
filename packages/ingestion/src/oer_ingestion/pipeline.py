@@ -17,6 +17,8 @@ from oer_shared import config
 from oer_shared.db import connect
 
 from .adapters import BookSpec, OpenStaxAdapter
+from .align import align_chunks
+from .embed import embed_chunks
 from .load import load_catalog, load_chunks, record_run, write_snapshots
 
 # Phase 1 OpenStax math catalog (S1). grade_band is coarse; per-chunk
@@ -61,18 +63,30 @@ def run_openstax(slugs: list[str], db_path: Path, snapshot_root: Path) -> None:
     conn.close()
 
 
+def run_embed_align(db_path: Path, sg_db: Path) -> None:
+    """Stages 4–5: embed chunks, then align to CCSS. Needs Ollama + SG DB."""
+    conn = connect(db_path, create=True)
+    embed_chunks(conn)
+    align_chunks(conn, sg_db)
+    conn.close()
+
+
 def main() -> None:
     p = argparse.ArgumentParser(description="OER ingestion pipeline")
-    p.add_argument("source", choices=["openstax"])
+    p.add_argument("source", choices=["openstax", "embed-align"])
     p.add_argument("--book", action="append", dest="books",
                    help="book slug (repeatable); default: prealgebra-2e")
     p.add_argument("--db", default=str(config.CORE_DB_PATH))
     p.add_argument("--snapshots", default=str(config.DATA_DIR / "raw" / "snapshots"))
+    p.add_argument("--sg-db", default=str(config.STANDARDGRAPH_DB_PATH),
+                   help="StandardGraph DB (build-time only, for alignment)")
     args = p.parse_args()
 
     books = args.books or ["prealgebra-2e"]
     if args.source == "openstax":
         run_openstax(books, Path(args.db), Path(args.snapshots))
+    elif args.source == "embed-align":
+        run_embed_align(Path(args.db), Path(args.sg_db))
 
 
 if __name__ == "__main__":
