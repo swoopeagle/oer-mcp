@@ -43,6 +43,20 @@ def list_sources() -> dict:
         return {"error": type(exc).__name__, "detail": str(exc)}
 
 
+@mcp.tool()
+def get_chunk(chunk_id: str, include_adjacent: bool = False) -> dict:
+    """Retrieve a specific OER content chunk by its ID — full content,
+    attribution (preserve this in any downstream output), and the curriculum
+    standards it aligns to. Set include_adjacent to also get neighbouring
+    section IDs."""
+    from . import queries
+
+    try:
+        return queries.get_chunk(get_conn(), chunk_id, include_adjacent)
+    except Exception as exc:
+        return {"error": type(exc).__name__, "detail": str(exc)}
+
+
 def main() -> None:
     mcp.run()
 

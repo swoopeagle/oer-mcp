@@ -6,9 +6,84 @@ server.py stay thin; tests target these functions directly.
 import sqlite3
 
 from oer_shared.db import attached_schemas
-from oer_shared.models import SourceInfo, SourceInventory
+from oer_shared.models import ChunkResult, SourceInfo, SourceInventory, StandardAlignment
 
 _SCHEMA_LABELS = {"main": "core", "ncsa": "ncsa"}
+
+
+def _alignments_for(conn, schema, chunk_id) -> list[StandardAlignment]:
+    rows = conn.execute(
+        f"""SELECT standard_id, standard_system, alignment_score, alignment_source,
+                   coverage_notes, verified_by_human
+            FROM {schema}.standard_alignments
+            WHERE chunk_id = ? AND stale = 0
+            ORDER BY alignment_score DESC""",
+        (chunk_id,),
+    ).fetchall()
+    return [
+        StandardAlignment(
+            standard_id=r["standard_id"],
+            standard_system=r["standard_system"],
+            alignment_score=r["alignment_score"],
+            alignment_source=r["alignment_source"],
+            coverage_notes=r["coverage_notes"],
+            verified_by_human=bool(r["verified_by_human"]),
+        )
+        for r in rows
+    ]
+
+
+def get_chunk(
+    conn: sqlite3.Connection, chunk_id: str, include_adjacent: bool = False
+) -> dict:
+    """Retrieve one chunk by ID, spanning attached databases. Returns a dict
+    with the chunk's content, attribution, and standard alignments, or a
+    structured not-found result."""
+    for schema in attached_schemas(conn):
+        row = conn.execute(
+            f"SELECT *, rowid FROM {schema}.chunks WHERE id = ? AND stale = 0",
+            (chunk_id,),
+        ).fetchone()
+        if row is None:
+            continue
+        result = ChunkResult(
+            chunk_id=row["id"],
+            source=row["source_id"],
+            title=row["title"],
+            content_type=row["content_type"],
+            grade_band=row["grade_band"],
+            content=row["content"],
+            source_url=row["source_url"],
+            attribution=row["attribution"],
+        )
+        payload = result.model_dump()
+        payload["chapter"] = row["chapter"]
+        payload["section"] = row["section"]
+        payload["alignments"] = [
+            a.model_dump() for a in _alignments_for(conn, schema, chunk_id)
+        ]
+        if include_adjacent:
+            payload["adjacent"] = _adjacent(conn, schema, row)
+        return payload
+    return {"chunk_id": chunk_id, "result": "not_found"}
+
+
+def _adjacent(conn, schema, row) -> dict:
+    """Preceding/following chunk IDs within the same book, by rowid order."""
+    prev = conn.execute(
+        f"SELECT id FROM {schema}.chunks WHERE book_id=? AND rowid<? AND stale=0 "
+        "ORDER BY rowid DESC LIMIT 1",
+        (row["book_id"], row["rowid"]),
+    ).fetchone()
+    nxt = conn.execute(
+        f"SELECT id FROM {schema}.chunks WHERE book_id=? AND rowid>? AND stale=0 "
+        "ORDER BY rowid ASC LIMIT 1",
+        (row["book_id"], row["rowid"]),
+    ).fetchone()
+    return {
+        "previous": prev["id"] if prev else None,
+        "next": nxt["id"] if nxt else None,
+    }
 
 
 def list_sources(conn: sqlite3.Connection) -> SourceInventory:
