@@ -3,12 +3,24 @@ databases (core + optional ncsa add-on, D11). The FastMCP tool wrappers in
 server.py stay thin; tests target these functions directly.
 """
 
+import re
 import sqlite3
+
+import numpy as np
 
 from oer_shared.db import attached_schemas
 from oer_shared.models import ChunkResult, SourceInfo, SourceInventory, StandardAlignment
 
 _SCHEMA_LABELS = {"main": "core", "ncsa": "ncsa"}
+
+
+def _fts_match(query: str) -> str | None:
+    """Sanitize a free-text query into a safe FTS5 MATCH expression (OR of
+    quoted terms — recall-oriented; BM25 floats multi-term matches up)."""
+    terms = re.findall(r"\w+", query.lower())
+    if not terms:
+        return None
+    return " OR ".join(f'"{t}"' for t in terms)
 
 
 def _alignments_for(conn, schema, chunk_id) -> list[StandardAlignment]:
@@ -66,6 +78,130 @@ def get_chunk(
             payload["adjacent"] = _adjacent(conn, schema, row)
         return payload
     return {"chunk_id": chunk_id, "result": "not_found"}
+
+
+def _keyword_hits(conn, schema, match, filters, params) -> list[str]:
+    """Chunk IDs from FTS5, BM25-ranked, honoring filters. Best first."""
+    where = " AND ".join(["c.stale = 0", *filters])
+    rows = conn.execute(
+        f"""SELECT c.id
+            FROM {schema}.chunks_fts f
+            JOIN {schema}.chunks c ON c.rowid = f.rowid
+            WHERE f.chunks_fts MATCH ? AND {where}
+            ORDER BY bm25(f.chunks_fts) ASC
+            LIMIT 50""",
+        (match, *params),
+    ).fetchall()
+    return [r["id"] for r in rows]
+
+
+def _semantic_hits(conn, schema, qvec, filters, params) -> list[str]:
+    """Chunk IDs by cosine to the query vector, honoring filters. Best first."""
+    where = " AND ".join(["c.stale = 0", *filters])
+    rows = conn.execute(
+        f"""SELECT c.id, e.vector
+            FROM {schema}.chunk_embeddings e
+            JOIN {schema}.chunks c ON c.id = e.chunk_id
+            WHERE {where}""",
+        tuple(params),
+    ).fetchall()
+    if not rows:
+        return []
+    mat = np.vstack([np.frombuffer(r["vector"], dtype=np.float32) for r in rows])
+    mat /= np.linalg.norm(mat, axis=1, keepdims=True) + 1e-9
+    qv = qvec / (np.linalg.norm(qvec) + 1e-9)
+    sims = mat @ qv
+    order = np.argsort(-sims)[:50]
+    return [rows[i]["id"] for i in order]
+
+
+def _rrf(rankings: list[list[str]], k: int = 60) -> list[str]:
+    """Reciprocal-rank fusion of several ranked ID lists → one merged ranking."""
+    scores: dict[str, float] = {}
+    for ranking in rankings:
+        for rank, cid in enumerate(ranking):
+            scores[cid] = scores.get(cid, 0.0) + 1.0 / (k + rank + 1)
+    return sorted(scores, key=lambda c: scores[c], reverse=True)
+
+
+def search_content(
+    conn: sqlite3.Connection,
+    query: str,
+    *,
+    embed_query=None,  # callable(str)->np.ndarray | None; None or failure → keyword-only (D13)
+    standard_id: str | None = None,
+    source: str | None = None,
+    grade_band: str | None = None,
+    content_type: str | None = None,
+    limit: int = 5,
+    include_content: bool = False,
+) -> dict:
+    """Hybrid keyword + semantic search across attached DBs. Falls back to
+    FTS5-only when no embedder is available (D13), flagging search_mode."""
+    match = _fts_match(query)
+    if match is None:
+        return {"query": query, "results": [], "search_mode": "empty_query"}
+
+    filters: list[str] = []
+    params: list = []
+    if source:
+        filters.append("c.source_id = ?"); params.append(source)
+    if grade_band:
+        filters.append("c.grade_band = ?"); params.append(grade_band)
+    if content_type:
+        filters.append("c.content_type = ?"); params.append(content_type)
+    if standard_id:
+        filters.append(
+            "EXISTS (SELECT 1 FROM standard_alignments a "
+            "WHERE a.chunk_id = c.id AND a.standard_id = ? AND a.stale = 0)"
+        )
+        params.append(standard_id)
+
+    qvec = None
+    if embed_query is not None:
+        try:
+            qvec = embed_query(query)
+        except Exception:
+            qvec = None  # graceful degradation (D13)
+    mode = "hybrid" if qvec is not None else "keyword_fallback"
+
+    merged: list[str] = []
+    by_id: dict[str, sqlite3.Row] = {}
+    for schema in attached_schemas(conn):
+        # standard_alignments lives in each schema; qualify the EXISTS subquery
+        sfilters = [
+            f.replace("standard_alignments", f"{schema}.standard_alignments")
+            for f in filters
+        ]
+        rankings = [_keyword_hits(conn, schema, match, sfilters, params)]
+        if qvec is not None:
+            rankings.append(_semantic_hits(conn, schema, qvec, sfilters, params))
+        ids = _rrf(rankings)
+        for cid in ids:
+            row = conn.execute(
+                f"SELECT * FROM {schema}.chunks WHERE id = ?", (cid,)
+            ).fetchone()
+            by_id[cid] = row
+        merged.extend(ids)
+
+    # de-dup preserving best fused order, then cap
+    seen, ordered = set(), []
+    for cid in _rrf([merged]) if len(attached_schemas(conn)) > 1 else merged:
+        if cid not in seen:
+            seen.add(cid); ordered.append(cid)
+
+    results = []
+    for cid in ordered[:limit]:
+        row = by_id[cid]
+        results.append(
+            ChunkResult(
+                chunk_id=row["id"], source=row["source_id"], title=row["title"],
+                content_type=row["content_type"], grade_band=row["grade_band"],
+                content=row["content"] if include_content else None,
+                source_url=row["source_url"], attribution=row["attribution"],
+            ).model_dump()
+        )
+    return {"query": query, "search_mode": mode, "results": results}
 
 
 # Confidence hierarchy (PRD §10): human > publisher_guide > embedding,
@@ -132,6 +268,140 @@ def fetch_for_standard(
         )
         out.append(result.model_dump(exclude_none=False))
     return out
+
+
+_BAND_RANK = {"none": 0, "light": 1, "moderate": 2, "strong": 3}
+
+
+def _cluster_standards(sg_conn, standard_id: str) -> list[tuple[str, str]]:
+    """Authoritative (id, text) list for a standard or its cluster, from
+    StandardGraph. Handles SG's inconsistent cluster-letter ID format: exact
+    standard → its whole domain+cluster; otherwise prefix match (tolerating a
+    trailing cluster letter like the '.A' in 'CCSS.MATH.6.RP.A')."""
+    exact = sg_conn.execute(
+        "SELECT domain, cluster FROM standards WHERE id = ? AND system = 'ccss'",
+        (standard_id,),
+    ).fetchone()
+    if exact:
+        rows = sg_conn.execute(
+            "SELECT id, standard_text FROM standards WHERE system='ccss' "
+            "AND domain = ? AND cluster = ? ORDER BY id",
+            (exact["domain"], exact["cluster"]),
+        ).fetchall()
+        return [(r["id"], r["standard_text"]) for r in rows]
+    prefix = standard_id
+    parts = standard_id.split(".")
+    if len(parts[-1]) == 1 and parts[-1].isupper():  # trailing cluster letter
+        prefix = ".".join(parts[:-1])
+    rows = sg_conn.execute(
+        "SELECT id, standard_text FROM standards WHERE system='ccss' "
+        "AND id LIKE ? ORDER BY id",
+        (prefix + "%",),
+    ).fetchall()
+    return [(r["id"], r["standard_text"]) for r in rows]
+
+
+def _best_alignment(conn, standard_id, source):
+    """Best (score, source, chunk_id) for a standard across attached DBs."""
+    best = None
+    for schema in attached_schemas(conn):
+        clause = "a.standard_id = ? AND a.stale = 0 AND c.stale = 0"
+        params = [standard_id]
+        if source:
+            clause += " AND c.source_id = ?"
+            params.append(source)
+        row = conn.execute(
+            f"""SELECT a.alignment_score, a.alignment_source, a.chunk_id
+                FROM {schema}.standard_alignments a
+                JOIN {schema}.chunks c ON c.id = a.chunk_id
+                WHERE {clause}
+                ORDER BY a.alignment_score DESC LIMIT 1""",
+            params,
+        ).fetchone()
+        if row and (best is None or row["alignment_score"] > best["alignment_score"]):
+            best = row
+    return best
+
+
+def check_coverage(
+    conn: sqlite3.Connection,
+    standard_id: str,
+    *,
+    sg_db_path=None,
+    source: str | None = None,
+) -> dict:
+    """Report how completely indexed OER content covers a standard or cluster.
+    Uses StandardGraph (read-only) to enumerate the cluster's standards so that
+    zero-coverage gaps are surfaced; without it, reports only standards that
+    have alignments and flags that gap detection is unavailable."""
+    import sqlite3 as _sql
+    from pathlib import Path
+
+    from oer_shared.coverage import coverage_band
+
+    standards: list[tuple[str, str | None]]
+    gap_detection = "full"
+    if sg_db_path and Path(sg_db_path).exists():
+        sg = _sql.connect(f"file:{sg_db_path}?mode=ro", uri=True)
+        sg.row_factory = _sql.Row
+        standards = _cluster_standards(sg, standard_id)
+        sg.close()
+        if not standards:
+            return {"standard_id": standard_id, "result": "unknown_standard"}
+    else:
+        # degraded: enumerate only standards that already have alignments
+        gap_detection = "unavailable_without_standardgraph"
+        ids = set()
+        for schema in attached_schemas(conn):
+            for r in conn.execute(
+                f"SELECT DISTINCT standard_id FROM {schema}.standard_alignments "
+                "WHERE standard_id LIKE ? AND stale = 0",
+                (standard_id.rstrip(".") + "%",),
+            ).fetchall():
+                ids.add(r["standard_id"])
+        standards = [(sid, None) for sid in sorted(ids)]
+
+    sub_reports, gaps = [], []
+    worst_covered = None
+    for sid, text in standards:
+        best = _best_alignment(conn, sid, source)
+        if best is None:
+            band = "none"
+            entry = {"id": sid, "coverage": band, "best_chunk": None, "alignment_score": None}
+        else:
+            band = coverage_band(best["alignment_score"], best["alignment_source"])
+            entry = {
+                "id": sid, "coverage": band,
+                "best_chunk": best["chunk_id"],
+                "alignment_score": round(best["alignment_score"], 4),
+                "alignment_source": best["alignment_source"],
+            }
+        if text is not None:
+            entry["text"] = text
+        sub_reports.append(entry)
+        if band == "none":
+            gaps.append(sid)
+        else:
+            r = _BAND_RANK[band]
+            worst_covered = r if worst_covered is None else min(worst_covered, r)
+
+    if not sub_reports:
+        overall = "none"
+    elif all(s["coverage"] == "none" for s in sub_reports):
+        overall = "none"
+    else:
+        overall = {v: k for k, v in _BAND_RANK.items()}[worst_covered]
+
+    return {
+        "standard_id": standard_id,
+        "standards_checked": len(sub_reports),
+        "sub_standards": sub_reports,
+        "overall_coverage": overall,
+        "gaps": gaps,
+        "gap_detection": gap_detection,
+        "sources_checked": [s.id for s in list_sources(conn).sources]
+        if source is None else [source],
+    }
 
 
 def _adjacent(conn, schema, row) -> dict:

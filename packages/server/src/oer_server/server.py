@@ -69,6 +69,53 @@ def fetch_for_standard(
 
 
 @mcp.tool()
+def search_content(
+    query: str,
+    standard_id: str | None = None,
+    source: str | None = None,
+    grade_band: str | None = None,
+    content_type: str | None = None,
+    limit: int = 5,
+    include_content: bool = False,
+) -> dict:
+    """Find OER content by natural-language concept (e.g. 'dividing fractions').
+    Hybrid semantic + keyword search; degrades to keyword-only when the embedder
+    is unavailable (response 'search_mode' says which). Optionally filter by
+    source, grade_band, content_type, or re-rank toward a standard_id. Set
+    include_content=true to return full text (omitted by default to save tokens).
+    Every result carries an attribution string to preserve downstream."""
+    from . import queries
+    from .embedding import embed_query
+
+    try:
+        return queries.search_content(
+            get_conn(), query, embed_query=embed_query, standard_id=standard_id,
+            source=source, grade_band=grade_band, content_type=content_type,
+            limit=limit, include_content=include_content,
+        )
+    except Exception as exc:
+        return {"error": type(exc).__name__, "detail": str(exc)}
+
+
+@mcp.tool()
+def check_coverage(standard_id: str, source: str | None = None) -> dict:
+    """Report how completely indexed OER content covers a standard or cluster
+    (e.g. 'CCSS.MATH.6.RP.3' or a cluster prefix). Returns per-standard coverage
+    bands (strong/moderate/light/none) and surfaces gaps — standards with no
+    aligned content. Optionally restrict to one source. Gap detection needs the
+    StandardGraph database; the response flags if it was unavailable."""
+    from . import queries
+
+    try:
+        return queries.check_coverage(
+            get_conn(), standard_id,
+            sg_db_path=config.STANDARDGRAPH_DB_PATH, source=source,
+        )
+    except Exception as exc:
+        return {"error": type(exc).__name__, "detail": str(exc)}
+
+
+@mcp.tool()
 def get_chunk(chunk_id: str, include_adjacent: bool = False) -> dict:
     """Retrieve a specific OER content chunk by its ID — full content,
     attribution (preserve this in any downstream output), and the curriculum
