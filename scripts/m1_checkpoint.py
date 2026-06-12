@@ -16,12 +16,14 @@ from pathlib import Path
 from oer_shared import config
 
 # Standards a Prealgebra book should cover well, with a human-language gloss.
+# NOTE: StandardGraph CCSS IDs omit cluster letters (6.RP.3, not 6.RP.A.3) —
+# alignments use SG's IDs verbatim, so probes must too.
 PROBES = [
-    ("CCSS.MATH.6.RP.A.3", "ratio & rate reasoning"),
-    ("CCSS.MATH.6.NS.A.1", "dividing fractions by fractions"),
-    ("CCSS.MATH.6.NS.C.6", "integers / number line"),
-    ("CCSS.MATH.7.NS.A.1", "adding/subtracting rationals"),
-    ("CCSS.MATH.6.EE.A.1", "whole-number exponents"),
+    ("CCSS.MATH.6.RP.3", "ratio & rate reasoning"),
+    ("CCSS.MATH.6.NS.1", "dividing fractions by fractions"),
+    ("CCSS.MATH.6.NS.5", "integers / number line"),
+    ("CCSS.MATH.6.NS.6", "rational numbers / number line"),
+    ("CCSS.MATH.6.EE.1", "whole-number exponents"),
 ]
 
 

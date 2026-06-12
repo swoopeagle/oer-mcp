@@ -60,6 +60,26 @@ Re-run result: 100 chunks → 330 alignments (was 436), 7 reach the new strong b
 Kindergarten/1st-grade matches that polluted the top are gone. Covered by tests in
 `test_grades.py`, `test_coverage.py`, `test_align_helpers.py`.
 
-**Still pending:** full embed run is capacity-blocked on the Mac Studio (competing
-job: ~6 min/batch, timeouts) — only 100/1248 chunks embedded; embed is idempotent
-and resumes. Re-run the topic probes (`6.RP.A.3` etc.) once embeddings are complete.
+## Final verdict — PASS (full embed, 2026-06-10)
+All 1248 chunks embedded → 3834 alignments across 175 CCSS standards. Topic
+probes (corrected to SG's no-cluster-letter IDs — see below) are clearly on-topic:
+- `6.NS.1` (divide fractions) → "Multiply and Divide Fractions: **Divide Fractions**" (0.804)
+- `6.NS.5` (integers/number line) → "Introduction to Integers: **Locate … on the number line**" (0.860)
+- `6.RP.3` (ratios) → "**Ratios and Rate**", "**Solve Proportions**" (0.726)
+- `6.EE.1` (exponents) → "Multiplication **Properties of Exponents**" (0.751)
+
+Embedding alignment finds the right content for the right standards; the D18
+recalibration (strong ≥0.78) is vindicated — only 3/3834 reach the old 0.85 bar,
+so 0.85 bands would have reported almost everything as "moderate". **OK to proceed
+to M2 scale-up.**
+
+### ID-format note (important)
+StandardGraph CCSS IDs **omit cluster letters** — `CCSS.MATH.6.RP.3`, not
+`CCSS.MATH.6.RP.A.3` (and the format is inconsistent: `6.NS.1` but `1.OA.B.3`).
+align pulls IDs straight from SG, so OER alignment IDs == SG IDs. Probes/tools
+must use SG's form; `check_coverage` tolerates both via exact-then-prefix match.
+
+All five MCP tools smoke-tested live against the populated DB. `search_content`
+returned `keyword_fallback` (Ollama busy with gemma → 2s query-embed timed out
+→ FTS5) and still surfaced the right fraction content — D13 degradation working
+in the wild.
