@@ -83,3 +83,15 @@ All five MCP tools smoke-tested live against the populated DB. `search_content`
 returned `keyword_fallback` (Ollama busy with gemma → 2s query-embed timed out
 → FTS5) and still surfaced the right fraction content — D13 degradation working
 in the wild.
+
+## Full 8-book catalog (2026-06-13)
+Scaled to all 8 OpenStax math books: **8761 chunks, 8761 embeddings (100%),
+20250 alignments across 262 distinct CCSS standards** (76 K-5, 78 6-8, 108 HS),
+19 reach the old 0.85 bar. Stage 7 validate: **all checks pass** (hard + soft).
+Quality holds — mid-school probes unchanged; HS content aligns well
+(HSN.RN.A.2=0.885, HSA.REI.D.12=0.874). Embedding was done on the **local Mac
+Mini Ollama** (nomic-embed-text, verified cosine 1.000000 vs the Studio's space)
+to bypass a stuck gemma4:31b job pinning the Studio GPU — ~7500 chunks in a few
+minutes, contention-free. 262/343 CCSS covered by OpenStax alone; the rest
+(mostly K-5, some HS) await Khan/CK-12. Stage 6 annotate (428 flagged) still
+pending an available gemma.
