@@ -18,8 +18,10 @@ from oer_shared.db import connect
 
 from .adapters import BookSpec, OpenStaxAdapter
 from .align import align_chunks
+from .annotate import annotate
 from .embed import embed_chunks
 from .load import load_catalog, load_chunks, record_run, write_snapshots
+from .validate_db import print_report, validate
 
 # Phase 1 OpenStax math catalog (S1). grade_band is coarse; per-chunk
 # refinement is a later concern.
@@ -71,22 +73,46 @@ def run_embed_align(db_path: Path, sg_db: Path) -> None:
     conn.close()
 
 
+def run_annotate(db_path: Path, sg_db: Path, limit: int | None = None) -> None:
+    """Stage 6: gemma coverage notes for flagged alignments. Needs Ollama + SG DB."""
+    conn = connect(db_path, create=True)
+    annotate(conn, sg_db, limit=limit)
+    conn.close()
+
+
+def run_validate(db_path: Path) -> None:
+    """Stage 7: acceptance validation. GPU-free."""
+    conn = connect(db_path, create=True)
+    report = validate(conn)
+    print_report(report)
+    conn.close()
+    if not report.passed:
+        raise SystemExit(1)
+
+
 def main() -> None:
     p = argparse.ArgumentParser(description="OER ingestion pipeline")
-    p.add_argument("source", choices=["openstax", "embed-align"])
+    p.add_argument("source", choices=["openstax", "embed-align", "annotate", "validate"])
     p.add_argument("--book", action="append", dest="books",
-                   help="book slug (repeatable); default: prealgebra-2e")
+                   help="book slug (repeatable); default: prealgebra-2e. 'all' = full catalog")
     p.add_argument("--db", default=str(config.CORE_DB_PATH))
     p.add_argument("--snapshots", default=str(config.DATA_DIR / "raw" / "snapshots"))
     p.add_argument("--sg-db", default=str(config.STANDARDGRAPH_DB_PATH),
-                   help="StandardGraph DB (build-time only, for alignment)")
+                   help="StandardGraph DB (build-time only, for alignment/annotate)")
+    p.add_argument("--limit", type=int, default=None, help="cap (annotate)")
     args = p.parse_args()
 
     books = args.books or ["prealgebra-2e"]
+    if books == ["all"]:
+        books = list(OPENSTAX_BOOKS)
     if args.source == "openstax":
         run_openstax(books, Path(args.db), Path(args.snapshots))
     elif args.source == "embed-align":
         run_embed_align(Path(args.db), Path(args.sg_db))
+    elif args.source == "annotate":
+        run_annotate(Path(args.db), Path(args.sg_db), args.limit)
+    elif args.source == "validate":
+        run_validate(Path(args.db))
 
 
 if __name__ == "__main__":
