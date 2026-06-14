@@ -9,11 +9,15 @@ sub-standards. Idempotent: skips alignments that already have coverage_notes.
 from __future__ import annotations
 
 import sqlite3
+import time
 from pathlib import Path
 
 import httpx
 
 from oer_shared import config
+
+MAX_RETRIES = 3
+GEN_TIMEOUT = 300.0  # contended Studio gemma can be slow; generous per-call cap
 
 PROMPT = """Given this curriculum standard:
   ID: {sid}
@@ -42,14 +46,22 @@ def _standard_context(sg: sqlite3.Connection, sid: str) -> tuple[str, str] | Non
     return row["standard_text"], sub_str
 
 
-def _gemma(prompt: str, client: httpx.Client) -> str:
-    resp = client.post(
-        f"{config.OLLAMA_BASE_URL}/api/generate",
-        json={"model": config.ANNOTATE_MODEL, "prompt": prompt, "stream": False},
-        timeout=180.0,
-    )
-    resp.raise_for_status()
-    return resp.json()["response"].strip()
+def _gemma(prompt: str, client: httpx.Client) -> str | None:
+    """One generation with retry/backoff. Returns None if it keeps failing so
+    the caller can skip the item (idempotent — picked up on the next run)."""
+    for attempt in range(1, MAX_RETRIES + 1):
+        try:
+            resp = client.post(
+                f"{config.OLLAMA_BASE_URL}/api/generate",
+                json={"model": config.ANNOTATE_MODEL, "prompt": prompt, "stream": False},
+                timeout=GEN_TIMEOUT,
+            )
+            resp.raise_for_status()
+            return resp.json()["response"].strip()
+        except httpx.HTTPError:
+            if attempt < MAX_RETRIES:
+                time.sleep(2 * attempt)
+    return None
 
 
 def annotate(
@@ -72,9 +84,9 @@ def annotate(
         return 0
 
     print(f"[annotate] {len(pending)} flagged alignments via {config.ANNOTATE_MODEL}")
-    done = 0
+    done = skipped = 0
     with httpx.Client() as client:
-        for row in pending:
+        for i, row in enumerate(pending, 1):
             ctx = _standard_context(sg, row["standard_id"])
             if ctx is None:
                 continue
@@ -84,14 +96,17 @@ def annotate(
                               title=row["title"], content=row["content"][:1500]),
                 client,
             )
+            if note is None:  # persistent failure — leave NULL, resume next run
+                skipped += 1
+                continue
             conn.execute(
                 f"UPDATE {schema}.standard_alignments SET coverage_notes=? WHERE id=?",
                 (note, row["id"]),
             )
             conn.commit()
             done += 1
-            if done % 10 == 0:
-                print(f"[annotate] {done}/{len(pending)}")
+            if i % 10 == 0:
+                print(f"[annotate] {i}/{len(pending)} (wrote {done}, skipped {skipped})")
     sg.close()
-    print(f"[annotate] wrote {done} coverage notes")
+    print(f"[annotate] wrote {done} coverage notes, skipped {skipped}")
     return done
