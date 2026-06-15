@@ -21,7 +21,9 @@ from .align import align_chunks
 from .annotate import annotate
 from .embed import embed_chunks
 from .load import load_catalog, load_chunks, record_run, write_snapshots
+from .migrate import migrate_alignment_source_check
 from .validate_db import print_report, validate
+from .verify import verify
 
 # Phase 1 OpenStax math catalog (S1). grade_band is coarse; per-chunk
 # refinement is a later concern.
@@ -110,6 +112,17 @@ def run_annotate(
     conn.close()
 
 
+def run_verify(db_path: Path, sg_db: Path, limit: int | None = None,
+               shard: tuple[int, int] | None = None) -> None:
+    """Stage 6b: gemma-verified alignment upgrade (D20). Migrates the CHECK
+    constraint first. Needs Ollama + SG DB."""
+    conn = connect(db_path, create=True)
+    if migrate_alignment_source_check(conn):
+        print("[migrate] expanded alignment_source CHECK for llm_verified")
+    verify(conn, sg_db, limit=limit, shard=shard)
+    conn.close()
+
+
 def run_validate(db_path: Path) -> None:
     """Stage 7: acceptance validation. GPU-free."""
     conn = connect(db_path, create=True)
@@ -122,7 +135,7 @@ def run_validate(db_path: Path) -> None:
 
 def main() -> None:
     p = argparse.ArgumentParser(description="OER ingestion pipeline")
-    p.add_argument("source", choices=["openstax", "khan", "embed-align", "annotate", "validate"])
+    p.add_argument("source", choices=["openstax", "khan", "embed-align", "annotate", "verify", "validate"])
     p.add_argument("--book", action="append", dest="books",
                    help="book slug (repeatable); default: prealgebra-2e. 'all' = full catalog")
     p.add_argument("--db", default=str(config.CORE_DB_PATH))
@@ -153,6 +166,8 @@ def main() -> None:
         run_embed_align(Path(args.db), Path(args.sg_db))
     elif args.source == "annotate":
         run_annotate(Path(args.db), Path(args.sg_db), args.limit, shard)
+    elif args.source == "verify":
+        run_verify(Path(args.db), Path(args.sg_db), args.limit, shard)
     elif args.source == "validate":
         run_validate(Path(args.db))
 

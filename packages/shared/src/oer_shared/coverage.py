@@ -15,6 +15,7 @@ CoverageLevel = Literal["strong", "moderate", "light", "none"]
 # (strong_min, moderate_min, light_min). Below light_min → "none".
 _BANDS = {
     "embedding": (0.78, 0.70, 0.65),
+    "llm_verified": (0.85, 0.65, 0.45),  # gemma-confirmed (D20); fixed 0.90 → strong
     "publisher_guide": (0.85, 0.65, 0.45),
     "human": (0.85, 0.65, 0.45),
 }

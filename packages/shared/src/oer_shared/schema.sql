@@ -117,7 +117,7 @@ CREATE TABLE IF NOT EXISTS standard_alignments (
     standard_system     TEXT NOT NULL,      -- "ccss" (Phase 1: ccss only, D3)
     alignment_score     REAL NOT NULL,
     alignment_source    TEXT NOT NULL CHECK (alignment_source IN
-                            ('embedding','publisher_guide','human')),
+                            ('embedding','llm_verified','publisher_guide','human')),
     coverage_notes      TEXT,
     verified_by_human   INTEGER NOT NULL DEFAULT 0,
     flagged_for_review  INTEGER NOT NULL DEFAULT 0,

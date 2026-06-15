@@ -204,9 +204,12 @@ def search_content(
     return {"query": query, "search_mode": mode, "results": results}
 
 
-# Confidence hierarchy (PRD §10): human > publisher_guide > embedding,
-# then by score. Applied as an ORDER BY key across attached schemas.
-_SOURCE_RANK = "CASE a.alignment_source WHEN 'human' THEN 3 WHEN 'publisher_guide' THEN 2 ELSE 1 END"
+# Confidence hierarchy (PRD §10, D20): human > publisher_guide > llm_verified >
+# embedding, then by score. Applied as an ORDER BY key across attached schemas.
+_SOURCE_RANK = (
+    "CASE a.alignment_source WHEN 'human' THEN 4 WHEN 'publisher_guide' THEN 3 "
+    "WHEN 'llm_verified' THEN 2 ELSE 1 END"
+)
 
 
 def fetch_for_standard(
