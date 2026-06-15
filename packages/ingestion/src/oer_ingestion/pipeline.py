@@ -73,10 +73,13 @@ def run_embed_align(db_path: Path, sg_db: Path) -> None:
     conn.close()
 
 
-def run_annotate(db_path: Path, sg_db: Path, limit: int | None = None) -> None:
+def run_annotate(
+    db_path: Path, sg_db: Path, limit: int | None = None,
+    shard: tuple[int, int] | None = None,
+) -> None:
     """Stage 6: gemma coverage notes for flagged alignments. Needs Ollama + SG DB."""
     conn = connect(db_path, create=True)
-    annotate(conn, sg_db, limit=limit)
+    annotate(conn, sg_db, limit=limit, shard=shard)
     conn.close()
 
 
@@ -100,7 +103,14 @@ def main() -> None:
     p.add_argument("--sg-db", default=str(config.STANDARDGRAPH_DB_PATH),
                    help="StandardGraph DB (build-time only, for alignment/annotate)")
     p.add_argument("--limit", type=int, default=None, help="cap (annotate)")
+    p.add_argument("--shard", default=None,
+                   help="annotate work split 'N/M' — process rows where id %% M == N")
     args = p.parse_args()
+
+    shard = None
+    if args.shard:
+        n, m = (int(x) for x in args.shard.split("/"))
+        shard = (n, m)
 
     books = args.books or ["prealgebra-2e"]
     if books == ["all"]:
@@ -110,7 +120,7 @@ def main() -> None:
     elif args.source == "embed-align":
         run_embed_align(Path(args.db), Path(args.sg_db))
     elif args.source == "annotate":
-        run_annotate(Path(args.db), Path(args.sg_db), args.limit)
+        run_annotate(Path(args.db), Path(args.sg_db), args.limit, shard)
     elif args.source == "validate":
         run_validate(Path(args.db))
 

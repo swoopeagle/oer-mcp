@@ -65,9 +65,12 @@ def _gemma(prompt: str, client: httpx.Client) -> str | None:
 
 
 def annotate(
-    conn: sqlite3.Connection, sg_db: str | Path, *, schema: str = "main", limit: int | None = None
+    conn: sqlite3.Connection, sg_db: str | Path, *, schema: str = "main",
+    limit: int | None = None, shard: tuple[int, int] | None = None,
 ) -> int:
-    """Annotate flagged alignments lacking coverage_notes. Returns count written."""
+    """Annotate flagged alignments lacking coverage_notes. Returns count written.
+    shard=(n, m) processes only rows where id % m == n — lets independent workers
+    (e.g. Studio + Mini on different Ollama hosts) split the work without overlap."""
     sg = sqlite3.connect(f"file:{sg_db}?mode=ro", uri=True)
     sg.row_factory = sqlite3.Row
     q = f"""SELECT a.id, a.standard_id, a.chunk_id, c.title, c.content
@@ -75,6 +78,9 @@ def annotate(
             JOIN {schema}.chunks c ON c.id = a.chunk_id
             WHERE a.flagged_for_review = 1 AND a.coverage_notes IS NULL
               AND a.alignment_source = 'embedding'"""
+    if shard is not None:
+        n, m = shard
+        q += f" AND a.id % {int(m)} = {int(n)}"
     if limit:
         q += f" LIMIT {int(limit)}"
     pending = conn.execute(q).fetchall()

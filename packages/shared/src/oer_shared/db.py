@@ -38,6 +38,11 @@ def connect(
     conn = sqlite3.connect(core_path, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
+    # WAL + busy_timeout let multiple build-time writers (e.g. sharded annotate
+    # workers on different Ollama hosts) write concurrently without locking out.
+    conn.execute("PRAGMA busy_timeout = 30000")
+    if create:
+        conn.execute("PRAGMA journal_mode = WAL")
     if create:
         init_schema(conn)
     if addon_path is not None and Path(addon_path).exists():
