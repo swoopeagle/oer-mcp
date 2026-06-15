@@ -18,7 +18,9 @@ from oer_shared.models import ContentChunk
 from .adapters.base import RawContent
 
 
-def write_snapshots(raw: list[RawContent], snapshot_root: str | Path) -> dict[str, str]:
+def write_snapshots(
+    raw: list[RawContent], snapshot_root: str | Path, *, ext: str = "xml"
+) -> dict[str, str]:
     """Persist raw fetched payloads before chunking. Returns {key: path}.
     Snapshot writing is not optional (PRD §11)."""
     root = Path(snapshot_root)
@@ -26,7 +28,7 @@ def write_snapshots(raw: list[RawContent], snapshot_root: str | Path) -> dict[st
     for item in raw:
         date = item.fetched_at[:10]
         safe_key = item.key.replace(":", "__").replace("/", "_")
-        dest = root / item.source_id / date / f"{safe_key}.xml"
+        dest = root / item.source_id / date / f"{safe_key}.{ext}"
         dest.parent.mkdir(parents=True, exist_ok=True)
         dest.write_text(item.payload, encoding="utf-8")
         paths[item.key] = str(dest)

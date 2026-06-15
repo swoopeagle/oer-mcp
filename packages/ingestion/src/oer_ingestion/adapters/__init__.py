@@ -1,4 +1,5 @@
 from .base import RawContent, SourceAdapter, ValidationResult
+from .khan import KhanAcademyAdapter
 from .openstax import BookSpec, OpenStaxAdapter
 
 __all__ = [
@@ -7,4 +8,5 @@ __all__ = [
     "ValidationResult",
     "BookSpec",
     "OpenStaxAdapter",
+    "KhanAcademyAdapter",
 ]

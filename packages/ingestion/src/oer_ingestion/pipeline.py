@@ -16,7 +16,7 @@ from pathlib import Path
 from oer_shared import config
 from oer_shared.db import connect
 
-from .adapters import BookSpec, OpenStaxAdapter
+from .adapters import BookSpec, KhanAcademyAdapter, OpenStaxAdapter
 from .align import align_chunks
 from .annotate import annotate
 from .embed import embed_chunks
@@ -65,6 +65,33 @@ def run_openstax(slugs: list[str], db_path: Path, snapshot_root: Path) -> None:
     conn.close()
 
 
+KHAN_CHANNEL_DEFAULT = str(config.DATA_DIR / "khan_channel.sqlite3")
+
+
+def run_khan(db_path: Path, snapshot_root: Path, channel_db: str,
+             max_videos: int | None = None) -> None:
+    """Ingest Khan video transcripts (Kolibri, D16) into the NC-SA database.
+    CC BY-NC-SA content lives in its own DB per the D11 license split."""
+    adapter = KhanAcademyAdapter(channel_db, max_videos=max_videos)
+    print(f"[fetch] Khan transcripts from {channel_db}")
+    raw = adapter.fetch()
+    print(f"[fetch] {len(raw)} transcripts")
+    snaps = write_snapshots(raw, snapshot_root, ext="vtt")
+    print(f"[snapshot] wrote {len(snaps)} VTT files")
+    chunks = adapter.parse(raw)
+    result = adapter.validate(chunks)
+    print(f"[chunk] {result.stats}")
+    if not result.ok:
+        raise SystemExit(f"[chunk] validation failed: {result.errors[:5]}")
+    conn = connect(db_path, create=True)
+    load_catalog(conn, adapter.catalog())
+    counts = load_chunks(conn, chunks)
+    record_run(conn, adapter.source_id, counts, warnings=result.warnings)
+    total = conn.execute("SELECT COUNT(*) FROM chunks").fetchone()[0]
+    print(f"[load] added={counts['added']} updated={counts['updated']} | db total={total}")
+    conn.close()
+
+
 def run_embed_align(db_path: Path, sg_db: Path) -> None:
     """Stages 4–5: embed chunks, then align to CCSS. Needs Ollama + SG DB."""
     conn = connect(db_path, create=True)
@@ -95,7 +122,7 @@ def run_validate(db_path: Path) -> None:
 
 def main() -> None:
     p = argparse.ArgumentParser(description="OER ingestion pipeline")
-    p.add_argument("source", choices=["openstax", "embed-align", "annotate", "validate"])
+    p.add_argument("source", choices=["openstax", "khan", "embed-align", "annotate", "validate"])
     p.add_argument("--book", action="append", dest="books",
                    help="book slug (repeatable); default: prealgebra-2e. 'all' = full catalog")
     p.add_argument("--db", default=str(config.CORE_DB_PATH))
@@ -105,6 +132,9 @@ def main() -> None:
     p.add_argument("--limit", type=int, default=None, help="cap (annotate)")
     p.add_argument("--shard", default=None,
                    help="annotate work split 'N/M' — process rows where id %% M == N")
+    p.add_argument("--channel-db", default=KHAN_CHANNEL_DEFAULT,
+                   help="Khan Kolibri channel sqlite3 path")
+    p.add_argument("--max-videos", type=int, default=None, help="cap (khan)")
     args = p.parse_args()
 
     shard = None
@@ -117,6 +147,8 @@ def main() -> None:
         books = list(OPENSTAX_BOOKS)
     if args.source == "openstax":
         run_openstax(books, Path(args.db), Path(args.snapshots))
+    elif args.source == "khan":
+        run_khan(Path(args.db), Path(args.snapshots), args.channel_db, args.max_videos)
     elif args.source == "embed-align":
         run_embed_align(Path(args.db), Path(args.sg_db))
     elif args.source == "annotate":
