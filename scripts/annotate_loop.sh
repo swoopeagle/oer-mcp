@@ -39,6 +39,6 @@ while true; do
   fi
   pass=$((pass + 1))
   PYTHONUNBUFFERED=1 uv run python -u -m oer_ingestion.pipeline annotate \
-    --db "$DB" --sg-db "$SG" "${shard_args[@]}" 2>&1 | grep -vi futurewarning
+    --db "$DB" --sg-db "$SG" ${shard_args[@]+"${shard_args[@]}"} 2>&1 | grep -vi futurewarning
   sleep 3
 done
