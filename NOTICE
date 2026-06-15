@@ -1,0 +1,40 @@
+OER MCP — content attribution & licensing
+==========================================
+
+The oer-mcp CODE is MIT-licensed (see LICENSE). The curriculum CONTENT it
+indexes belongs to its original publishers under open licenses, and is
+partitioned by license into two databases (decision D11):
+
+  oer_core.db   — CC BY (and more permissive) content. Default install.
+  oer_ncsa.db   — CC BY-NC-SA content. Optional add-on (`--with-khan`).
+
+Every content chunk carries a non-nullable attribution string that is
+surfaced in every tool response, so downstream tools propagate attribution
+automatically (decision D4).
+
+Sources
+-------
+
+OpenStax (https://openstax.org)
+  Math textbooks ingested from the openstax/osbooks-* CNXML repositories.
+  License is per-book: most current 2e editions are CC BY-NC-SA 4.0; some
+  titles (e.g. HS Statistics) are CC BY 4.0. The per-book license is read from
+  each book's collection.xml at ingestion time and stored on every chunk.
+    CC BY 4.0:        https://creativecommons.org/licenses/by/4.0/
+    CC BY-NC-SA 4.0:  https://creativecommons.org/licenses/by-nc-sa/4.0/
+
+Khan Academy (https://www.khanacademy.org)  — optional add-on
+  Video-transcript content obtained via Learning Equality's Kolibri channel
+  ("Khan Academy, English - US curriculum"). Licensed CC BY-NC-SA 4.0:
+  non-commercial use only, attribution required, derivatives ShareAlike.
+    https://creativecommons.org/licenses/by-nc-sa/4.0/
+
+Note for commercial use
+-----------------------
+The default core database is CC BY content, suitable for commercial reuse with
+attribution. The Khan add-on (oer_ncsa.db) and CC BY-NC-SA OpenStax titles are
+NON-COMMERCIAL. If you build a commercial product, use only CC BY content or
+review each source's terms independently. This NOTICE is informational, not
+legal advice.
+
+CK-12 was evaluated and NOT included (see docs/spikes/S4-ck12.md).
