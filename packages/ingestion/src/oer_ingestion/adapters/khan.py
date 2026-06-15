@@ -96,7 +96,10 @@ class KhanAcademyAdapter(SourceAdapter):
         rows = ch.execute(
             """
             WITH RECURSIVE tree(id) AS (
-              SELECT id FROM content_contentnode WHERE title='Math' AND kind='topic'
+              -- 'Math' (topic-organized courses) and 'Math by grade' (K-12) are
+              -- sibling top-level topics; cover both so grade tags survive (S2).
+              SELECT id FROM content_contentnode
+                WHERE kind='topic' AND title IN ('Math','Math by grade')
               UNION SELECT cn.id FROM content_contentnode cn JOIN tree ON cn.parent_id=tree.id
             )
             SELECT cn.id, cn.content_id, cn.title, lf.id AS checksum
