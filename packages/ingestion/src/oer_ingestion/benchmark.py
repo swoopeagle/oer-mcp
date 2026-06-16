@@ -1,20 +1,20 @@
-"""Combined-MCP benchmark (D9, PRD §13).
+"""Combined-MCP benchmark (D9, PRD §13) — pairwise preference design.
 
-Measures whether grounding lesson-plan generation in retrieved OER content
-produces measurably better plans. For each topic, a lesson plan is generated
-three ways — context differs, generator is held constant so the delta isolates
-the value of the retrieved context:
+An earlier absolute 1-5 rubric saturated (a weak local judge scored ~everything
+5/5, so no lift was measurable). This version fixes both failure modes:
 
-  none           topic only
-  standardgraph  topic + standard text (StandardGraph DB)
-  both           topic + standard text + OER content (fetch_for_standard)
+  * Pairwise judging — the judge sees two segments for the same topic and must
+    pick the better-grounded one (A / B / TIE), which beats the ceiling effect.
+  * Grounding-stressing task — generate worked examples (not a generic plan),
+    and judge on fidelity to how the standard is *actually* taught, so the value
+    of real OER content can show. Generic "is it correct" doesn't need grounding;
+    "does it match real curriculum examples/methods" does.
 
-A judge model then scores every plan BLIND to condition on three 1–5 rubric
-dimensions. Target: `both` beats `standardgraph` by ≥1.0 on content_accuracy.
-
-Generator and judge both run via Ollama (configurable). Using one local model
-for both is a relative measure — the generator cancels across conditions; only
-the injected context varies. Build-time eval; never runs at query time.
+Each topic is generated three ways (none / standardgraph / both); the generator
+is held constant so the comparison isolates the injected context. Headline
+metric: how often `both` is preferred over `standardgraph` (and over `none`),
+blind and order-randomized. Target: `both` preferred over `standardgraph` in
+≥60% of decisive comparisons. Build-time eval; never runs at query time.
 """
 
 from __future__ import annotations
@@ -22,7 +22,6 @@ from __future__ import annotations
 import json
 import random
 import re
-import sqlite3
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -56,27 +55,33 @@ TOPICS: list[tuple[str, str]] = [
 ]
 
 CONDITIONS = ("none", "standardgraph", "both")
-DIMENSIONS = ("standards_accuracy", "content_accuracy", "pedagogical_coherence")
+# Comparisons whose preference we tally (the headline is both-vs-standardgraph).
+PAIRS = (("both", "standardgraph"), ("both", "none"), ("standardgraph", "none"))
 
-GEN_PROMPT = """Write a concise math lesson plan (objective, 2-3 worked teaching
-steps, and one practice problem) for this topic:
+GEN_PROMPT = """Produce a short teaching segment for this math topic: a one-line
+objective, TWO worked examples with step-by-step solutions, and one practice
+problem. Use the specific methods, notation, and example types that real
+curriculum materials use for this topic.
 
 Topic: {topic}
 {context}
-Return only the lesson plan."""
+Return only the teaching segment."""
 
-JUDGE_PROMPT = """You are grading a math lesson plan. Score it 1-5 (5=best) on:
-- standards_accuracy: alignment to the stated standard's intent
-- content_accuracy: mathematical correctness and appropriate examples
-- pedagogical_coherence: logical teaching sequence, clear and grade-appropriate
+JUDGE_PROMPT = """Two teaching segments (A and B) cover the same math topic.
+Decide which one is more faithful to how this standard is ACTUALLY taught in real
+curriculum materials — concrete and correct worked examples, standard methods and
+notation, grade-appropriate. Judge fidelity and usefulness, not length.
 
 Topic: {topic}
-Standard: {standard_id}
+Standard {standard_id}: {standard_text}
 
-Lesson plan:
-{plan}
+--- Segment A ---
+{a}
 
-Return ONLY a JSON object: {{"standards_accuracy": N, "content_accuracy": N, "pedagogical_coherence": N}}"""
+--- Segment B ---
+{b}
+
+Reply with exactly one token: A, B, or TIE."""
 
 
 @dataclass
@@ -85,10 +90,18 @@ class Plan:
     standard_id: str
     condition: str
     text: str
-    scores: dict[str, int] = field(default_factory=dict)
 
 
-def _sg_context(sg: sqlite3.Connection, standard_id: str) -> str:
+@dataclass
+class Comparison:
+    topic: str
+    standard_id: str
+    left: str   # condition shown as "A"
+    right: str  # condition shown as "B"
+    winner: str | None = None  # condition that won, or "tie", or None (unparsed)
+
+
+def _sg_context(sg, standard_id: str) -> str:
     row = sg.execute(
         "SELECT standard_text FROM standards WHERE id=? AND system='ccss'",
         (standard_id,),
@@ -105,14 +118,20 @@ def _sg_context(sg: sqlite3.Connection, standard_id: str) -> str:
     return out
 
 
+def _standard_text(sg, standard_id: str) -> str:
+    row = sg.execute(
+        "SELECT standard_text FROM standards WHERE id=? AND system='ccss'",
+        (standard_id,),
+    ).fetchone()
+    return row[0] if row else ""
+
+
 def _oer_context(oer_conn, standard_id: str, queries) -> str:
     res = queries.fetch_for_standard(oer_conn, standard_id, limit=2, include_content=True)
     if isinstance(res, dict):  # no_content
         return ""
-    parts = []
-    for r in res:
-        parts.append(f"From {r['attribution']}:\n{(r['content'] or '')[:900]}")
-    return "Reference content:\n" + "\n\n".join(parts) if parts else ""
+    parts = [f"From {r['attribution']}:\n{(r['content'] or '')[:900]}" for r in res]
+    return "Reference content (use these example types and methods):\n" + "\n\n".join(parts) if parts else ""
 
 
 def _build_context(condition, standard_id, sg, oer_conn, queries) -> str:
@@ -129,28 +148,24 @@ def _ollama(model, prompt, client, *, temperature=0.2) -> str:
         f"{config.OLLAMA_BASE_URL}/api/generate",
         json={"model": model, "prompt": prompt, "stream": False,
               "options": {"temperature": temperature}},
-        timeout=600.0,
+        timeout=300.0,
     )
     resp.raise_for_status()
     return resp.json()["response"].strip()
 
 
-def parse_scores(text: str) -> dict[str, int]:
-    """Lenient extraction of the three rubric scores from judge output."""
-    try:
-        m = re.search(r"\{.*\}", text, re.DOTALL)
-        if m:
-            d = json.loads(m.group(0))
-            return {k: int(d[k]) for k in DIMENSIONS if k in d}
-    except (ValueError, KeyError, TypeError):
-        pass
-    # fallback: find "dimension: N" patterns
-    out = {}
-    for dim in DIMENSIONS:
-        m = re.search(rf"{dim}\D{{0,5}}([1-5])", text, re.IGNORECASE)
-        if m:
-            out[dim] = int(m.group(1))
-    return out
+def parse_pref(text: str) -> str | None:
+    """Extract A / B / TIE from a judge response; None if unparseable.
+    Prefer the first token (the judge is told to reply with one), then fall back
+    to TIE anywhere, then a standalone A/B."""
+    t = text.strip().upper()
+    tokens = re.findall(r"[A-Z]+", t)
+    if tokens and tokens[0] in ("A", "B", "TIE"):
+        return tokens[0]
+    if re.search(r"\bTIE\b", t):
+        return "TIE"
+    m = re.search(r"\b([AB])\b", t)
+    return m.group(1) if m else None
 
 
 def run_benchmark(
@@ -158,80 +173,97 @@ def run_benchmark(
     gen_model: str | None = None, judge_model: str | None = None,
     addon_db: str | Path | None = None, topics=None, seed: int = 0,
 ) -> dict:
-    from oer_server import queries  # local import; server pkg
+    import sqlite3
+
+    from oer_server import queries
     from oer_shared.db import connect
 
     gen_model = gen_model or config.ANNOTATE_MODEL
     judge_model = judge_model or config.ANNOTATE_MODEL
     topics = topics or TOPICS
+    rng = random.Random(seed)
     sg = sqlite3.connect(f"file:{sg_db}?mode=ro", uri=True)
     oer_conn = connect(oer_db, addon_db)
 
-    plans: list[Plan] = []
+    comparisons: list[Comparison] = []
     with httpx.Client() as client:
         for topic, sid in topics:
+            plans = {}
             for cond in CONDITIONS:
                 ctx = _build_context(cond, sid, sg, oer_conn, queries)
-                text = _ollama(gen_model,
-                               GEN_PROMPT.format(topic=topic, context=ctx), client)
-                plans.append(Plan(topic, sid, cond, text))
-
-        # judge blind: shuffle so order leaks nothing about condition
-        order = list(range(len(plans)))
-        random.Random(seed).shuffle(order)
-        for i in order:
-            p = plans[i]
-            verdict = _ollama(judge_model,
-                              JUDGE_PROMPT.format(topic=p.topic, standard_id=p.standard_id,
-                                                  plan=p.text), client, temperature=0)
-            p.scores = parse_scores(verdict)
+                plans[cond] = _ollama(gen_model, GEN_PROMPT.format(topic=topic, context=ctx), client)
+            stext = _standard_text(sg, sid)
+            for left_cond, right_cond in PAIRS:
+                # randomize which condition is shown as A vs B (blind to judge)
+                a_cond, b_cond = (left_cond, right_cond) if rng.random() < 0.5 else (right_cond, left_cond)
+                verdict = _ollama(
+                    judge_model,
+                    JUDGE_PROMPT.format(topic=topic, standard_id=sid, standard_text=stext,
+                                        a=plans[a_cond], b=plans[b_cond]),
+                    client, temperature=0,
+                )
+                pref = parse_pref(verdict)
+                winner = None
+                if pref == "TIE":
+                    winner = "tie"
+                elif pref == "A":
+                    winner = a_cond
+                elif pref == "B":
+                    winner = b_cond
+                comparisons.append(Comparison(topic, sid, a_cond, b_cond, winner))
 
     sg.close()
     oer_conn.close()
-    return _aggregate(plans)
+    return _aggregate(comparisons, len(topics))
 
 
-def _aggregate(plans: list[Plan]) -> dict:
-    means = {c: {d: 0.0 for d in DIMENSIONS} for c in CONDITIONS}
-    counts = {c: 0 for c in CONDITIONS}
-    for p in plans:
-        if not p.scores:
-            continue
-        counts[p.condition] += 1
-        for d in DIMENSIONS:
-            means[p.condition][d] += p.scores.get(d, 0)
-    for c in CONDITIONS:
-        if counts[c]:
-            for d in DIMENSIONS:
-                means[c][d] /= counts[c]
-    lift = (means["both"]["content_accuracy"]
-            - means["standardgraph"]["content_accuracy"])
+def _aggregate(comparisons: list[Comparison], n_topics: int) -> dict:
+    results = {}
+    for left, right in PAIRS:
+        key = f"{left}_vs_{right}"
+        wins = losses = ties = unparsed = 0
+        for c in comparisons:
+            if {c.left, c.right} != {left, right}:
+                continue
+            if c.winner is None:
+                unparsed += 1
+            elif c.winner == "tie":
+                ties += 1
+            elif c.winner == left:
+                wins += 1
+            else:
+                losses += 1
+        decisive = wins + losses
+        results[key] = {
+            "wins": wins, "losses": losses, "ties": ties, "unparsed": unparsed,
+            "win_rate": round(wins / decisive, 3) if decisive else None,
+        }
+    headline = results["both_vs_standardgraph"]["win_rate"]
     return {
-        "n_topics": len(plans) // len(CONDITIONS),
-        "scored": counts,
-        "means": means,
-        "content_accuracy_lift_both_vs_sg": round(lift, 3),
-        "target_met": lift >= 1.0,
-        "plans": [vars(p) for p in plans],
+        "n_topics": n_topics,
+        "comparisons": results,
+        "both_vs_standardgraph_win_rate": headline,
+        "target_met": headline is not None and headline >= 0.60,
+        "raw": [vars(c) for c in comparisons],
     }
 
 
 def print_report(result: dict) -> None:
-    print(f"\nCombined-MCP benchmark — {result['n_topics']} topics\n")
-    hdr = f"{'condition':<14}" + "".join(f"{d[:16]:>18}" for d in DIMENSIONS)
-    print(hdr)
-    for c in CONDITIONS:
-        row = f"{c:<14}" + "".join(f"{result['means'][c][d]:>18.2f}" for d in DIMENSIONS)
-        print(row)
-    print(f"\ncontent_accuracy lift (both - standardgraph): "
-          f"{result['content_accuracy_lift_both_vs_sg']:+.2f}  "
-          f"(target ≥ +1.0 → {'MET' if result['target_met'] else 'not met'})")
+    print(f"\nCombined-MCP benchmark (pairwise) — {result['n_topics']} topics\n")
+    print(f"{'comparison':<28}{'win':>5}{'loss':>6}{'tie':>5}{'win_rate':>10}")
+    for key, r in result["comparisons"].items():
+        wr = "n/a" if r["win_rate"] is None else f"{r['win_rate']:.2f}"
+        print(f"{key:<28}{r['wins']:>5}{r['losses']:>6}{r['ties']:>5}{wr:>10}")
+    hr = result["both_vs_standardgraph_win_rate"]
+    print(f"\nheadline — both preferred over standardgraph: "
+          f"{('n/a' if hr is None else f'{hr:.0%}')} "
+          f"(target ≥60% → {'MET' if result['target_met'] else 'not met'})")
 
 
 def main() -> None:
     import argparse
 
-    p = argparse.ArgumentParser(description="Combined-MCP benchmark (D9)")
+    p = argparse.ArgumentParser(description="Combined-MCP pairwise benchmark (D9)")
     p.add_argument("--db", default=str(config.CORE_DB_PATH))
     p.add_argument("--addon-db", default=None)
     p.add_argument("--sg-db", default=str(config.STANDARDGRAPH_DB_PATH))

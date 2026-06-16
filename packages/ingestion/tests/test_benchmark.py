@@ -1,59 +1,53 @@
-"""Offline benchmark logic — score parsing, aggregation, topic set (no Ollama)."""
+"""Offline benchmark logic — pairwise preference parsing & aggregation (no Ollama)."""
 
-from oer_ingestion.benchmark import (
-    CONDITIONS,
-    DIMENSIONS,
-    TOPICS,
-    Plan,
-    _aggregate,
-    parse_scores,
-)
+from oer_ingestion.benchmark import TOPICS, Comparison, _aggregate, parse_pref
 
 
-def test_parse_scores_json():
-    s = parse_scores('Here: {"standards_accuracy": 4, "content_accuracy": 5, "pedagogical_coherence": 3}')
-    assert s == {"standards_accuracy": 4, "content_accuracy": 5, "pedagogical_coherence": 3}
+def test_parse_pref():
+    assert parse_pref("A") == "A"
+    assert parse_pref("B") == "B"
+    assert parse_pref("TIE") == "TIE"
+    assert parse_pref("The better one is B.") == "B"
+    assert parse_pref("They are equivalent, TIE") == "TIE"
+    assert parse_pref("neither, hard to say") is None
 
 
-def test_parse_scores_loose_fallback():
-    s = parse_scores("standards_accuracy: 3\ncontent_accuracy = 4\npedagogical_coherence -> 5")
-    assert s == {"standards_accuracy": 3, "content_accuracy": 4, "pedagogical_coherence": 5}
-
-
-def test_parse_scores_garbage():
-    assert parse_scores("the model rambled with no scores") == {}
-
-
-def test_aggregate_computes_lift_and_target():
-    plans = []
-    # both strong on content, standardgraph weaker → lift ≥ 1.0
-    for cond, content in (("none", 2), ("standardgraph", 3), ("both", 4.5)):
-        for _ in range(2):
-            plans.append(Plan("t", "S", cond, "plan",
-                              {"standards_accuracy": 4, "content_accuracy": int(content),
-                               "pedagogical_coherence": 4}))
-    # make 'both' average 4.5
-    plans[-1].scores["content_accuracy"] = 5
-    plans[-2].scores["content_accuracy"] = 4
-    r = _aggregate(plans)
-    assert r["n_topics"] == 2
-    assert r["means"]["both"]["content_accuracy"] == 4.5
-    assert r["means"]["standardgraph"]["content_accuracy"] == 3.0
-    assert r["content_accuracy_lift_both_vs_sg"] == 1.5
+def test_aggregate_win_rate_and_target():
+    comps = []
+    # both beats standardgraph 7, loses 2, ties 1 → win_rate 7/9 ≈ 0.78 ≥ 0.60
+    for _ in range(7):
+        comps.append(Comparison("t", "S", "both", "standardgraph", "both"))
+    for _ in range(2):
+        comps.append(Comparison("t", "S", "standardgraph", "both", "standardgraph"))
+    comps.append(Comparison("t", "S", "both", "standardgraph", "tie"))
+    r = _aggregate(comps, n_topics=10)
+    bvs = r["comparisons"]["both_vs_standardgraph"]
+    assert bvs["wins"] == 7 and bvs["losses"] == 2 and bvs["ties"] == 1
+    assert bvs["win_rate"] == round(7 / 9, 3)
+    assert r["both_vs_standardgraph_win_rate"] == round(7 / 9, 3)
     assert r["target_met"] is True
 
 
-def test_aggregate_skips_unscored():
-    plans = [Plan("t", "S", c, "p", {} if c == "none" else
-                  {d: 3 for d in DIMENSIONS}) for c in CONDITIONS]
-    r = _aggregate(plans)
-    assert r["scored"]["none"] == 0  # unscored excluded
-    assert r["scored"]["both"] == 1
+def test_aggregate_target_not_met_and_unparsed():
+    comps = [Comparison("t", "S", "both", "standardgraph", "standardgraph"),
+             Comparison("t", "S", "both", "standardgraph", "both"),
+             Comparison("t", "S", "both", "standardgraph", None)]  # unparsed
+    r = _aggregate(comps, n_topics=3)
+    bvs = r["comparisons"]["both_vs_standardgraph"]
+    assert bvs["unparsed"] == 1
+    assert bvs["win_rate"] == 0.5  # 1 win / 2 decisive
+    assert r["target_met"] is False
+
+
+def test_winner_mapped_regardless_of_ab_order():
+    # both shown as B and chosen → both wins (order independence)
+    comps = [Comparison("t", "S", "standardgraph", "both", "both")]
+    r = _aggregate(comps, n_topics=1)
+    assert r["comparisons"]["both_vs_standardgraph"]["wins"] == 1
 
 
 def test_topic_set_spans_k12():
     assert len(TOPICS) == 20
     ids = [s for _, s in TOPICS]
-    assert any(".K." in i for i in ids)        # kindergarten
-    assert any(".HS" in i for i in ids)         # high school
+    assert any(".K." in i for i in ids) and any(".HS" in i for i in ids)
     assert all(i.startswith("CCSS.MATH.") for i in ids)
