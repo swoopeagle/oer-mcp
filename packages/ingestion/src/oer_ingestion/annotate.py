@@ -73,11 +73,14 @@ def annotate(
     (e.g. Studio + Mini on different Ollama hosts) split the work without overlap."""
     sg = sqlite3.connect(f"file:{sg_db}?mode=ro", uri=True)
     sg.row_factory = sqlite3.Row
+    # Annotate any flagged alignment lacking notes, whether still 'embedding' or
+    # already promoted to 'llm_verified' by the verify stage (order of stages
+    # differs per source: OpenStax annotated pre-verify, Khan post-verify).
     q = f"""SELECT a.id, a.standard_id, a.chunk_id, c.title, c.content
             FROM {schema}.standard_alignments a
             JOIN {schema}.chunks c ON c.id = a.chunk_id
             WHERE a.flagged_for_review = 1 AND a.coverage_notes IS NULL
-              AND a.alignment_source = 'embedding'"""
+              AND a.alignment_source IN ('embedding','llm_verified')"""
     if shard is not None:
         n, m = shard
         q += f" AND a.id % {int(m)} = {int(n)}"
