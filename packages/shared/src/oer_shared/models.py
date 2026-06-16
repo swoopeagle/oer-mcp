@@ -5,7 +5,8 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 ContentType = Literal["exposition", "worked_example", "exercise_set", "summary"]
-AlignmentSource = Literal["embedding", "publisher_guide", "human"]
+# Keep in sync with the schema.sql CHECK and oer_shared.coverage bands (D20).
+AlignmentSource = Literal["embedding", "llm_verified", "publisher_guide", "human"]
 
 
 class StandardAlignment(BaseModel):

@@ -58,6 +58,17 @@ def test_confidence_hierarchy_beats_raw_score(conn):
     assert out[0]["alignment_source"] == "publisher_guide"
 
 
+def test_llm_verified_tier_serializes_and_ranks(conn):
+    # regression: llm_verified must be a valid alignment_source (D20) and
+    # outrank raw embedding even at a lower score
+    _chunk(conn, "emb"); _align(conn, "emb", 0.95, "embedding")
+    _chunk(conn, "ver"); _align(conn, "ver", 0.90, "llm_verified")
+    conn.commit()
+    out = queries.fetch_for_standard(conn, "CCSS.MATH.6.RP.A.3", limit=2)
+    assert [r["chunk_id"] for r in out] == ["ver", "emb"]
+    assert out[0]["alignment_source"] == "llm_verified"
+
+
 def test_filters_and_include_content(conn):
     _chunk(conn, "expo", "exposition"); _align(conn, "expo", 0.9, "embedding")
     _chunk(conn, "ex", "worked_example"); _align(conn, "ex", 0.95, "embedding")
