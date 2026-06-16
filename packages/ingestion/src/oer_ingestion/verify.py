@@ -22,7 +22,7 @@ from oer_shared import config
 
 VERIFIED_SCORE = 0.90
 MAX_RETRIES = 3
-GEN_TIMEOUT = 300.0
+GEN_TIMEOUT = 120.0  # local gemma answers in seconds; long enough to absorb a cold load
 
 PROMPT = """You are checking curriculum alignment. Reply with exactly one word: YES or NO.
 

@@ -12,7 +12,7 @@ FLAGGED_SQL="SELECT COUNT(*) FROM standard_alignments WHERE flagged_for_review=1
 
 for DB in "${DBS[@]}"; do
   [ -f "$DB" ] || continue
-  pass=0
+  pass=0; prev=-1
   while true; do
     rem=$(sqlite3 "$DB" "$FLAGGED_SQL")
     echo "[verify-loop $DB] pass=$pass flagged=$rem $(date +%H:%M:%S)"
@@ -20,6 +20,14 @@ for DB in "${DBS[@]}"; do
       echo "[verify-loop $DB] DONE"
       break
     fi
+    # No-progress guard: if a full pass didn't reduce the flagged count, the
+    # remaining items are unverifiable (gemma keeps failing on them) — stop
+    # retrying this DB rather than loop forever.
+    if [ "$rem" = "$prev" ]; then
+      echo "[verify-loop $DB] no progress ($rem unverifiable left) — moving on"
+      break
+    fi
+    prev=$rem
     pass=$((pass + 1))
     PYTHONUNBUFFERED=1 uv run python -u -m oer_ingestion.pipeline verify \
       --db "$DB" --sg-db "$SG" 2>&1 | grep -vi futurewarning
