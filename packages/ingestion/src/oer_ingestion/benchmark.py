@@ -143,8 +143,9 @@ def _build_context(condition, standard_id, sg, oer_conn, queries) -> str:
     return (sg_ctx + "\n\n" + _oer_context(oer_conn, standard_id, queries)).strip()
 
 
-def _ollama(model, prompt, client, *, temperature=0.2) -> str:
-    """Generate with retry/backoff — one timeout shouldn't kill a 120-call run."""
+def _ollama(model, prompt, client, *, temperature=0.2, num_predict=512) -> str:
+    """Generate with retry/backoff and a token cap (num_predict) so a runaway
+    generation can't hang past the timeout. One timeout shouldn't kill the run."""
     import time
 
     last = None
@@ -153,7 +154,7 @@ def _ollama(model, prompt, client, *, temperature=0.2) -> str:
             resp = client.post(
                 f"{config.OLLAMA_BASE_URL}/api/generate",
                 json={"model": model, "prompt": prompt, "stream": False,
-                      "options": {"temperature": temperature}},
+                      "options": {"temperature": temperature, "num_predict": num_predict}},
                 timeout=180.0,
             )
             resp.raise_for_status()
@@ -199,20 +200,28 @@ def run_benchmark(
     comparisons: list[Comparison] = []
     with httpx.Client() as client:
         for topic, sid in topics:
-            plans = {}
-            for cond in CONDITIONS:
-                ctx = _build_context(cond, sid, sg, oer_conn, queries)
-                plans[cond] = _ollama(gen_model, GEN_PROMPT.format(topic=topic, context=ctx), client)
+            try:
+                plans = {}
+                for cond in CONDITIONS:
+                    ctx = _build_context(cond, sid, sg, oer_conn, queries)
+                    plans[cond] = _ollama(gen_model, GEN_PROMPT.format(topic=topic, context=ctx), client)
+            except httpx.HTTPError as exc:
+                print(f"[benchmark] skip topic {sid!r} (generation failed: {exc!r})")
+                continue
             stext = _standard_text(sg, sid)
             for left_cond, right_cond in PAIRS:
                 # randomize which condition is shown as A vs B (blind to judge)
                 a_cond, b_cond = (left_cond, right_cond) if rng.random() < 0.5 else (right_cond, left_cond)
-                verdict = _ollama(
-                    judge_model,
-                    JUDGE_PROMPT.format(topic=topic, standard_id=sid, standard_text=stext,
-                                        a=plans[a_cond], b=plans[b_cond]),
-                    client, temperature=0,
-                )
+                try:
+                    verdict = _ollama(
+                        judge_model,
+                        JUDGE_PROMPT.format(topic=topic, standard_id=sid, standard_text=stext,
+                                            a=plans[a_cond], b=plans[b_cond]),
+                        client, temperature=0, num_predict=8,
+                    )
+                except httpx.HTTPError:
+                    comparisons.append(Comparison(topic, sid, a_cond, b_cond, None))
+                    continue
                 pref = parse_pref(verdict)
                 winner = None
                 if pref == "TIE":
