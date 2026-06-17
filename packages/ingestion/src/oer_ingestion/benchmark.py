@@ -144,14 +144,25 @@ def _build_context(condition, standard_id, sg, oer_conn, queries) -> str:
 
 
 def _ollama(model, prompt, client, *, temperature=0.2) -> str:
-    resp = client.post(
-        f"{config.OLLAMA_BASE_URL}/api/generate",
-        json={"model": model, "prompt": prompt, "stream": False,
-              "options": {"temperature": temperature}},
-        timeout=300.0,
-    )
-    resp.raise_for_status()
-    return resp.json()["response"].strip()
+    """Generate with retry/backoff — one timeout shouldn't kill a 120-call run."""
+    import time
+
+    last = None
+    for attempt in range(1, 4):
+        try:
+            resp = client.post(
+                f"{config.OLLAMA_BASE_URL}/api/generate",
+                json={"model": model, "prompt": prompt, "stream": False,
+                      "options": {"temperature": temperature}},
+                timeout=180.0,
+            )
+            resp.raise_for_status()
+            return resp.json()["response"].strip()
+        except httpx.HTTPError as exc:
+            last = exc
+            if attempt < 3:
+                time.sleep(2 * attempt)
+    raise last
 
 
 def parse_pref(text: str) -> str | None:
