@@ -14,6 +14,8 @@ ADDON_DB_PATH = Path(os.environ.get("OER_ADDON_DB_PATH", str(DATA_DIR / "oer_ncs
 
 # Build-time only (ingestion Stages 4–6); never required at query time.
 OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://169.254.1.1:11434")
+# "generate" (default) or "chat" — some hosts/models only answer via /api/chat.
+OLLAMA_API = os.environ.get("OER_OLLAMA_API", "generate")
 EMBED_MODEL = os.environ.get("OER_EMBED_MODEL", "nomic-embed-text")
 ANNOTATE_MODEL = os.environ.get("OER_ANNOTATE_MODEL", "gemma4:31b-it-q8_0")
 

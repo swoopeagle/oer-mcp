@@ -15,6 +15,7 @@ from pathlib import Path
 import httpx
 
 from oer_shared import config
+from oer_shared.ollama_client import complete
 
 MAX_RETRIES = 3
 GEN_TIMEOUT = 300.0  # contended Studio gemma can be slow; generous per-call cap
@@ -51,13 +52,7 @@ def _gemma(prompt: str, client: httpx.Client) -> str | None:
     the caller can skip the item (idempotent — picked up on the next run)."""
     for attempt in range(1, MAX_RETRIES + 1):
         try:
-            resp = client.post(
-                f"{config.OLLAMA_BASE_URL}/api/generate",
-                json={"model": config.ANNOTATE_MODEL, "prompt": prompt, "stream": False},
-                timeout=GEN_TIMEOUT,
-            )
-            resp.raise_for_status()
-            return resp.json()["response"].strip()
+            return complete(prompt, config.ANNOTATE_MODEL, client, timeout=GEN_TIMEOUT)
         except httpx.HTTPError:
             if attempt < MAX_RETRIES:
                 time.sleep(2 * attempt)

@@ -19,6 +19,7 @@ from pathlib import Path
 import httpx
 
 from oer_shared import config
+from oer_shared.ollama_client import complete
 
 VERIFIED_SCORE = 0.90
 MAX_RETRIES = 3
@@ -38,17 +39,20 @@ Answer (YES or NO):"""
 
 
 def _ask(prompt: str, client: httpx.Client) -> bool | None:
+    # No num_predict cap: some hosts/models (e.g. the Windows gemma4:12b on
+    # /api/chat) return EMPTY when the cap is set. An unclear/empty answer maps
+    # to None (skip), never to a rejection — a flaky endpoint must not be able to
+    # falsely reject and corrupt the corpus.
     for attempt in range(1, MAX_RETRIES + 1):
         try:
-            resp = client.post(
-                f"{config.OLLAMA_BASE_URL}/api/generate",
-                json={"model": config.ANNOTATE_MODEL, "prompt": prompt,
-                      "stream": False, "options": {"temperature": 0}},
-                timeout=GEN_TIMEOUT,
-            )
-            resp.raise_for_status()
-            ans = resp.json()["response"].strip().upper()
-            return ans.startswith("YES")
+            ans = complete(prompt, config.ANNOTATE_MODEL, client,
+                           temperature=0, timeout=GEN_TIMEOUT)
+            u = ans.strip().upper()
+            if u.startswith("YES"):
+                return True
+            if u.startswith("NO"):
+                return False
+            return None  # empty/unclear → skip, leave flagged for another pass
         except httpx.HTTPError:
             if attempt < MAX_RETRIES:
                 time.sleep(2 * attempt)
