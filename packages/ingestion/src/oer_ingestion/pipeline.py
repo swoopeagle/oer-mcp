@@ -17,10 +17,11 @@ from oer_shared import config
 from oer_shared.db import connect
 
 from .adapters import BookSpec, KhanAcademyAdapter, OpenStaxAdapter
+from .adapters.illustrative_math import IllustrativeMathAdapter
 from .align import align_chunks
 from .annotate import annotate
 from .embed import embed_chunks
-from .load import load_catalog, load_chunks, record_run, write_snapshots
+from .load import load_alignments, load_catalog, load_chunks, record_run, write_snapshots
 from .migrate import migrate_alignment_source_check
 from .validate_db import print_report, validate
 from .verify import verify
@@ -36,7 +37,19 @@ OPENSTAX_BOOKS = {
     "precalculus-2e": BookSpec("osbooks-college-algebra-bundle", "precalculus-2e", "college"),
     "calculus-volume-1": BookSpec("osbooks-calculus-bundle", "calculus-volume-1", "college"),
     "statistics": BookSpec("osbooks-statistics", "statistics", "9-12"),
+    # Expansion (all CC BY-NC-SA → oer_ncsa.db). Slugs/licenses verified 2026-06-22.
+    "algebra-and-trigonometry-2e": BookSpec("osbooks-college-algebra-bundle", "algebra-and-trigonometry-2e", "9-12"),
+    "college-algebra-corequisite-support-2e": BookSpec("osbooks-college-algebra-bundle", "college-algebra-corequisite-support-2e", "college"),
+    "contemporary-mathematics": BookSpec("osbooks-contemporary-mathematics", "contemporary-mathematics", "9-12"),
+    "calculus-volume-2": BookSpec("osbooks-calculus-bundle", "calculus-volume-2", "college"),
+    "calculus-volume-3": BookSpec("osbooks-calculus-bundle", "calculus-volume-3", "college"),
 }
+
+# Books added in the expansion pass — used by scripts to target just the new set.
+EXPANSION_BOOKS = [
+    "algebra-and-trigonometry-2e", "college-algebra-corequisite-support-2e",
+    "contemporary-mathematics", "calculus-volume-2", "calculus-volume-3",
+]
 
 
 def run_openstax(slugs: list[str], db_path: Path, snapshot_root: Path) -> None:
@@ -94,6 +107,39 @@ def run_khan(db_path: Path, snapshot_root: Path, channel_db: str,
     conn.close()
 
 
+def run_im(db_path: Path, snapshot_root: Path, courses: list[str] | None = None,
+           max_lessons: int | None = None) -> None:
+    """Ingest Illustrative Mathematics 6–8 (First Edition, CC BY 4.0) into the
+    *core* DB — it is permissively licensed so it grows the default install. Each
+    lesson's "Addressing" CCSS standards load as publisher_guide alignments (the
+    first real publisher tags in the corpus; no LLM verify needed for those)."""
+    adapter = IllustrativeMathAdapter(courses=courses, max_lessons=max_lessons)
+    print(f"[fetch] IM crawl (courses={adapter.courses}, max_lessons={max_lessons})")
+    raw = adapter.fetch()
+    print(f"[fetch] {len(raw)} lessons")
+    snaps = write_snapshots(raw, snapshot_root, ext="html")
+    print(f"[snapshot] wrote {len(snaps)} HTML files")
+    chunks = adapter.parse(raw)
+    result = adapter.validate(chunks)
+    print(f"[chunk] {result.stats}")
+    if not result.ok:
+        raise SystemExit(f"[chunk] validation failed: {result.errors[:5]}")
+    for w in result.warnings:
+        print(f"[chunk][warn] {w}")
+    conn = connect(db_path, create=True)
+    load_catalog(conn, adapter.catalog())
+    counts = load_chunks(conn, chunks)
+    acounts = load_alignments(conn, chunks)
+    record_run(conn, adapter.source_id, counts, warnings=result.warnings)
+    total = conn.execute("SELECT COUNT(*) FROM chunks").fetchone()[0]
+    pub = conn.execute("SELECT COUNT(*) FROM standard_alignments "
+                       "WHERE alignment_source='publisher_guide'").fetchone()[0]
+    print(f"[load] chunks added={counts['added']} updated={counts['updated']} | "
+          f"publisher alignments added={acounts['added']} updated={acounts['updated']} "
+          f"| db total chunks={total}, publisher_guide={pub}")
+    conn.close()
+
+
 def run_embed_align(db_path: Path, sg_db: Path) -> None:
     """Stages 4–5: embed chunks, then align to CCSS. Needs Ollama + SG DB."""
     conn = connect(db_path, create=True)
@@ -135,7 +181,7 @@ def run_validate(db_path: Path) -> None:
 
 def main() -> None:
     p = argparse.ArgumentParser(description="OER ingestion pipeline")
-    p.add_argument("source", choices=["openstax", "khan", "embed-align", "annotate", "verify", "validate"])
+    p.add_argument("source", choices=["openstax", "khan", "im", "embed-align", "annotate", "verify", "validate"])
     p.add_argument("--book", action="append", dest="books",
                    help="book slug (repeatable); default: prealgebra-2e. 'all' = full catalog")
     p.add_argument("--db", default=str(config.CORE_DB_PATH))
@@ -148,6 +194,9 @@ def main() -> None:
     p.add_argument("--channel-db", default=KHAN_CHANNEL_DEFAULT,
                    help="Khan Kolibri channel sqlite3 path")
     p.add_argument("--max-videos", type=int, default=None, help="cap (khan)")
+    p.add_argument("--course", action="append", dest="courses",
+                   help="IM MS course (repeatable): 1=Gr6, 2=Gr7, 3=Gr8; default all")
+    p.add_argument("--max-lessons", type=int, default=None, help="cap (im)")
     args = p.parse_args()
 
     shard = None
@@ -162,6 +211,8 @@ def main() -> None:
         run_openstax(books, Path(args.db), Path(args.snapshots))
     elif args.source == "khan":
         run_khan(Path(args.db), Path(args.snapshots), args.channel_db, args.max_videos)
+    elif args.source == "im":
+        run_im(Path(args.db), Path(args.snapshots), args.courses, args.max_lessons)
     elif args.source == "embed-align":
         run_embed_align(Path(args.db), Path(args.sg_db))
     elif args.source == "annotate":

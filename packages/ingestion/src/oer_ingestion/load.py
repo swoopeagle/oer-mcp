@@ -116,6 +116,46 @@ def load_chunks(
     return {"added": added, "updated": updated}
 
 
+def load_alignments(conn: sqlite3.Connection, chunks: list[ContentChunk]) -> dict[str, int]:
+    """Persist chunk-level standard_alignments (e.g. IM publisher_guide CCSS tags).
+    Upserts on UNIQUE(chunk_id, standard_id); a higher-confidence source overwrites
+    a weaker one but never the reverse, and human-verified rows are never touched."""
+    _RANK = {"embedding": 1, "llm_verified": 2, "publisher_guide": 3, "human": 4}
+    added = updated = 0
+    for c in chunks:
+        for a in c.standard_alignments:
+            row = conn.execute(
+                "SELECT alignment_source, verified_by_human FROM standard_alignments "
+                "WHERE chunk_id=? AND standard_id=?", (c.id, a.standard_id),
+            ).fetchone()
+            if row is None:
+                conn.execute(
+                    """INSERT INTO standard_alignments
+                         (chunk_id, standard_id, standard_system, alignment_score,
+                          alignment_source, coverage_notes, verified_by_human)
+                       VALUES (?,?,?,?,?,?,?)""",
+                    (c.id, a.standard_id, a.standard_system, a.alignment_score,
+                     a.alignment_source, a.coverage_notes, int(a.verified_by_human)),
+                )
+                added += 1
+            else:
+                existing_src, human = row[0], row[1]
+                if human:  # never override a human decision
+                    continue
+                if _RANK.get(a.alignment_source, 0) >= _RANK.get(existing_src, 0):
+                    conn.execute(
+                        """UPDATE standard_alignments
+                             SET standard_system=?, alignment_score=?, alignment_source=?,
+                                 coverage_notes=?, flagged_for_review=0, stale=0
+                           WHERE chunk_id=? AND standard_id=?""",
+                        (a.standard_system, a.alignment_score, a.alignment_source,
+                         a.coverage_notes, c.id, a.standard_id),
+                    )
+                    updated += 1
+    conn.commit()
+    return {"added": added, "updated": updated}
+
+
 def _snapshot_for(chunk: ContentChunk, snapshot_paths: dict[str, str]) -> str | None:
     # chunk.id = "openstax-{slug}-{module}-{suffix}"; fetch key = "{slug}:{module}"
     for key, path in snapshot_paths.items():
