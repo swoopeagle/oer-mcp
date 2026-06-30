@@ -43,6 +43,10 @@ def connect(
     # WAL + busy_timeout let multiple build-time writers (e.g. sharded annotate
     # workers on different Ollama hosts) write concurrently without locking out.
     conn.execute("PRAGMA busy_timeout = 30000")
+    # Performance PRAGMAs safe for both server and build paths.
+    conn.execute("PRAGMA temp_store = MEMORY")
+    conn.execute("PRAGMA mmap_size = 268435456")   # 256 MB memory-map
+    conn.execute("PRAGMA cache_size = -65536")      # 64 MB page cache (negative = KiB)
     if create:
         conn.execute("PRAGMA journal_mode = WAL")
         init_schema(conn)
@@ -50,6 +54,9 @@ def connect(
         conn.execute("ATTACH DATABASE ? AS ncsa", (str(addon_path),))
     if ap_path is not None and Path(ap_path).exists():
         conn.execute("ATTACH DATABASE ? AS ap", (str(ap_path),))
+    # query_only hardens the server against accidental writes; set last so ATTACHes work.
+    if not create:
+        conn.execute("PRAGMA query_only = ON")
     return conn
 
 

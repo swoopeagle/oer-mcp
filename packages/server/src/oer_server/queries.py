@@ -103,23 +103,41 @@ def _keyword_hits(conn, schema, match, filters, params) -> list[str]:
 
 
 def _semantic_hits(conn, schema, qvec, filters, params) -> list[str]:
-    """Chunk IDs by cosine to the query vector, honoring filters. Best first."""
+    """Chunk IDs by cosine to the query vector, honoring filters. Best first.
+
+    Uses the in-memory normalized matrix from embed_cache; the per-call SQL
+    is a cheap metadata-only filter query (no vector BLOBs read each time).
+    """
+    from .embed_cache import get_matrix
+
+    ids, mat, _ = get_matrix(conn, schema)
+    if len(ids) == 0:
+        return []
+
+    # Get the allowed chunk IDs after applying filters (no vector I/O).
     where = " AND ".join(["c.stale = 0", *filters])
-    rows = conn.execute(
-        f"""SELECT c.id, e.vector
+    allowed_rows = conn.execute(
+        f"""SELECT e.chunk_id
             FROM {schema}.chunk_embeddings e
             JOIN {schema}.chunks c ON c.id = e.chunk_id
             WHERE {where}""",
         tuple(params),
     ).fetchall()
-    if not rows:
+    if not allowed_rows:
         return []
-    mat = np.vstack([np.frombuffer(r["vector"], dtype=np.float32) for r in rows])
-    mat /= np.linalg.norm(mat, axis=1, keepdims=True) + 1e-9
+
+    allowed_set = {r["chunk_id"] for r in allowed_rows}
+    mask = np.array([cid in allowed_set for cid in ids], dtype=bool)
+    if not mask.any():
+        return []
+
+    restricted_mat = mat[mask]
+    restricted_ids = [ids[i] for i, m in enumerate(mask) if m]
+
     qv = qvec / (np.linalg.norm(qvec) + 1e-9)
-    sims = mat @ qv
+    sims = restricted_mat @ qv
     order = np.argsort(-sims)[:50]
-    return [rows[i]["id"] for i in order]
+    return [restricted_ids[i] for i in order]
 
 
 def _rrf(rankings: list[list[str]], k: int = 60) -> list[str]:
