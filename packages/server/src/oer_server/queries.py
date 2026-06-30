@@ -708,6 +708,82 @@ def _adjacent(conn, schema, row) -> dict:
     }
 
 
+_ALL_TOOLS = [
+    "fetch_for_standard",
+    "search_content",
+    "get_chunk",
+    "check_coverage",
+    "list_sources",
+    "map_to_assessments",
+    "get_learning_path",
+    "get_capabilities",
+]
+
+
+def get_capabilities(conn: sqlite3.Connection) -> dict:
+    """Return a live self-describing manifest of this server's corpus and tools.
+
+    Enumerates sources, standard systems, content types, exam series, grade
+    bands, alignment sources, and available tools from the attached databases.
+    Intended as a discovery call so machine clients can configure themselves
+    before issuing queries.
+    """
+    from oer_shared.coverage import _BANDS
+
+    schemas = attached_schemas(conn)
+    inventory = list_sources(conn)
+
+    sources = [
+        {
+            "id": s.id,
+            "full_name": s.full_name,
+            "chunks": s.chunks_indexed,
+            "grade_bands": s.grade_bands,
+            "license": s.license,
+        }
+        for s in inventory.sources
+    ]
+
+    standard_systems: list[str] = []
+    exam_series: list[str] = []
+    grade_bands: list[str] = []
+    for schema in schemas:
+        for row in conn.execute(
+            f"SELECT DISTINCT standard_system FROM {schema}.standard_alignments WHERE stale=0"
+        ).fetchall():
+            if row[0] and row[0] not in standard_systems:
+                standard_systems.append(row[0])
+
+        for row in conn.execute(
+            f"SELECT DISTINCT exam_series FROM {schema}.chunks WHERE exam_series IS NOT NULL AND stale=0"
+        ).fetchall():
+            if row[0] and row[0] not in exam_series:
+                exam_series.append(row[0])
+
+        for row in conn.execute(
+            f"SELECT DISTINCT grade_band FROM {schema}.books WHERE grade_band IS NOT NULL"
+        ).fetchall():
+            if row[0] and row[0] not in grade_bands:
+                grade_bands.append(row[0])
+
+    return {
+        "databases_attached": [_SCHEMA_LABELS[s] for s in schemas],
+        "sources": sources,
+        "standard_systems": sorted(standard_systems),
+        "content_types": ["exposition", "worked_example", "exercise_set", "summary", "assessment"],
+        "exam_series": sorted(exam_series),
+        "grade_bands": sorted(grade_bands),
+        "alignment_sources": ["human", "publisher_guide", "llm_verified", "embedding"],
+        "alignment_confidence_bands": {
+            src: {"strong": t[0], "moderate": t[1], "light": t[2]}
+            for src, t in _BANDS.items()
+        },
+        "tools": _ALL_TOOLS,
+        "total_chunks": inventory.total_chunks,
+        "total_alignments": inventory.total_standards_aligned,
+    }
+
+
 def list_sources(conn: sqlite3.Connection) -> SourceInventory:
     sources: list[SourceInfo] = []
     total_chunks = 0

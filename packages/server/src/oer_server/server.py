@@ -209,6 +209,23 @@ def get_learning_path(
         return _error(exc)
 
 
+@mcp.tool()
+def get_capabilities() -> dict:
+    """Return a self-describing manifest of this server's corpus and capabilities.
+
+    Call this first to discover what content, standard systems, exam series,
+    grade bands, and tools this server exposes — without any trial-and-error
+    queries. The response enumerates every attached database, source, and tool
+    available in this deployment.
+    """
+    from . import queries
+
+    try:
+        return queries.get_capabilities(get_conn())
+    except Exception as exc:
+        return _error(exc)
+
+
 def main() -> None:
     mcp.run()
 
