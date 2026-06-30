@@ -5,7 +5,7 @@ All work from this session is documented below. Everything is ready to use.
 ## 📋 Main Documents
 
 ### Project Context
-- **[CLAUDE.md](CLAUDE.md)** — Project overview, architecture, design decisions
+- **[CLAUDE.md](../CLAUDE.md)** — Project overview, architecture, design decisions
 
 ### Analysis & Audits  
 - **[BENCHMARK_ANALYSIS.md](BENCHMARK_ANALYSIS.md)** — Root cause of zero lift, fixes applied
@@ -41,9 +41,11 @@ uv run python scripts/generate_coverage_analysis.py --db data/oer_core.db --sg-d
 ## 📊 Analysis Outputs
 
 Generated CSV files (ready for Excel visualization):
-- **coverage_by_grade.csv** — Grade-level × domain heatmap
-- **standards_gaps.csv** — All 343 CCSS Math standards with gap classifications  
-- **source_quality.csv** — Per-source quality metrics
+- **[analysis/coverage_by_grade.csv](analysis/coverage_by_grade.csv)** — Grade-level × domain heatmap
+- **[analysis/standards_gaps.csv](analysis/standards_gaps.csv)** — All 343 CCSS Math standards with gap classifications  
+- **[analysis/source_quality.csv](analysis/source_quality.csv)** — Per-source quality metrics
+
+> Regenerate these with: `scripts/generate_coverage_analysis.py --output-dir docs/analysis`
 
 ## 📈 Key Findings
 
@@ -83,30 +85,29 @@ Generated CSV files (ready for Excel visualization):
 ```
 oer-mcp/
 ├── data/
-│   └── oer_core.db (synced from Mini 2, optimized)
+│   └── oer_core.db
+├── docs/ (this directory)
+│   ├── analysis/
+│   │   ├── coverage_by_grade.csv
+│   │   ├── standards_gaps.csv
+│   │   └── source_quality.csv
+│   ├── DOCUMENTATION_INDEX.md (this file)
+│   ├── BENCHMARK_ANALYSIS.md
+│   ├── TEST_COVERAGE_AUDIT.md
+│   ├── SCHEMA_OPTIMIZATION_AUDIT.md
+│   ├── OPERATIONAL_RUNBOOK.md
+│   ├── WORK_SUMMARY.md
+│   ├── LOCAL_EXECUTION_SUMMARY.md
+│   └── COMPREHENSIVE_SPRINT_SUMMARY.md
 ├── scripts/
-│   ├── local_verify_alignments.py (verify embeddings)
-│   ├── local_annotate_alignments.py (annotate coverage)
-│   ├── audit_alignment_quality.py (data audit)
-│   ├── benchmark_performance.py (query perf)
-│   ├── generate_coverage_analysis.py (CSV reports)
-│   └── eval/e2e_benchmark.py (benchmark)
+│   └── (analysis and pipeline scripts)
 ├── packages/
-│   ├── ingestion/
-│   │   └── tests/
-│   │       ├── test_align_edge_cases.py (+8 tests)
-│   │       └── test_alignment_critical_logic.py (+8 tests)
-│   ├── server/
-│   │   └── tests/test_multi_db_spanning.py
+│   ├── ingestion/tests/
+│   ├── server/tests/
 │   └── shared/
-├── DOCUMENTATION_INDEX.md (this file)
-├── BENCHMARK_ANALYSIS.md
-├── TEST_COVERAGE_AUDIT.md
-├── SCHEMA_OPTIMIZATION_AUDIT.md
-├── OPERATIONAL_RUNBOOK.md
-├── WORK_SUMMARY.md
-├── LOCAL_EXECUTION_SUMMARY.md
-└── COMPREHENSIVE_SPRINT_SUMMARY.md
+├── CLAUDE.md
+├── README.md
+└── HAIKU_TASKS.md
 ```
 
 ## 💾 Databases
