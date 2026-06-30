@@ -22,11 +22,14 @@ Then restart Claude Desktop. Try: *"Find content that teaches CCSS.MATH.6.NS.1"*
 
 | Tool | What it does |
 |---|---|
-| `fetch_for_standard` | OER content that teaches a given standard ID, ranked by alignment confidence |
+| `fetch_for_standard` | OER content that teaches a given standard ID, ranked by alignment confidence; returns `{count, results}` envelope |
 | `search_content` | Natural-language concept search (hybrid semantic + keyword; degrades to keyword if no embedder) |
 | `get_chunk` | Retrieve a specific section by ID, with neighbours and alignments |
 | `check_coverage` | How completely the corpus covers a standard/cluster — surfaces gaps |
 | `list_sources` | Live inventory of indexed sources, books, chunks, and attached databases |
+| `map_to_assessments` | Map a standard to high-stakes exams (SAT/ACT/AP/state/NAEP) — skill domains + available items + gaps |
+| `get_learning_path` | **Prerequisite-aware path**: walks StandardGraph prereqs → OER content per rung, bottom-up; surfaces `prerequisite_gaps` |
+| `get_capabilities` | Self-describing manifest: sources, standard systems, exam series, grade bands, and all 8 tools |
 
 Every content response carries an **attribution string** to preserve downstream.
 

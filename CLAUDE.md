@@ -125,12 +125,14 @@ sqlite3 data/oer_core.db "SELECT COUNT(DISTINCT standard_id) FROM standard_align
 
 | Tool | What it does |
 |---|---|
-| `fetch_for_standard` | OER content for a standard ID, ranked by alignment confidence; filter by `content_type`, `dok_level`, `exam_series` |
+| `fetch_for_standard` | OER content for a standard ID, ranked by alignment confidence; returns `{standard_id, count, results}` envelope |
 | `search_content` | Hybrid semantic + FTS5 keyword search; degrades gracefully without Ollama |
 | `get_chunk` | Retrieve a specific chunk by ID, with neighbours and alignments |
 | `check_coverage` | Coverage bands (strong/moderate/light/none) and gaps for a standard/cluster |
 | `list_sources` | Live inventory of sources, books, chunks, and attached databases |
 | `map_to_assessments` | Map a standard to high-stakes exams (SAT/ACT/AP/state/NAEP) — crosswalk domains + available items per exam; surfaces gaps |
+| `get_learning_path` | **Prerequisite-aware path**: BFS over StandardGraph prereqs → OER content per rung, bottom-up; surfaces `prerequisite_gaps` |
+| `get_capabilities` | Self-describing manifest: sources, standard systems, exam series, grade bands, and available tools |
 
 ## Alignment confidence bands (source-aware, D18)
 

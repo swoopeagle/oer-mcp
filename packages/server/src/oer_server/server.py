@@ -170,6 +170,45 @@ def map_to_assessments(
         return _error(exc)
 
 
+@mcp.tool()
+def get_learning_path(
+    standard_id: str,
+    depth: int = 1,
+    content_per_standard: int = 2,
+    include_content: bool = False,
+) -> dict:
+    """Return a prerequisite-aware learning path for a curriculum standard.
+
+    Walks the StandardGraph prerequisite graph (up to `depth` levels) and
+    returns OER content for each rung, ordered bottom-up: deepest prerequisites
+    first, the requested standard last. This grounds "what should a student master
+    first?" in actual curriculum materials rather than a model's memory.
+
+    Example use: "What do students need to know before CCSS.MATH.7.RP.1, and
+    what content teaches each prerequisite?"
+
+    Response shape:
+    - path: list of rungs, each with standard_id, text, distance, is_target,
+      content (ChunkResult list), and coverage band.
+    - prerequisite_gaps: standard IDs in the path with no aligned content yet
+      — a direct actionable ingestion priority signal.
+    - sg_available: False when StandardGraph DB is not present (degrades to just
+      the target standard's content).
+    """
+    from . import queries
+
+    try:
+        return queries.get_learning_path(
+            get_conn(), standard_id,
+            sg_db_path=config.STANDARDGRAPH_DB_PATH,
+            depth=depth,
+            content_per_standard=content_per_standard,
+            include_content=include_content,
+        )
+    except Exception as exc:
+        return _error(exc)
+
+
 def main() -> None:
     mcp.run()
 

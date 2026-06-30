@@ -201,3 +201,28 @@ def test_map_to_assessments_error_handling(monkeypatch):
     assert result["error"]["code"] == "internal_error"
     assert result["error"]["type"] == "RuntimeError"
     assert result["error"]["message"] == "boom"
+
+
+def test_get_learning_path_success(conn, monkeypatch):
+    """get_learning_path wrapper returns underlying queries result."""
+    _chunk(conn, "c1")
+    _align(conn, "c1", "CCSS.MATH.6.RP.A.3")
+    conn.commit()
+    monkeypatch.setattr(server, "get_conn", lambda: conn)
+    # SG not available in this test context → degrades gracefully.
+    result = server.get_learning_path("CCSS.MATH.6.RP.A.3")
+    assert isinstance(result, dict)
+    # Either a valid path response or unknown_standard (depending on SG availability).
+    assert "path" in result or "sg_available" in result or "result" in result
+
+
+def test_get_learning_path_error_handling(monkeypatch):
+    """Wrapper catches exception and returns structured error."""
+    def broken_get_conn():
+        raise RuntimeError("boom")
+    monkeypatch.setattr(server, "get_conn", broken_get_conn)
+    result = server.get_learning_path("CCSS.MATH.6.RP.A.3")
+    assert isinstance(result, dict)
+    assert result["error"]["code"] == "internal_error"
+    assert result["error"]["type"] == "RuntimeError"
+    assert result["error"]["message"] == "boom"

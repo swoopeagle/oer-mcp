@@ -548,6 +548,148 @@ def map_to_assessments(
     }
 
 
+def get_learning_path(
+    conn: sqlite3.Connection,
+    standard_id: str,
+    *,
+    sg_db_path=None,
+    depth: int = 1,
+    content_per_standard: int = 2,
+    include_content: bool = False,
+) -> dict:
+    """Return a prerequisite-aware content path for a standard, grounded in OER.
+
+    BFS-walks StandardGraph's prerequisite graph up to `depth` levels and
+    attaches ranked OER content per rung, bottom-up (deepest prereqs first,
+    target standard last). Surfaces prerequisite_gaps: standards in the path
+    with no content in the corpus.
+
+    Degrades gracefully when StandardGraph is unavailable (returns just the
+    target standard's content with sg_available=False).
+    """
+    import sqlite3 as _sql
+    from collections import deque
+    from pathlib import Path
+
+    from oer_shared.coverage import coverage_band
+
+    # ── Step 1: resolve prerequisites from StandardGraph ────────────────────
+    sg_available = False
+    path_standards: dict[str, tuple[str | None, int]] = {}  # id → (text, distance)
+
+    if sg_db_path and Path(sg_db_path).exists():
+        sg = _sql.connect(f"file:{sg_db_path}?mode=ro", uri=True)
+        sg.row_factory = _sql.Row
+
+        target_row = sg.execute(
+            "SELECT id, standard_text FROM standards WHERE id = ? AND system = 'ccss'",
+            (standard_id,),
+        ).fetchone()
+        if target_row is None:
+            sg.close()
+            return {"standard_id": standard_id, "result": "unknown_standard"}
+
+        sg_available = True
+        visited: set[str] = {standard_id}
+        queue: deque[tuple[str, int]] = deque([(standard_id, 0)])
+
+        while queue:
+            current_id, current_depth = queue.popleft()
+            row = sg.execute(
+                "SELECT standard_text FROM standards WHERE id = ? AND system = 'ccss'",
+                (current_id,),
+            ).fetchone()
+            text = row["standard_text"] if row else None
+            path_standards[current_id] = (text, current_depth)
+
+            if current_depth < depth:
+                prereqs = sg.execute(
+                    "SELECT target_id FROM standard_relationships "
+                    "WHERE source_id = ? AND relationship = 'prerequisite' AND system = 'ccss'",
+                    (current_id,),
+                ).fetchall()
+                for prereq_row in prereqs:
+                    pid = prereq_row["target_id"]
+                    if pid not in visited:
+                        visited.add(pid)
+                        queue.append((pid, current_depth + 1))
+
+        sg.close()
+    else:
+        # Degraded: just the target standard, no prereq walk.
+        path_standards = {standard_id: (None, 0)}
+
+    # ── Step 2: sort bottom-up (highest distance first, target last) ─────────
+    sorted_path = sorted(
+        path_standards.items(),
+        key=lambda kv: (-kv[1][1], kv[0]),  # (-distance, id) for stable tie-break
+    )
+
+    # ── Step 3: attach OER content and coverage per standard ─────────────────
+    path = []
+    prerequisite_gaps: list[str] = []
+
+    for sid, (text, distance) in sorted_path:
+        # Best alignment for coverage band.
+        best = _best_alignment(conn, sid, None)
+        band = coverage_band(best["alignment_score"], best["alignment_source"]) if best else "none"
+
+        # Collect ranked content from all schemas.
+        all_rows: list = []
+        for schema in attached_schemas(conn):
+            clauses = ["a.standard_id = ?", "a.stale = 0", "c.stale = 0"]
+            params: list = [sid]
+            q = f"""
+                SELECT c.id, c.source_id, c.title, c.content_type, c.grade_band,
+                       c.content, c.source_url, c.attribution,
+                       c.item_type, c.dok_level, c.answer_key,
+                       c.exam_series, c.exam_year, c.difficulty, c.item_generation,
+                       a.alignment_score, a.alignment_source, a.coverage_notes,
+                       {_SOURCE_RANK} AS rank
+                FROM {schema}.standard_alignments a
+                JOIN {schema}.chunks c ON c.id = a.chunk_id
+                WHERE {' AND '.join(clauses)}
+            """
+            all_rows.extend(conn.execute(q, params).fetchall())
+
+        all_rows.sort(key=lambda r: (r["rank"], r["alignment_score"]), reverse=True)
+        content = [
+            ChunkResult(
+                chunk_id=r["id"], source=r["source_id"], title=r["title"],
+                content_type=r["content_type"], grade_band=r["grade_band"],
+                alignment_score=round(r["alignment_score"], 4),
+                alignment_source=r["alignment_source"],
+                coverage_notes=r["coverage_notes"],
+                content=r["content"] if include_content else None,
+                source_url=r["source_url"], attribution=r["attribution"],
+                item_type=r["item_type"], dok_level=r["dok_level"],
+                answer_key=r["answer_key"],
+                exam_series=r["exam_series"], exam_year=r["exam_year"],
+                difficulty=r["difficulty"], item_generation=r["item_generation"],
+            ).model_dump(exclude_none=False)
+            for r in all_rows[:content_per_standard]
+        ]
+
+        path.append({
+            "standard_id": sid,
+            "text": text,
+            "distance": distance,
+            "is_target": (sid == standard_id),
+            "content": content,
+            "coverage": band,
+        })
+        if band == "none":
+            prerequisite_gaps.append(sid)
+
+    return {
+        "standard_id": standard_id,
+        "sg_available": sg_available,
+        "depth": depth,
+        "path": path,
+        "prerequisite_gaps": prerequisite_gaps,
+    }
+
+
 def _adjacent(conn, schema, row) -> dict:
     """Preceding/following chunk IDs within the same book, by rowid order."""
     prev = conn.execute(
