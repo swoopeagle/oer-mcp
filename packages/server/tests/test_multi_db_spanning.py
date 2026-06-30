@@ -95,13 +95,13 @@ def test_fetch_spans_both_databases(multi_db):
 
     # Query a standard that has results in ncsa
     out = queries.fetch_for_standard(core, "CCSS.MATH.5.NF.1")
-    assert len(out) >= 1
-    assert any(r["chunk_id"] == "khan1" for r in out)
+    assert out["count"] >= 1
+    assert any(r["chunk_id"] == "khan1" for r in out["results"])
 
     # Query a standard that has results in core
     out2 = queries.fetch_for_standard(core, "CCSS.MATH.HSS.CP.1")
-    assert len(out2) >= 1
-    assert any(r["chunk_id"] == "os1" for r in out2)
+    assert out2["count"] >= 1
+    assert any(r["chunk_id"] == "os1" for r in out2["results"])
 
 
 def test_search_spans_both_databases(multi_db):
@@ -157,8 +157,8 @@ def test_ranking_respects_confidence_across_dbs(multi_db):
 
     out = queries.fetch_for_standard(core, "CCSS.MATH.HSS.CP.1")
     # publisher_guide from ncsa should rank above embedding from core
-    if len(out) > 1:
-        assert out[0]["alignment_source"] == "publisher_guide"
+    if out["count"] > 1:
+        assert out["results"][0]["alignment_source"] == "publisher_guide"
 
 
 def test_deduplication_across_databases(multi_db):
@@ -181,6 +181,6 @@ def test_deduplication_across_databases(multi_db):
     ncsa.close()
 
     out = queries.fetch_for_standard(core, "CCSS.MATH.5.NF.1")
-    shared_count = sum(1 for r in out if r["chunk_id"] == "shared")
+    shared_count = sum(1 for r in out["results"] if r["chunk_id"] == "shared")
     # Should appear only once (not duplicated)
     assert shared_count <= 1

@@ -23,6 +23,19 @@ mcp = FastMCP(
 
 _conn = None
 
+# Stable error code enum — clients branch on "code", not the Python class name.
+_ERROR_CODES: dict[str, str] = {
+    "FileNotFoundError": "database_unavailable",
+    "OperationalError": "database_error",
+    "DatabaseError": "database_error",
+}
+
+
+def _error(exc: Exception) -> dict:
+    """Wrap an exception as a stable structured error dict."""
+    code = _ERROR_CODES.get(type(exc).__name__, "internal_error")
+    return {"error": {"code": code, "type": type(exc).__name__, "message": str(exc)}}
+
 
 def get_conn():
     global _conn
@@ -39,8 +52,8 @@ def list_sources() -> dict:
 
     try:
         return queries.list_sources(get_conn()).model_dump()
-    except Exception as exc:  # graceful degradation — structured errors, never bare exceptions
-        return {"error": type(exc).__name__, "detail": str(exc)}
+    except Exception as exc:
+        return _error(exc)
 
 
 @mcp.tool()
@@ -51,10 +64,12 @@ def fetch_for_standard(
     dok_level: int | None = None,
     limit: int = 3,
     include_content: bool = True,
-) -> list[dict] | dict:
+) -> dict:
     """Return OER content that teaches a given curriculum standard, by its
-    StandardGraph ID (e.g. 'CCSS.MATH.6.RP.A.3'). Results are ranked by
-    alignment confidence (human > publisher guide > embedding) then score.
+    StandardGraph ID (e.g. 'CCSS.MATH.6.RP.A.3'). Returns a dict with a
+    'results' list ranked by alignment confidence (human > publisher guide >
+    embedding) then score, and a 'count' field. On no content, 'count' is 0
+    and 'results' is empty with a 'reason' and 'available_sources' field.
     Optionally filter by source or content_type (exposition / worked_example /
     exercise_set / summary / assessment). Use dok_level (1–4, Webb's DOK) to
     filter assessment-type results by rigor — ignored for other content types.
@@ -67,7 +82,7 @@ def fetch_for_standard(
             dok_level=dok_level, limit=limit, include_content=include_content,
         )
     except Exception as exc:
-        return {"error": type(exc).__name__, "detail": str(exc)}
+        return _error(exc)
 
 
 @mcp.tool()
@@ -96,7 +111,7 @@ def search_content(
             limit=limit, include_content=include_content,
         )
     except Exception as exc:
-        return {"error": type(exc).__name__, "detail": str(exc)}
+        return _error(exc)
 
 
 @mcp.tool()
@@ -114,7 +129,7 @@ def check_coverage(standard_id: str, source: str | None = None) -> dict:
             sg_db_path=config.STANDARDGRAPH_DB_PATH, source=source,
         )
     except Exception as exc:
-        return {"error": type(exc).__name__, "detail": str(exc)}
+        return _error(exc)
 
 
 @mcp.tool()
@@ -128,7 +143,7 @@ def get_chunk(chunk_id: str, include_adjacent: bool = False) -> dict:
     try:
         return queries.get_chunk(get_conn(), chunk_id, include_adjacent)
     except Exception as exc:
-        return {"error": type(exc).__name__, "detail": str(exc)}
+        return _error(exc)
 
 
 @mcp.tool()
@@ -152,7 +167,7 @@ def map_to_assessments(
             include_items=include_items, items_per_exam=items_per_exam,
         )
     except Exception as exc:
-        return {"error": type(exc).__name__, "detail": str(exc)}
+        return _error(exc)
 
 
 def main() -> None:

@@ -42,9 +42,11 @@ def conn(tmp_path):
     c.close()
 
 
-def test_no_content_is_structured(conn):
+def test_no_content_returns_envelope_with_empty_results(conn):
     out = queries.fetch_for_standard(conn, "CCSS.MATH.6.RP.A.3")
-    assert out["result"] == "no_content"
+    assert out["count"] == 0
+    assert out["results"] == []
+    assert "reason" in out
     assert out["available_sources"] == ["openstax"]
 
 
@@ -54,8 +56,9 @@ def test_confidence_hierarchy_beats_raw_score(conn):
     _chunk(conn, "pub"); _align(conn, "pub", 0.90, "publisher_guide")
     conn.commit()
     out = queries.fetch_for_standard(conn, "CCSS.MATH.6.RP.A.3", limit=2)
-    assert [r["chunk_id"] for r in out] == ["pub", "emb"]
-    assert out[0]["alignment_source"] == "publisher_guide"
+    assert [r["chunk_id"] for r in out["results"]] == ["pub", "emb"]
+    assert out["results"][0]["alignment_source"] == "publisher_guide"
+    assert out["count"] == 2
 
 
 def test_llm_verified_tier_serializes_and_ranks(conn):
@@ -65,8 +68,8 @@ def test_llm_verified_tier_serializes_and_ranks(conn):
     _chunk(conn, "ver"); _align(conn, "ver", 0.90, "llm_verified")
     conn.commit()
     out = queries.fetch_for_standard(conn, "CCSS.MATH.6.RP.A.3", limit=2)
-    assert [r["chunk_id"] for r in out] == ["ver", "emb"]
-    assert out[0]["alignment_source"] == "llm_verified"
+    assert [r["chunk_id"] for r in out["results"]] == ["ver", "emb"]
+    assert out["results"][0]["alignment_source"] == "llm_verified"
 
 
 def test_filters_and_include_content(conn):
@@ -76,9 +79,9 @@ def test_filters_and_include_content(conn):
     only = queries.fetch_for_standard(
         conn, "CCSS.MATH.6.RP.A.3", content_type="worked_example"
     )
-    assert [r["chunk_id"] for r in only] == ["ex"]
+    assert [r["chunk_id"] for r in only["results"]] == ["ex"]
     light = queries.fetch_for_standard(
         conn, "CCSS.MATH.6.RP.A.3", include_content=False
     )
-    assert all(r["content"] is None for r in light)
-    assert all(r["attribution"] for r in light)  # attribution always present (D4)
+    assert all(r["content"] is None for r in light["results"])
+    assert all(r["attribution"] for r in light["results"])  # attribution always present (D4)

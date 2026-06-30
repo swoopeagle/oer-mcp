@@ -76,16 +76,17 @@ def test_list_sources_success(conn, monkeypatch):
 
 
 def test_fetch_for_standard_success(conn, monkeypatch):
-    """fetch_for_standard wrapper returns underlying queries result."""
+    """fetch_for_standard wrapper returns dict with standard_id/count/results envelope."""
     _chunk(conn, "c1")
     _align(conn, "c1", "CCSS.MATH.6.RP.A.3")
     conn.commit()
     monkeypatch.setattr(server, "get_conn", lambda: conn)
     result = server.fetch_for_standard("CCSS.MATH.6.RP.A.3")
-    # Result is a list of dicts (the chunks)
-    assert isinstance(result, list)
-    if result:
-        assert "chunk_id" in result[0]
+    assert isinstance(result, dict)
+    assert "results" in result
+    assert "count" in result
+    if result["count"] > 0:
+        assert "chunk_id" in result["results"][0]
 
 
 def test_search_content_success(conn, monkeypatch):
@@ -137,8 +138,9 @@ def test_list_sources_error_handling(monkeypatch):
     monkeypatch.setattr(server, "get_conn", broken_get_conn)
     result = server.list_sources()
     assert isinstance(result, dict)
-    assert result["error"] == "RuntimeError"
-    assert result["detail"] == "boom"
+    assert result["error"]["code"] == "internal_error"
+    assert result["error"]["type"] == "RuntimeError"
+    assert result["error"]["message"] == "boom"
 
 
 def test_fetch_for_standard_error_handling(monkeypatch):
@@ -148,8 +150,9 @@ def test_fetch_for_standard_error_handling(monkeypatch):
     monkeypatch.setattr(server, "get_conn", broken_get_conn)
     result = server.fetch_for_standard("CCSS.MATH.6.RP.A.3")
     assert isinstance(result, dict)
-    assert result["error"] == "RuntimeError"
-    assert result["detail"] == "boom"
+    assert result["error"]["code"] == "internal_error"
+    assert result["error"]["type"] == "RuntimeError"
+    assert result["error"]["message"] == "boom"
 
 
 def test_get_chunk_error_handling(monkeypatch):
@@ -159,8 +162,9 @@ def test_get_chunk_error_handling(monkeypatch):
     monkeypatch.setattr(server, "get_conn", broken_get_conn)
     result = server.get_chunk("c1")
     assert isinstance(result, dict)
-    assert result["error"] == "RuntimeError"
-    assert result["detail"] == "boom"
+    assert result["error"]["code"] == "internal_error"
+    assert result["error"]["type"] == "RuntimeError"
+    assert result["error"]["message"] == "boom"
 
 
 def test_search_content_error_handling(monkeypatch):
@@ -170,8 +174,9 @@ def test_search_content_error_handling(monkeypatch):
     monkeypatch.setattr(server, "get_conn", broken_get_conn)
     result = server.search_content("query")
     assert isinstance(result, dict)
-    assert result["error"] == "RuntimeError"
-    assert result["detail"] == "boom"
+    assert result["error"]["code"] == "internal_error"
+    assert result["error"]["type"] == "RuntimeError"
+    assert result["error"]["message"] == "boom"
 
 
 def test_check_coverage_error_handling(monkeypatch):
@@ -181,8 +186,9 @@ def test_check_coverage_error_handling(monkeypatch):
     monkeypatch.setattr(server, "get_conn", broken_get_conn)
     result = server.check_coverage("CCSS.MATH.6.RP.A.3")
     assert isinstance(result, dict)
-    assert result["error"] == "RuntimeError"
-    assert result["detail"] == "boom"
+    assert result["error"]["code"] == "internal_error"
+    assert result["error"]["type"] == "RuntimeError"
+    assert result["error"]["message"] == "boom"
 
 
 def test_map_to_assessments_error_handling(monkeypatch):
@@ -192,5 +198,6 @@ def test_map_to_assessments_error_handling(monkeypatch):
     monkeypatch.setattr(server, "get_conn", broken_get_conn)
     result = server.map_to_assessments("CCSS.MATH.6.RP.A.3")
     assert isinstance(result, dict)
-    assert result["error"] == "RuntimeError"
-    assert result["detail"] == "boom"
+    assert result["error"]["code"] == "internal_error"
+    assert result["error"]["type"] == "RuntimeError"
+    assert result["error"]["message"] == "boom"

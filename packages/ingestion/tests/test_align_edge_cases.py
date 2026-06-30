@@ -53,8 +53,8 @@ def test_stale_chunks_excluded_from_fetch(conn):
     conn.commit()
 
     out = queries.fetch_for_standard(conn, "CCSS.MATH.6.RP.3")
-    assert len(out) == 1
-    assert out[0]["chunk_id"] == "live"
+    assert out["count"] == 1
+    assert out["results"][0]["chunk_id"] == "live"
 
 
 def test_stale_alignments_excluded(conn):
@@ -68,9 +68,10 @@ def test_stale_alignments_excluded(conn):
     conn.commit()
 
     out = queries.fetch_for_standard(conn, "CCSS.MATH.6.RP.3")
-    assert out == {"standard_id": "CCSS.MATH.6.RP.3", "result": "no_content",
-                   "reason": "No OER content aligned to this standard yet.",
-                   "available_sources": ["openstax"]}
+    assert out["count"] == 0
+    assert out["results"] == []
+    assert "reason" in out
+    assert out["available_sources"] == ["openstax"]
 
 
 # ── Assessment Content Fields ───────────────────────────────────────
@@ -97,8 +98,8 @@ def test_assessment_fields_included(conn):
     conn.commit()
 
     out = queries.fetch_for_standard(conn, "CCSS.MATH.6.RP.3", include_content=True)
-    assert len(out) == 1
-    result = out[0]
+    assert out["count"] == 1
+    result = out["results"][0]
     assert result["item_type"] == "multiple_choice"
     assert result["dok_level"] == 1
     assert result["answer_key"] == "D) 4"
@@ -115,7 +116,7 @@ def test_assessment_fields_null_for_exposition(conn):
     conn.commit()
 
     out = queries.fetch_for_standard(conn, "CCSS.MATH.6.RP.3")
-    result = out[0]
+    result = out["results"][0]
     assert result["item_type"] is None
     assert result["dok_level"] is None
     assert result["answer_key"] is None
@@ -135,7 +136,7 @@ def test_coverage_notes_included_when_present(conn):
     conn.commit()
 
     out = queries.fetch_for_standard(conn, "CCSS.MATH.6.RP.3")
-    assert out[0]["coverage_notes"] == "Teaches ratio concepts via examples"
+    assert out["results"][0]["coverage_notes"] == "Teaches ratio concepts via examples"
 
 
 def test_coverage_notes_null_when_absent(conn):
@@ -145,7 +146,7 @@ def test_coverage_notes_null_when_absent(conn):
     conn.commit()
 
     out = queries.fetch_for_standard(conn, "CCSS.MATH.6.RP.3")
-    assert out[0]["coverage_notes"] is None
+    assert out["results"][0]["coverage_notes"] is None
 
 
 # ── Grade Band Filtering ────────────────────────────────────────────
@@ -194,5 +195,5 @@ def test_source_filter_on_fetch(conn):
     conn.commit()
 
     os_only = queries.fetch_for_standard(conn, "CCSS.MATH.6.RP.3", source="openstax")
-    assert all(r["source"] == "openstax" for r in os_only)
-    assert len(os_only) == 1
+    assert all(r["source"] == "openstax" for r in os_only["results"])
+    assert os_only["count"] == 1

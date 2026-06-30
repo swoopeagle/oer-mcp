@@ -253,9 +253,14 @@ def fetch_for_standard(
     dok_level: int | None = None,
     limit: int = 3,
     include_content: bool = True,
-) -> list[dict] | dict:
+) -> dict:
     """Return OER chunks aligned to a StandardGraph standard ID, ranked by the
-    confidence hierarchy then alignment score, spanning attached databases."""
+    confidence hierarchy then alignment score, spanning attached databases.
+
+    Always returns a dict with 'standard_id', 'count', and 'results' keys.
+    When no content is found, 'count' is 0, 'results' is [], and 'reason' /
+    'available_sources' are included to explain the gap.
+    """
     rows: list[tuple] = []
     for schema in attached_schemas(conn):
         clauses = ["a.standard_id = ?", "a.stale = 0", "c.stale = 0"]
@@ -286,7 +291,8 @@ def fetch_for_standard(
         sources = [s.id for s in list_sources(conn).sources]
         return {
             "standard_id": standard_id,
-            "result": "no_content",
+            "count": 0,
+            "results": [],
             "reason": "No OER content aligned to this standard yet.",
             "available_sources": sources,
         }
@@ -315,7 +321,7 @@ def fetch_for_standard(
             item_generation=r["item_generation"],
         )
         out.append(result.model_dump(exclude_none=False))
-    return out
+    return {"standard_id": standard_id, "count": len(out), "results": out}
 
 
 _BAND_RANK = {"none": 0, "light": 1, "moderate": 2, "strong": 3}

@@ -126,8 +126,8 @@ def test_ranking_deterministic_with_ties(conn):
     out1 = queries.fetch_for_standard(conn, "CCSS.MATH.6.RP.3")
     out2 = queries.fetch_for_standard(conn, "CCSS.MATH.6.RP.3")
 
-    ids1 = [r["chunk_id"] for r in out1]
-    ids2 = [r["chunk_id"] for r in out2]
+    ids1 = [r["chunk_id"] for r in out1["results"]]
+    ids2 = [r["chunk_id"] for r in out2["results"]]
 
     # Order should be same (deterministic)
     assert ids1 == ids2
@@ -146,7 +146,7 @@ def test_coverage_notes_with_special_characters(conn):
     conn.commit()
 
     out = queries.fetch_for_standard(conn, "CCSS.MATH.6.RP.3")
-    assert out[0]["coverage_notes"] == special_note
+    assert out["results"][0]["coverage_notes"] == special_note
 
 
 def test_alignment_with_null_grade_band(conn):
@@ -161,9 +161,9 @@ def test_alignment_with_null_grade_band(conn):
     conn.commit()
 
     out = queries.fetch_for_standard(conn, "CCSS.MATH.6.RP.3")
-    assert len(out) == 1
-    assert out[0]["chunk_id"] == "cnull"
-    assert out[0]["grade_band"] is None
+    assert out["count"] == 1
+    assert out["results"][0]["chunk_id"] == "cnull"
+    assert out["results"][0]["grade_band"] is None
 
 
 def test_verified_alignment_confidently_beats_embedding(conn):
@@ -185,8 +185,8 @@ def test_verified_alignment_confidently_beats_embedding(conn):
 
     out = queries.fetch_for_standard(conn, "CCSS.MATH.6.RP.3")
     # llm_verified should be first despite lower score
-    assert out[0]["chunk_id"] == "ver"
-    assert out[0]["alignment_source"] == "llm_verified"
+    assert out["results"][0]["chunk_id"] == "ver"
+    assert out["results"][0]["alignment_source"] == "llm_verified"
 
 
 def test_multiple_alignments_same_chunk(conn):
@@ -207,5 +207,5 @@ def test_multiple_alignments_same_chunk(conn):
     out1 = queries.fetch_for_standard(conn, "CCSS.MATH.6.RP.1")
     out2 = queries.fetch_for_standard(conn, "CCSS.MATH.6.RP.2")
 
-    assert len(out1) == 1 and out1[0]["chunk_id"] == "c1"
-    assert len(out2) == 1 and out2[0]["chunk_id"] == "c1"
+    assert out1["count"] == 1 and out1["results"][0]["chunk_id"] == "c1"
+    assert out2["count"] == 1 and out2["results"][0]["chunk_id"] == "c1"
