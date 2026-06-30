@@ -70,6 +70,8 @@ CREATE INDEX IF NOT EXISTS idx_chunks_book   ON chunks(book_id);
 CREATE INDEX IF NOT EXISTS idx_chunks_source ON chunks(source_id);
 CREATE INDEX IF NOT EXISTS idx_chunks_grade  ON chunks(grade_band);
 CREATE INDEX IF NOT EXISTS idx_chunks_type   ON chunks(content_type);
+CREATE INDEX IF NOT EXISTS idx_chunks_source_stale ON chunks(source_id, stale);
+CREATE INDEX IF NOT EXISTS idx_chunks_grade_stale  ON chunks(grade_band, stale);
 
 -- FTS5 external-content index, kept in sync by triggers below.
 -- NOTE: the pipeline must upsert via explicit UPDATE-else-INSERT, not
@@ -153,6 +155,8 @@ CREATE TABLE IF NOT EXISTS pipeline_runs (
     completed       INTEGER NOT NULL DEFAULT 0,
     created_at      TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+CREATE INDEX IF NOT EXISTS idx_pipeline_runs_date ON pipeline_runs(run_date DESC);
 
 -- ─────────────────────────────────────────────────────────────────
 -- exam_crosswalks — standard → high-stakes exam skill domain mapping.
