@@ -16,13 +16,15 @@ from pathlib import Path
 from oer_shared import config
 from oer_shared.db import connect
 
-from .adapters import BookSpec, KhanAcademyAdapter, OpenStaxAdapter
+from .adapters import APFRQAdapter, BookSpec, KhanAcademyAdapter, NAEPAdapter, OpenStaxAdapter, SmarterBalancedAdapter
 from .adapters.illustrative_math import IllustrativeMathAdapter
 from .align import align_chunks
 from .annotate import annotate
+from .crosswalk import load_crosswalks
 from .embed import embed_chunks
 from .load import load_alignments, load_catalog, load_chunks, record_run, write_snapshots
-from .migrate import migrate_alignment_source_check
+from .migrate import migrate_alignment_source_check, migrate_assessment_columns
+from .style_gen import run_style_gen
 from .validate_db import print_report, validate
 from .verify import verify
 
@@ -140,6 +142,113 @@ def run_im(db_path: Path, snapshot_root: Path, courses: list[str] | None = None,
     conn.close()
 
 
+def run_smarter_balanced(db_path: Path, snapshot_root: Path,
+                         grades: list[int] | None = None,
+                         max_items: int | None = None) -> None:
+    """Ingest SBAC sample items (CC BY) into the core DB."""
+    adapter = SmarterBalancedAdapter(grades=grades, max_items=max_items)
+    print(f"[fetch] Smarter Balanced (grades={adapter.grades})")
+    raw = adapter.fetch()
+    print(f"[fetch] {len(raw)} item pages")
+    snaps = write_snapshots(raw, snapshot_root, ext="json")
+    chunks = adapter.parse(raw)
+    result = adapter.validate(chunks)
+    print(f"[chunk] {result.stats}")
+    if not result.ok:
+        raise SystemExit(f"[chunk] validation failed: {result.errors[:5]}")
+    conn = connect(db_path, create=True)
+    migrate_assessment_columns(conn)
+    load_catalog(conn, adapter.catalog())
+    counts = load_chunks(conn, chunks, snapshot_paths=snaps)
+    acounts = load_alignments(conn, chunks)
+    record_run(conn, adapter.source_id, counts)
+    total = conn.execute("SELECT COUNT(*) FROM chunks WHERE content_type='assessment'").fetchone()[0]
+    print(f"[load] added={counts['added']} updated={counts['updated']} | "
+          f"pub alignments={acounts['added']} | total assessment chunks={total}")
+    conn.close()
+
+
+def run_naep(db_path: Path, snapshot_root: Path,
+             grades: list[int] | None = None,
+             max_items: int | None = None) -> None:
+    """Ingest NAEP released items (public domain) into the core DB."""
+    adapter = NAEPAdapter(grades=grades, max_items=max_items)
+    print(f"[fetch] NAEP (grades={adapter.grades})")
+    raw = adapter.fetch()
+    print(f"[fetch] {len(raw)} items")
+    snaps = write_snapshots(raw, snapshot_root, ext="json")
+    chunks = adapter.parse(raw)
+    result = adapter.validate(chunks)
+    print(f"[chunk] {result.stats}")
+    if not result.ok:
+        raise SystemExit(f"[chunk] validation failed: {result.errors[:5]}")
+    conn = connect(db_path, create=True)
+    migrate_assessment_columns(conn)
+    load_catalog(conn, adapter.catalog())
+    counts = load_chunks(conn, chunks, snapshot_paths=snaps)
+    record_run(conn, adapter.source_id, counts)
+    total = conn.execute("SELECT COUNT(*) FROM chunks WHERE content_type='assessment'").fetchone()[0]
+    print(f"[load] added={counts['added']} updated={counts['updated']} | total assessment={total}")
+    conn.close()
+
+
+def run_ap_frq(db_path: Path, snapshot_root: Path,
+               subjects: list[str] | None = None,
+               years: list[int] | None = None) -> None:
+    """Ingest AP free-response questions into the AP DB (oer_ap.db)."""
+    adapter = APFRQAdapter(subjects=subjects, years=years)
+    print(f"[fetch] AP FRQ (subjects={adapter.subjects}, years={adapter.years})")
+    raw = adapter.fetch()
+    print(f"[fetch] {len(raw)} PDFs")
+    snaps = write_snapshots(raw, snapshot_root, ext="pdf")
+    chunks = adapter.parse(raw)
+    result = adapter.validate(chunks)
+    print(f"[chunk] {result.stats}")
+    if not result.ok:
+        raise SystemExit(f"[chunk] validation failed: {result.errors[:5]}")
+    conn = connect(db_path, create=True)
+    migrate_assessment_columns(conn)
+    load_catalog(conn, adapter.catalog())
+    counts = load_chunks(conn, chunks, snapshot_paths=snaps)
+    record_run(conn, adapter.source_id, counts)
+    total = conn.execute("SELECT COUNT(*) FROM chunks WHERE content_type='assessment'").fetchone()[0]
+    print(f"[load] added={counts['added']} updated={counts['updated']} | total assessment={total}")
+    conn.close()
+
+
+def run_crosswalks(db_path: Path, crosswalk_file: Path | None = None) -> None:
+    """Load exam crosswalk data (standard → exam domain) into the core DB."""
+    from pathlib import Path as _Path
+    _DEFAULT = _Path(__file__).parent / "data" / "exam_crosswalks.json"
+    file = crosswalk_file or _DEFAULT
+    conn = connect(db_path, create=True)
+    migrate_assessment_columns(conn)
+    counts = load_crosswalks(conn, file)
+    conn.close()
+    print(f"[crosswalk] loaded from {file}: added={counts['added']} updated={counts['updated']}")
+
+
+def run_style_gen_pipeline(db_path: Path, sg_db: Path,
+                           style: str = "sat",
+                           limit: int | None = None,
+                           shard: tuple[int, int] | None = None) -> None:
+    """Generate SAT/ACT-style items for all standards not yet covered."""
+    conn = connect(db_path, create=True)
+    migrate_assessment_columns(conn)
+    run_style_gen(conn, str(sg_db), style=style, limit=limit, shard=shard)  # type: ignore[arg-type]
+    conn.close()
+
+
+def run_migrate(db_path: Path) -> None:
+    """Run all pending schema migrations on an existing DB (idempotent)."""
+    conn = connect(db_path, create=False)
+    did_align = migrate_alignment_source_check(conn)
+    did_assess = migrate_assessment_columns(conn)
+    conn.close()
+    print(f"[migrate] alignment_source CHECK: {'migrated' if did_align else 'already current'}")
+    print(f"[migrate] assessment columns: {'migrated' if did_assess else 'already current'}")
+
+
 def run_embed_align(db_path: Path, sg_db: Path) -> None:
     """Stages 4–5: embed chunks, then align to CCSS. Needs Ollama + SG DB."""
     conn = connect(db_path, create=True)
@@ -181,7 +290,12 @@ def run_validate(db_path: Path) -> None:
 
 def main() -> None:
     p = argparse.ArgumentParser(description="OER ingestion pipeline")
-    p.add_argument("source", choices=["openstax", "khan", "im", "embed-align", "annotate", "verify", "validate"])
+    p.add_argument("source", choices=[
+        "openstax", "khan", "im",
+        "smarter-balanced", "naep", "ap-frq",
+        "crosswalks", "style-gen",
+        "embed-align", "annotate", "verify", "validate", "migrate",
+    ])
     p.add_argument("--book", action="append", dest="books",
                    help="book slug (repeatable); default: prealgebra-2e. 'all' = full catalog")
     p.add_argument("--db", default=str(config.CORE_DB_PATH))
@@ -197,6 +311,17 @@ def main() -> None:
     p.add_argument("--course", action="append", dest="courses",
                    help="IM MS course (repeatable): 1=Gr6, 2=Gr7, 3=Gr8; default all")
     p.add_argument("--max-lessons", type=int, default=None, help="cap (im)")
+    p.add_argument("--grade", type=int, action="append", dest="grades",
+                   help="grade filter (smarter-balanced, naep; repeatable)")
+    p.add_argument("--subject", action="append", dest="subjects",
+                   help="AP subject slug (ap-frq; repeatable)")
+    p.add_argument("--year", type=int, action="append", dest="years",
+                   help="year filter (ap-frq; repeatable)")
+    p.add_argument("--max-items", type=int, default=None, help="cap (smarter-balanced, naep)")
+    p.add_argument("--crosswalk-file", default=None,
+                   help="crosswalk JSON file (crosswalks; default: built-in seed)")
+    p.add_argument("--style", choices=["sat", "act"], default="sat",
+                   help="exam style (style-gen)")
     args = p.parse_args()
 
     shard = None
@@ -213,6 +338,23 @@ def main() -> None:
         run_khan(Path(args.db), Path(args.snapshots), args.channel_db, args.max_videos)
     elif args.source == "im":
         run_im(Path(args.db), Path(args.snapshots), args.courses, args.max_lessons)
+    elif args.source == "smarter-balanced":
+        run_smarter_balanced(Path(args.db), Path(args.snapshots),
+                             grades=args.grades, max_items=args.max_items)
+    elif args.source == "naep":
+        run_naep(Path(args.db), Path(args.snapshots),
+                 grades=args.grades, max_items=args.max_items)
+    elif args.source == "ap-frq":
+        run_ap_frq(Path(args.db), Path(args.snapshots),
+                   subjects=args.subjects, years=args.years)
+    elif args.source == "crosswalks":
+        run_crosswalks(Path(args.db),
+                       Path(args.crosswalk_file) if args.crosswalk_file else None)
+    elif args.source == "style-gen":
+        run_style_gen_pipeline(Path(args.db), Path(args.sg_db),
+                               style=args.style, limit=args.limit, shard=shard)
+    elif args.source == "migrate":
+        run_migrate(Path(args.db))
     elif args.source == "embed-align":
         run_embed_align(Path(args.db), Path(args.sg_db))
     elif args.source == "annotate":

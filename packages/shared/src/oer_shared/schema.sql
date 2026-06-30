@@ -44,13 +44,20 @@ CREATE TABLE IF NOT EXISTS chunks (
     title           TEXT NOT NULL,
     content         TEXT NOT NULL,
     content_type    TEXT NOT NULL CHECK (content_type IN
-                        ('exposition','worked_example','exercise_set','summary')),
+                        ('exposition','worked_example','exercise_set','summary','assessment')),
     chapter         TEXT,
     section         TEXT,
     grade_band      TEXT,
     word_count      INTEGER NOT NULL,
     source_url      TEXT NOT NULL,
     attribution     TEXT NOT NULL,          -- non-negotiable (D4)
+    item_type       TEXT,                   -- assessment only: "multiple_choice" | "constructed_response" | "performance_task"
+    dok_level       INTEGER,                -- assessment only: Webb's DOK 1–4
+    answer_key      TEXT,                   -- assessment only: correct answer / scoring guidance (AI-generated for style_generated items)
+    exam_series     TEXT,                   -- assessment only: "AP Calculus BC" | "SAT" | "NAEP Grade 8" | "Smarter Balanced Gr 6" etc.
+    exam_year       INTEGER,                -- assessment only: year of release; NULL for style_generated
+    difficulty      REAL,                   -- assessment only: 0–1 normalized (NAEP % correct, SAT band, etc.)
+    item_generation TEXT,                   -- assessment only: "released" | "style_generated"
     snapshot_path   TEXT,                   -- raw snapshot file this chunk was parsed from
     content_hash    TEXT,                   -- SHA-256 of content — detects upstream changes
     stale           INTEGER NOT NULL DEFAULT 0,
@@ -146,6 +153,24 @@ CREATE TABLE IF NOT EXISTS pipeline_runs (
     completed       INTEGER NOT NULL DEFAULT 0,
     created_at      TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+-- ─────────────────────────────────────────────────────────────────
+-- exam_crosswalks — standard → high-stakes exam skill domain mapping.
+-- Populated from College Board / ACT alignment documents; query-time
+-- only (no ingestion pipeline). Lives in the core DB; empty in ncsa/ap.
+-- ─────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS exam_crosswalks (
+    standard_id     TEXT NOT NULL,          -- "CCSS.MATH.HSA.REI.D.12"
+    exam_series     TEXT NOT NULL,          -- "SAT" | "ACT" | "AP Calculus AB" etc.
+    skill_domain    TEXT NOT NULL,          -- "Passport to Advanced Mathematics"
+    notes           TEXT,
+    source_url      TEXT NOT NULL,
+    created_at      TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (standard_id, exam_series)
+);
+
+CREATE INDEX IF NOT EXISTS idx_crosswalks_standard ON exam_crosswalks(standard_id);
+CREATE INDEX IF NOT EXISTS idx_crosswalks_exam     ON exam_crosswalks(exam_series);
 
 -- ─────────────────────────────────────────────────────────────────
 -- updated_at trigger for chunks

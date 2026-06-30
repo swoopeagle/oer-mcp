@@ -1,9 +1,8 @@
 """One-off migrations for already-populated databases.
 
-SQLite can't ALTER a CHECK constraint in place, so adding the 'llm_verified'
-alignment_source value (D20) to an existing DB means rebuilding the
-standard_alignments table. Idempotent: a no-op if the new value is already
-accepted.
+SQLite can't ALTER a CHECK constraint in place, so schema changes that touch
+CHECK values require rebuilding the affected table. All migrations are
+idempotent — safe to re-run.
 """
 
 import sqlite3
@@ -55,6 +54,86 @@ def migrate_alignment_source_check(conn: sqlite3.Connection, schema: str = "main
         CREATE INDEX IF NOT EXISTS {schema}.idx_alignments_standard ON standard_alignments(standard_id);
         CREATE INDEX IF NOT EXISTS {schema}.idx_alignments_score    ON standard_alignments(alignment_score DESC);
         CREATE INDEX IF NOT EXISTS {schema}.idx_alignments_system   ON standard_alignments(standard_system);
+        COMMIT;
+        PRAGMA foreign_keys=ON;
+        """
+    )
+    return True
+
+
+def _chunks_has_assessment_columns(conn: sqlite3.Connection, schema: str = "main") -> bool:
+    row = conn.execute(
+        f"SELECT sql FROM {schema}.sqlite_master "
+        "WHERE type='table' AND name='chunks'"
+    ).fetchone()
+    return bool(row) and "dok_level" in (row[0] or "")
+
+
+def migrate_assessment_columns(conn: sqlite3.Connection, schema: str = "main") -> bool:
+    """Add all assessment-specific columns (item_type, dok_level, answer_key,
+    exam_series, exam_year, difficulty, item_generation) and expand the
+    content_type CHECK to include 'assessment'. Rebuilds chunks to update the
+    CHECK — all other tables and triggers are left untouched.
+    Also creates the exam_crosswalks table if absent. Returns True if a
+    migration was performed."""
+    if _chunks_has_assessment_columns(conn, schema):
+        return False
+
+    conn.executescript(
+        f"""
+        PRAGMA foreign_keys=OFF;
+        BEGIN;
+        CREATE TABLE {schema}.chunks_new (
+            id              TEXT PRIMARY KEY,
+            book_id         TEXT NOT NULL REFERENCES books(id) ON DELETE CASCADE,
+            source_id       TEXT NOT NULL,
+            title           TEXT NOT NULL,
+            content         TEXT NOT NULL,
+            content_type    TEXT NOT NULL CHECK (content_type IN
+                                ('exposition','worked_example','exercise_set','summary','assessment')),
+            chapter         TEXT,
+            section         TEXT,
+            grade_band      TEXT,
+            word_count      INTEGER NOT NULL,
+            source_url      TEXT NOT NULL,
+            attribution     TEXT NOT NULL,
+            item_type       TEXT,
+            dok_level       INTEGER,
+            answer_key      TEXT,
+            exam_series     TEXT,
+            exam_year       INTEGER,
+            difficulty      REAL,
+            item_generation TEXT,
+            snapshot_path   TEXT,
+            content_hash    TEXT,
+            stale           INTEGER NOT NULL DEFAULT 0,
+            last_verified   TEXT NOT NULL,
+            created_at      TEXT NOT NULL DEFAULT (datetime('now')),
+            updated_at      TEXT NOT NULL DEFAULT (datetime('now'))
+        );
+        INSERT INTO {schema}.chunks_new
+            SELECT id, book_id, source_id, title, content, content_type,
+                   chapter, section, grade_band, word_count, source_url, attribution,
+                   NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+                   snapshot_path, content_hash, stale, last_verified, created_at, updated_at
+            FROM {schema}.chunks;
+        DROP TABLE {schema}.chunks;
+        ALTER TABLE {schema}.chunks_new RENAME TO chunks;
+        CREATE INDEX IF NOT EXISTS {schema}.idx_chunks_book   ON chunks(book_id);
+        CREATE INDEX IF NOT EXISTS {schema}.idx_chunks_source ON chunks(source_id);
+        CREATE INDEX IF NOT EXISTS {schema}.idx_chunks_grade  ON chunks(grade_band);
+        CREATE INDEX IF NOT EXISTS {schema}.idx_chunks_type   ON chunks(content_type);
+        CREATE TABLE IF NOT EXISTS {schema}.exam_crosswalks (
+            standard_id     TEXT NOT NULL,
+            exam_series     TEXT NOT NULL,
+            skill_domain    TEXT NOT NULL,
+            notes           TEXT,
+            source_url      TEXT NOT NULL,
+            created_at      TEXT NOT NULL DEFAULT (datetime('now')),
+            PRIMARY KEY (standard_id, exam_series)
+        );
+        CREATE INDEX IF NOT EXISTS {schema}.idx_crosswalks_standard ON exam_crosswalks(standard_id);
+        CREATE INDEX IF NOT EXISTS {schema}.idx_crosswalks_exam     ON exam_crosswalks(exam_series);
         COMMIT;
         PRAGMA foreign_keys=ON;
         """

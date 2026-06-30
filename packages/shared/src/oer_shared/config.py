@@ -12,6 +12,10 @@ CORE_DB_PATH = Path(os.environ.get("OER_CORE_DB_PATH", str(DATA_DIR / "oer_core.
 # OpenStax 2e editions). Attached at runtime when present (D11).
 ADDON_DB_PATH = Path(os.environ.get("OER_ADDON_DB_PATH", str(DATA_DIR / "oer_ncsa.db")))
 
+# Optional AP database: AP free-response questions (College Board copyright,
+# educational use). Partitioned separately so deployments can exclude it.
+AP_DB_PATH = Path(os.environ.get("OER_AP_DB_PATH", str(DATA_DIR / "oer_ap.db")))
+
 # Build-time only (ingestion Stages 4–6); never required at query time.
 OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://169.254.1.1:11434")
 # "generate" (default) or "chat" — some hosts/models only answer via /api/chat.

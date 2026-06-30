@@ -27,7 +27,7 @@ _conn = None
 def get_conn():
     global _conn
     if _conn is None:
-        _conn = connect(config.CORE_DB_PATH, config.ADDON_DB_PATH)
+        _conn = connect(config.CORE_DB_PATH, config.ADDON_DB_PATH, config.AP_DB_PATH)
     return _conn
 
 
@@ -48,6 +48,7 @@ def fetch_for_standard(
     standard_id: str,
     source: str | None = None,
     content_type: str | None = None,
+    dok_level: int | None = None,
     limit: int = 3,
     include_content: bool = True,
 ) -> list[dict] | dict:
@@ -55,14 +56,15 @@ def fetch_for_standard(
     StandardGraph ID (e.g. 'CCSS.MATH.6.RP.A.3'). Results are ranked by
     alignment confidence (human > publisher guide > embedding) then score.
     Optionally filter by source or content_type (exposition / worked_example /
-    exercise_set / summary). Every result carries an attribution string to
-    preserve in downstream output."""
+    exercise_set / summary / assessment). Use dok_level (1–4, Webb's DOK) to
+    filter assessment-type results by rigor — ignored for other content types.
+    Every result carries an attribution string to preserve in downstream output."""
     from . import queries
 
     try:
         return queries.fetch_for_standard(
             get_conn(), standard_id, source=source, content_type=content_type,
-            limit=limit, include_content=include_content,
+            dok_level=dok_level, limit=limit, include_content=include_content,
         )
     except Exception as exc:
         return {"error": type(exc).__name__, "detail": str(exc)}
@@ -125,6 +127,30 @@ def get_chunk(chunk_id: str, include_adjacent: bool = False) -> dict:
 
     try:
         return queries.get_chunk(get_conn(), chunk_id, include_adjacent)
+    except Exception as exc:
+        return {"error": type(exc).__name__, "detail": str(exc)}
+
+
+@mcp.tool()
+def map_to_assessments(
+    standard_id: str,
+    include_items: bool = True,
+    items_per_exam: int = 2,
+) -> dict:
+    """Map a curriculum standard to high-stakes exams (SAT, ACT, AP, state tests,
+    NAEP). Returns: which exam series test this standard and at which skill domain
+    (from the crosswalk), plus available assessment items per exam — both released
+    items (NAEP, Smarter Balanced, AP free-response) and style-generated items
+    (SAT/ACT). Surfaces gaps: exams in the crosswalk that have no items in the
+    corpus yet. Use this to answer 'how does my 6.RP.3 instruction connect to the
+    SAT?' or 'what does mastery of this standard look like on a state test?'"""
+    from . import queries
+
+    try:
+        return queries.map_to_assessments(
+            get_conn(), standard_id,
+            include_items=include_items, items_per_exam=items_per_exam,
+        )
     except Exception as exc:
         return {"error": type(exc).__name__, "detail": str(exc)}
 

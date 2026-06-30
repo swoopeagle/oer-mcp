@@ -20,13 +20,15 @@ def init_schema(conn: sqlite3.Connection) -> None:
 def connect(
     core_path: str | Path,
     addon_path: str | Path | None = None,
+    ap_path: str | Path | None = None,
     *,
     create: bool = False,
 ) -> sqlite3.Connection:
-    """Open the core DB, attach the add-on DB if it exists on disk.
+    """Open the core DB; attach the NC-SA add-on and AP databases if present.
 
     create=True initialises the schema on the core DB (ingestion/tests);
-    the server runs with create=False and fails loudly on a missing DB.
+    the server runs with create=False and fails loudly on a missing core DB.
+    The add-on and AP databases are always optional — silently skipped when absent.
     """
     core_path = Path(core_path)
     if not create and not core_path.exists():
@@ -43,14 +45,15 @@ def connect(
     conn.execute("PRAGMA busy_timeout = 30000")
     if create:
         conn.execute("PRAGMA journal_mode = WAL")
-    if create:
         init_schema(conn)
     if addon_path is not None and Path(addon_path).exists():
         conn.execute("ATTACH DATABASE ? AS ncsa", (str(addon_path),))
+    if ap_path is not None and Path(ap_path).exists():
+        conn.execute("ATTACH DATABASE ? AS ap", (str(ap_path),))
     return conn
 
 
 def attached_schemas(conn: sqlite3.Connection) -> list[str]:
-    """Schemas holding OER content: ['main'] or ['main', 'ncsa']."""
+    """Schemas holding OER content: ['main'], ['main', 'ncsa'], or all three."""
     rows = conn.execute("PRAGMA database_list").fetchall()
-    return [r["name"] for r in rows if r["name"] in ("main", "ncsa")]
+    return [r["name"] for r in rows if r["name"] in ("main", "ncsa", "ap")]

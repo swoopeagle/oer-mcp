@@ -4,7 +4,8 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-ContentType = Literal["exposition", "worked_example", "exercise_set", "summary"]
+ContentType = Literal["exposition", "worked_example", "exercise_set", "summary", "assessment"]
+ItemType = Literal["multiple_choice", "constructed_response", "performance_task"]
 # Keep in sync with the schema.sql CHECK and oer_shared.coverage bands (D20).
 AlignmentSource = Literal["embedding", "llm_verified", "publisher_guide", "human"]
 
@@ -32,6 +33,14 @@ class ContentChunk(BaseModel):
     source_url: str
     attribution: str  # non-negotiable (D4)
     standard_alignments: list[StandardAlignment] = []
+    # assessment-only (None for all other content_type values)
+    item_type: ItemType | None = None
+    dok_level: int | None = None
+    answer_key: str | None = None
+    exam_series: str | None = None
+    exam_year: int | None = None
+    difficulty: float | None = None
+    item_generation: str | None = None  # "released" | "style_generated"
 
 
 class ChunkResult(BaseModel):
@@ -48,6 +57,14 @@ class ChunkResult(BaseModel):
     content: str | None = None  # omitted when include_content=False
     source_url: str
     attribution: str
+    # assessment-only fields (None for all other content types)
+    item_type: ItemType | None = None
+    dok_level: int | None = None
+    answer_key: str | None = None
+    exam_series: str | None = None
+    exam_year: int | None = None
+    difficulty: float | None = None
+    item_generation: str | None = None  # "released" | "style_generated"
 
 
 class SourceInfo(BaseModel):

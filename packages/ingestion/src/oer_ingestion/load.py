@@ -87,6 +87,11 @@ def load_chunks(
             "word_count": c.word_count, "source_url": c.source_url,
             "attribution": c.attribution, "snapshot_path": snap,
             "content_hash": content_hash, "last_verified": now,
+            # assessment-only (None for non-assessment chunks)
+            "item_type": c.item_type, "dok_level": c.dok_level,
+            "answer_key": c.answer_key, "exam_series": c.exam_series,
+            "exam_year": c.exam_year, "difficulty": c.difficulty,
+            "item_generation": c.item_generation,
         }
         if exists:
             conn.execute(
@@ -95,7 +100,11 @@ def load_chunks(
                      chapter=:chapter, section=:section, grade_band=:grade_band,
                      word_count=:word_count, source_url=:source_url,
                      attribution=:attribution, snapshot_path=:snapshot_path,
-                     content_hash=:content_hash, last_verified=:last_verified, stale=0
+                     content_hash=:content_hash, last_verified=:last_verified,
+                     item_type=:item_type, dok_level=:dok_level,
+                     answer_key=:answer_key, exam_series=:exam_series,
+                     exam_year=:exam_year, difficulty=:difficulty,
+                     item_generation=:item_generation, stale=0
                    WHERE id=:id""",
                 params,
             )
@@ -104,11 +113,14 @@ def load_chunks(
             conn.execute(
                 """INSERT INTO chunks (id, book_id, source_id, title, content,
                      content_type, chapter, section, grade_band, word_count,
-                     source_url, attribution, snapshot_path, content_hash, last_verified)
+                     source_url, attribution, snapshot_path, content_hash, last_verified,
+                     item_type, dok_level, answer_key, exam_series, exam_year,
+                     difficulty, item_generation)
                    VALUES (:id, :book_id, :source_id, :title, :content,
                      :content_type, :chapter, :section, :grade_band, :word_count,
                      :source_url, :attribution, :snapshot_path, :content_hash,
-                     :last_verified)""",
+                     :last_verified, :item_type, :dok_level, :answer_key,
+                     :exam_series, :exam_year, :difficulty, :item_generation)""",
                 params,
             )
             added += 1

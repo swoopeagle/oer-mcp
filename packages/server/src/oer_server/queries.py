@@ -11,7 +11,7 @@ import numpy as np
 from oer_shared.db import attached_schemas
 from oer_shared.models import ChunkResult, SourceInfo, SourceInventory, StandardAlignment
 
-_SCHEMA_LABELS = {"main": "core", "ncsa": "ncsa"}
+_SCHEMA_LABELS = {"main": "core", "ncsa": "ncsa", "ap": "ap"}
 
 
 def _fts_match(query: str) -> str | None:
@@ -67,6 +67,13 @@ def get_chunk(
             content=row["content"],
             source_url=row["source_url"],
             attribution=row["attribution"],
+            item_type=row["item_type"],
+            dok_level=row["dok_level"],
+            answer_key=row["answer_key"],
+            exam_series=row["exam_series"],
+            exam_year=row["exam_year"],
+            difficulty=row["difficulty"],
+            item_generation=row["item_generation"],
         )
         payload = result.model_dump()
         payload["chapter"] = row["chapter"]
@@ -199,6 +206,13 @@ def search_content(
                 content_type=row["content_type"], grade_band=row["grade_band"],
                 content=row["content"] if include_content else None,
                 source_url=row["source_url"], attribution=row["attribution"],
+                item_type=row["item_type"],
+                dok_level=row["dok_level"],
+                answer_key=row["answer_key"],
+                exam_series=row["exam_series"],
+                exam_year=row["exam_year"],
+                difficulty=row["difficulty"],
+                item_generation=row["item_generation"],
             ).model_dump()
         )
     return {"query": query, "search_mode": mode, "results": results}
@@ -218,6 +232,7 @@ def fetch_for_standard(
     *,
     source: str | None = None,
     content_type: str | None = None,
+    dok_level: int | None = None,
     limit: int = 3,
     include_content: bool = True,
 ) -> list[dict] | dict:
@@ -233,9 +248,14 @@ def fetch_for_standard(
         if content_type:
             clauses.append("c.content_type = ?")
             params.append(content_type)
+        if dok_level is not None:
+            clauses.append("c.content_type = 'assessment' AND c.dok_level = ?")
+            params.append(dok_level)
         q = f"""
             SELECT c.id, c.source_id, c.title, c.content_type, c.grade_band,
                    c.content, c.source_url, c.attribution,
+                   c.item_type, c.dok_level, c.answer_key,
+                   c.exam_series, c.exam_year, c.difficulty, c.item_generation,
                    a.alignment_score, a.alignment_source, a.coverage_notes,
                    {_SOURCE_RANK} AS rank
             FROM {schema}.standard_alignments a
@@ -268,6 +288,13 @@ def fetch_for_standard(
             content=r["content"] if include_content else None,
             source_url=r["source_url"],
             attribution=r["attribution"],
+            item_type=r["item_type"],
+            dok_level=r["dok_level"],
+            answer_key=r["answer_key"],
+            exam_series=r["exam_series"],
+            exam_year=r["exam_year"],
+            difficulty=r["difficulty"],
+            item_generation=r["item_generation"],
         )
         out.append(result.model_dump(exclude_none=False))
     return out
@@ -404,6 +431,96 @@ def check_coverage(
         "gap_detection": gap_detection,
         "sources_checked": [s.id for s in list_sources(conn).sources]
         if source is None else [source],
+    }
+
+
+def map_to_assessments(
+    conn: sqlite3.Connection,
+    standard_id: str,
+    *,
+    include_items: bool = True,
+    items_per_exam: int = 2,
+) -> dict:
+    """Report how a standard maps to high-stakes exams. Returns:
+    - crosswalk: which exam series test this standard and at what skill domain
+    - items: available assessment chunks per exam (released or style-generated)
+    - gaps: exam series in the crosswalk that have no items in the corpus yet
+    Spans all attached databases (core + ncsa + ap)."""
+    # Crosswalk lives in main only (reference data, not content).
+    xwalk_rows = conn.execute(
+        "SELECT exam_series, skill_domain, notes, source_url "
+        "FROM main.exam_crosswalks WHERE standard_id = ? ORDER BY exam_series",
+        (standard_id,),
+    ).fetchall()
+
+    # Prefix fallback: strip trailing cluster letter if no exact match.
+    if not xwalk_rows:
+        prefix = standard_id
+        parts = standard_id.split(".")
+        if len(parts[-1]) == 1 and parts[-1].isupper():
+            prefix = ".".join(parts[:-1])
+        xwalk_rows = conn.execute(
+            "SELECT exam_series, skill_domain, notes, source_url "
+            "FROM main.exam_crosswalks WHERE standard_id LIKE ? ORDER BY exam_series",
+            (prefix + "%",),
+        ).fetchall()
+
+    crosswalk = [
+        {
+            "exam_series": r["exam_series"],
+            "skill_domain": r["skill_domain"],
+            "notes": r["notes"],
+            "source_url": r["source_url"],
+        }
+        for r in xwalk_rows
+    ]
+    crosswalk_exams = {r["exam_series"] for r in xwalk_rows}
+
+    # Collect assessment items aligned to this standard, grouped by exam_series.
+    items_by_exam: dict[str, list[dict]] = {}
+    for schema in attached_schemas(conn):
+        rows = conn.execute(
+            f"""SELECT c.id, c.source_id, c.title, c.content_type, c.grade_band,
+                       c.content, c.source_url, c.attribution,
+                       c.item_type, c.dok_level, c.answer_key,
+                       c.exam_series, c.exam_year, c.difficulty, c.item_generation,
+                       a.alignment_score, a.alignment_source, a.coverage_notes,
+                       {_SOURCE_RANK} AS rank
+                FROM {schema}.standard_alignments a
+                JOIN {schema}.chunks c ON c.id = a.chunk_id
+                WHERE a.standard_id = ? AND a.stale = 0 AND c.stale = 0
+                  AND c.content_type = 'assessment' AND c.exam_series IS NOT NULL
+                ORDER BY rank DESC, a.alignment_score DESC""",
+            (standard_id,),
+        ).fetchall()
+        for r in rows:
+            series = r["exam_series"]
+            bucket = items_by_exam.setdefault(series, [])
+            if len(bucket) < items_per_exam:
+                chunk = ChunkResult(
+                    chunk_id=r["id"], source=r["source_id"], title=r["title"],
+                    content_type=r["content_type"], grade_band=r["grade_band"],
+                    alignment_score=round(r["alignment_score"], 4),
+                    alignment_source=r["alignment_source"],
+                    coverage_notes=r["coverage_notes"],
+                    content=r["content"] if include_items else None,
+                    source_url=r["source_url"], attribution=r["attribution"],
+                    item_type=r["item_type"], dok_level=r["dok_level"],
+                    answer_key=r["answer_key"] if include_items else None,
+                    exam_series=r["exam_series"], exam_year=r["exam_year"],
+                    difficulty=r["difficulty"], item_generation=r["item_generation"],
+                )
+                bucket.append(chunk.model_dump(exclude_none=False))
+
+    # Exams in crosswalk but no items yet = gaps.
+    gaps = sorted(crosswalk_exams - set(items_by_exam))
+
+    return {
+        "standard_id": standard_id,
+        "crosswalk": crosswalk,
+        "items_by_exam": items_by_exam,
+        "gaps": gaps,
+        "crosswalk_coverage": "full" if crosswalk else "unavailable",
     }
 
 
