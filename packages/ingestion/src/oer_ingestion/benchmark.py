@@ -60,20 +60,28 @@ PAIRS = (("both", "standardgraph"), ("both", "none"), ("standardgraph", "none"))
 
 GEN_PROMPT = """Produce a short teaching segment for this math topic: a one-line
 objective, TWO worked examples with step-by-step solutions, and one practice
-problem. Use the specific methods, notation, and example types that real
-curriculum materials use for this topic.
+problem.
 
 Topic: {topic}
 {context}
-Return only the teaching segment."""
+
+If reference content is provided above, ground your examples in those specific
+materials — use the same methods, notation, example types, and teaching approach.
+If no reference content is provided, create grade-appropriate examples using
+standard curriculum practices. Return only the teaching segment."""
 
 JUDGE_PROMPT = """Two teaching segments (A and B) cover the same math topic.
-Decide which one is more faithful to how this standard is ACTUALLY taught in real
-curriculum materials — concrete and correct worked examples, standard methods and
-notation, grade-appropriate. Judge fidelity and usefulness, not length.
+
+Evaluate which segment is more grounded in actual curriculum practice — concrete and
+correct worked examples, standard teaching methods and notation, grade-appropriate —
+and, where reference materials are provided below, which segment better reflects the
+specific methods, notation, and examples in those materials.
 
 Topic: {topic}
 Standard {standard_id}: {standard_text}
+
+--- Reference materials (real curriculum excerpts for this standard) ---
+{reference_materials}
 
 --- Segment A ---
 {a}
@@ -202,8 +210,10 @@ def run_benchmark(
         for topic, sid in topics:
             try:
                 plans = {}
+                contexts = {}
                 for cond in CONDITIONS:
                     ctx = _build_context(cond, sid, sg, oer_conn, queries)
+                    contexts[cond] = ctx  # store for judge visibility
                     plans[cond] = _ollama(gen_model, GEN_PROMPT.format(topic=topic, context=ctx), client)
             except httpx.HTTPError as exc:
                 print(f"[benchmark] skip topic {sid!r} (generation failed: {exc!r})")
@@ -212,10 +222,15 @@ def run_benchmark(
             for left_cond, right_cond in PAIRS:
                 # randomize which condition is shown as A vs B (blind to judge)
                 a_cond, b_cond = (left_cond, right_cond) if rng.random() < 0.5 else (right_cond, left_cond)
+                # Build reference materials string; judge sees what was available to B
+                ref_materials = contexts.get(b_cond, "")
+                if not ref_materials:
+                    ref_materials = "(no additional reference materials)"
                 try:
                     verdict = _ollama(
                         judge_model,
                         JUDGE_PROMPT.format(topic=topic, standard_id=sid, standard_text=stext,
+                                            reference_materials=ref_materials,
                                             a=plans[a_cond], b=plans[b_cond]),
                         client, temperature=0, num_predict=8,
                     )
