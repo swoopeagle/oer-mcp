@@ -1,6 +1,21 @@
 # Benchmark Investigation — Root Cause Analysis
 
-**Status:** `content_accuracy_lift_both_vs_sg = 0.0` (target: not met)
+**Status:** ✅ **RESOLVED (2026-07).** The ceiling effect described below came from an
+absolute 1–5 rubric. The benchmark was rebuilt as a **pairwise-preference** design
+(`oer_ingestion.benchmark`), which fixes all three primary root causes:
+- *Measurement blindness* (Fix 1) — the judge now sees a fixed ground-truth reference
+  (the standard's real OER excerpts), identical across every A/B pair, so it can
+  actually assess grounding. An intermediate version tied the reference to whichever
+  condition landed in slot B, leaking a slot-B advantage; that too is now fixed.
+- *Weak generator instructions* (Fix 2) — `GEN_PROMPT` now mandates grounding examples
+  in the provided materials (same methods, notation, example types).
+- *Ceiling effect* (Fix 3) — pairwise A/B/TIE replaces absolute scores entirely.
+
+The old-format `bench.json` (`content_accuracy_lift_both_vs_sg = 0.0`) is a **stale
+artifact** and no longer reflects the code; regenerate it on a fleet machine with
+Ollama. The analysis below is retained as the historical record.
+
+---
 
 ## Problem Statement
 The benchmark's `both` condition (OER + StandardGraph) does not lift content_accuracy above StandardGraph alone. Both score 5.0/5.0 with zero lift.

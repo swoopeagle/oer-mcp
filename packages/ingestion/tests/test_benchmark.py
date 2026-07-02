@@ -1,6 +1,32 @@
 """Offline benchmark logic — pairwise preference parsing & aggregation (no Ollama)."""
 
-from oer_ingestion.benchmark import TOPICS, Comparison, _aggregate, parse_pref
+from oer_ingestion.benchmark import (
+    TOPICS,
+    Comparison,
+    _aggregate,
+    _judge_reference,
+    parse_pref,
+)
+
+
+def test_judge_reference_is_ground_truth_with_fallback():
+    """The judge yardstick is the standard's real OER content, and never blank."""
+
+    class WithContent:
+        def fetch_for_standard(self, conn, sid, limit=2, include_content=True):
+            return [{"attribution": "OpenStax Prealgebra 2e",
+                     "content": "Worked example: 2^3 * 2^4 = 2^7"}]
+
+    ref = _judge_reference(None, "CCSS.MATH.8.EE.1", WithContent())
+    assert "OpenStax Prealgebra 2e" in ref and "2^7" in ref
+
+    class NoContent:
+        def fetch_for_standard(self, conn, sid, limit=2, include_content=True):
+            return {"result": "no_content"}  # fetch_for_standard's empty envelope
+
+    ref_empty = _judge_reference(None, "CCSS.MATH.8.EE.1", NoContent())
+    assert ref_empty == "(no reference materials available for this standard)"
+    assert ref_empty.strip()  # never a blank yardstick
 
 
 def test_parse_pref():

@@ -5,6 +5,9 @@ An earlier absolute 1-5 rubric saturated (a weak local judge scored ~everything
 
   * Pairwise judging — the judge sees two segments for the same topic and must
     pick the better-grounded one (A / B / TIE), which beats the ceiling effect.
+    The judge scores both segments against one *fixed* ground-truth reference
+    (the real OER excerpts for the standard), identical across every pair, so the
+    yardstick never depends on which condition randomly landed in slot B.
   * Grounding-stressing task — generate worked examples (not a generic plan),
     and judge on fidelity to how the standard is *actually* taught, so the value
     of real OER content can show. Generic "is it correct" doesn't need grounding;
@@ -142,6 +145,15 @@ def _oer_context(oer_conn, standard_id: str, queries) -> str:
     return "Reference content (use these example types and methods):\n" + "\n\n".join(parts) if parts else ""
 
 
+def _judge_reference(oer_conn, standard_id, queries) -> str:
+    """Fixed ground-truth reference shown to the judge for every pair on a topic,
+    independent of A/B assignment: the real OER excerpts for the standard, with a
+    stable fallback when the corpus has no aligned content (so the judge never
+    sees a blank yardstick)."""
+    return _oer_context(oer_conn, standard_id, queries) or \
+        "(no reference materials available for this standard)"
+
+
 def _build_context(condition, standard_id, sg, oer_conn, queries) -> str:
     if condition == "none":
         return ""
@@ -210,22 +222,23 @@ def run_benchmark(
         for topic, sid in topics:
             try:
                 plans = {}
-                contexts = {}
                 for cond in CONDITIONS:
                     ctx = _build_context(cond, sid, sg, oer_conn, queries)
-                    contexts[cond] = ctx  # store for judge visibility
                     plans[cond] = _ollama(gen_model, GEN_PROMPT.format(topic=topic, context=ctx), client)
             except httpx.HTTPError as exc:
                 print(f"[benchmark] skip topic {sid!r} (generation failed: {exc!r})")
                 continue
             stext = _standard_text(sg, sid)
+            # Fixed ground-truth yardstick for the judge: the real OER excerpts
+            # for this standard, shown identically for every pair. Tying the
+            # reference to whichever condition landed in slot B leaked a slot-B
+            # advantage (when `both` was randomized into A, the judge saw the
+            # weaker context and couldn't reward A's grounding). A blind pairwise
+            # grounding comparison needs one yardstick, independent of A/B order.
+            ref_materials = _judge_reference(oer_conn, sid, queries)
             for left_cond, right_cond in PAIRS:
                 # randomize which condition is shown as A vs B (blind to judge)
                 a_cond, b_cond = (left_cond, right_cond) if rng.random() < 0.5 else (right_cond, left_cond)
-                # Build reference materials string; judge sees what was available to B
-                ref_materials = contexts.get(b_cond, "")
-                if not ref_materials:
-                    ref_materials = "(no additional reference materials)"
                 try:
                     verdict = _ollama(
                         judge_model,

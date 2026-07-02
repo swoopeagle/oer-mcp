@@ -182,9 +182,25 @@ publisher_guide / llm_verified / human: always "strong" (score not compared to t
 - **CCSS ID format:** StandardGraph omits cluster letters inconsistently — `CCSS.MATH.6.RP.3` not `CCSS.MATH.6.RP.A.3`, but `CCSS.MATH.1.OA.B.3` keeps the letter. Alignment IDs come straight from SG. `check_coverage` tolerates both via exact-then-prefix match.
 - **IM publisher alignments:** Illustrative Mathematics lessons ship "Addressing" CCSS tags → loaded as `publisher_guide` rows directly (first real publisher-seed data in corpus; no LLM verify needed).
 
-## Benchmark (bench.json)
+## Benchmark
 
-LLM-judge e2e benchmark: 20 topics × 3 conditions (`none` / `standardgraph` / `both`). Current result: `target_met: false` — `both` condition does not lift above `standardgraph` alone on `content_accuracy`. Investigate whether OER content is reaching the judge or whether the benchmark prompt needs rework before drawing product conclusions.
+Combined-MCP benchmark: 20 math topics K–12, each generated three ways
+(`none` / `standardgraph` / `both`) with the generator held constant, then judged
+**pairwise** (`oer_ingestion.benchmark`). Headline: how often `both` is preferred
+over `standardgraph`; target ≥60% of decisive comparisons.
+
+The design was rebuilt from an absolute 1–5 rubric (which saturated at 5.0 — a weak
+local judge scored ~everything 5/5, so no lift was measurable) to pairwise
+preference on a grounding-stressing task. The judge scores both segments against one
+**fixed ground-truth reference** (the standard's real OER excerpts), identical across
+every pair, so the yardstick never depends on which condition randomly landed in
+slot B.
+
+> **`bench.json` is a stale artifact** from the old absolute-rubric run (schema:
+> `means`/`content_accuracy`/`target_met`). It does **not** reflect the current
+> pairwise design and should be regenerated on a fleet machine with Ollama:
+> `uv run python -m oer_ingestion.benchmark --db data/oer_core.db --sg-db ~/.standardgraph/common_core.db --out bench.json`.
+> Regeneration needs Ollama + the full DB, so it can't run on the dev MacBook.
 
 ## Batch execution workflow
 
