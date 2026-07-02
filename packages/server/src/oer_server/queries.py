@@ -251,6 +251,17 @@ _SOURCE_RANK = (
     "WHEN 'llm_verified' THEN 2 ELSE 1 END"
 )
 
+# Content usefulness for grounding a lesson/answer (D-retrieval, 2026-07): worked
+# examples first, then explanatory prose / practice, then summaries and items.
+# Without this, publisher-tagged *facilitation prose* (IM lesson narration, tagged
+# `exposition` at publisher_guide confidence) buried genuinely useful worked
+# examples that happened to be embedding-aligned — e.g. 8.EE.1 has 950 worked
+# examples that never surfaced. Content type leads the sort so those come up.
+_CONTENT_RANK = (
+    "CASE c.content_type WHEN 'worked_example' THEN 3 "
+    "WHEN 'exposition' THEN 2 WHEN 'exercise_set' THEN 2 ELSE 1 END"
+)
+
 
 def fetch_for_standard(
     conn: sqlite3.Connection,
@@ -288,7 +299,7 @@ def fetch_for_standard(
                    c.item_type, c.dok_level, c.answer_key,
                    c.exam_series, c.exam_year, c.difficulty, c.item_generation,
                    a.alignment_score, a.alignment_source, a.coverage_notes,
-                   {_SOURCE_RANK} AS rank
+                   {_SOURCE_RANK} AS rank, {_CONTENT_RANK} AS content_rank
             FROM {schema}.standard_alignments a
             JOIN {schema}.chunks c ON c.id = a.chunk_id
             WHERE {' AND '.join(clauses)}
@@ -305,7 +316,9 @@ def fetch_for_standard(
             "available_sources": sources,
         }
 
-    rows.sort(key=lambda r: (r["rank"], r["alignment_score"]), reverse=True)
+    # Content usefulness leads, then alignment confidence, then score: surfaces
+    # worked examples over publisher-tagged facilitation prose (see _CONTENT_RANK).
+    rows.sort(key=lambda r: (r["content_rank"], r["rank"], r["alignment_score"]), reverse=True)
     out = []
     for r in rows[:limit]:
         result = ChunkResult(

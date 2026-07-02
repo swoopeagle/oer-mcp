@@ -61,6 +61,19 @@ def test_confidence_hierarchy_beats_raw_score(conn):
     assert out["count"] == 2
 
 
+def test_worked_example_outranks_facilitation_exposition(conn):
+    # Content usefulness leads the sort (D-retrieval): a worked example surfaces
+    # above a publisher_guide exposition, even though its alignment confidence is
+    # lower. Without this, IM facilitation prose (publisher_guide exposition)
+    # buried worked examples that are far better grounding material.
+    _chunk(conn, "expo", ctype="exposition"); _align(conn, "expo", 0.95, "publisher_guide")
+    _chunk(conn, "we", ctype="worked_example"); _align(conn, "we", 0.72, "embedding")
+    conn.commit()
+    out = queries.fetch_for_standard(conn, "CCSS.MATH.6.RP.A.3", limit=2)
+    assert [r["chunk_id"] for r in out["results"]] == ["we", "expo"]
+    assert out["results"][0]["content_type"] == "worked_example"
+
+
 def test_llm_verified_tier_serializes_and_ranks(conn):
     # regression: llm_verified must be a valid alignment_source (D20) and
     # outrank raw embedding even at a lower score
