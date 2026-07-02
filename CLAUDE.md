@@ -38,9 +38,9 @@ scripts/
 
 - **Core DB (CC BY):** OpenStax statistics (1e) + Illustrative Mathematics 6–8 + any CC BY expansions
 - **NC-SA DB (CC BY-NC-SA):** OpenStax 2e math books + Khan Academy transcripts
-- **Chunks:** ~12,000 total (8,761 OpenStax + ~3,322 Khan) — IM being added
-- **CCSS coverage:** 327/343 standards (95%) K–12
-- **Alignments:** 20,250 across 262 distinct CCSS standards (OpenStax alone); confidence hierarchy: `human` > `publisher_guide` > `llm_verified` > `embedding`
+- **Chunks (local `data/oer_core.db`, 2026-07-01):** 14,488 (14,065 OpenStax + 423 IM) + 29 Claude-authored assessment items
+- **CCSS coverage (local build, denominator 343 CCSS math standards):** **277/343 (81%)** have *any* alignment; **210/343 (61%)** have a *strong/verified* alignment (`human`/`publisher_guide`/`llm_verified` or embedding ≥ 0.78). Best-tier breakdown: 172 verified/publisher · 38 strong-embed · 47 moderate-embed · 20 light-embed. NOTE: the older "327/343 (95%)" figure was an earlier/production claim — not verified against this build; treat 61% strong / 81% any as the honest current numbers until the HF production DB is re-measured.
+- **Alignments (local build):** 32,906 across 277 distinct CCSS standards; confidence hierarchy: `human` > `publisher_guide` > `llm_verified` > `embedding`
 - **IM adapter:** First source with real `publisher_guide` alignments (CCSS "Addressing" tags per lesson); no LLM verify needed for those
 - **HuggingFace dataset:** `swoopeagle/oer-mcp` (files: `oer_core.db`, `oer_ncsa.db`)
 
