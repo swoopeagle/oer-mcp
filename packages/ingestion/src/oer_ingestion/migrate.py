@@ -61,22 +61,26 @@ def migrate_alignment_source_check(conn: sqlite3.Connection, schema: str = "main
     return True
 
 
-def _chunks_has_assessment_columns(conn: sqlite3.Connection, schema: str = "main") -> bool:
+def _chunks_check_allows_assessment(conn: sqlite3.Connection, schema: str = "main") -> bool:
+    """True if the chunks content_type CHECK already allows 'assessment'.
+    We gate on the CHECK, not on column presence: oer_shared.db.migrate_schema
+    may have ALTER-added the columns while leaving the old 4-value CHECK in
+    place, and gating on a column would then wrongly skip the CHECK rebuild."""
     row = conn.execute(
         f"SELECT sql FROM {schema}.sqlite_master "
         "WHERE type='table' AND name='chunks'"
     ).fetchone()
-    return bool(row) and "dok_level" in (row[0] or "")
+    return bool(row) and "'assessment'" in (row[0] or "")
 
 
 def migrate_assessment_columns(conn: sqlite3.Connection, schema: str = "main") -> bool:
     """Add all assessment-specific columns (item_type, dok_level, answer_key,
     exam_series, exam_year, difficulty, item_generation) and expand the
     content_type CHECK to include 'assessment'. Rebuilds chunks to update the
-    CHECK — all other tables and triggers are left untouched.
+    CHECK, then restores the FTS/updated_at triggers that DROP TABLE removes.
     Also creates the exam_crosswalks table if absent. Returns True if a
     migration was performed."""
-    if _chunks_has_assessment_columns(conn, schema):
+    if _chunks_check_allows_assessment(conn, schema):
         return False
 
     conn.executescript(
@@ -138,4 +142,12 @@ def migrate_assessment_columns(conn: sqlite3.Connection, schema: str = "main") -
         PRAGMA foreign_keys=ON;
         """
     )
+    # DROP TABLE chunks also dropped the triggers bound to it (chunks_fts_ai/ad/au
+    # keep FTS5 in sync; chunks_updated_at stamps updated_at). Re-running the
+    # schema restores every IF-NOT-EXISTS object that went missing, leaving the
+    # rebuilt chunks table otherwise untouched. Without this, FTS silently stops
+    # syncing after the migration.
+    from oer_shared.db import init_schema
+
+    init_schema(conn)
     return True

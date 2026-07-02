@@ -64,6 +64,12 @@ def load_style_items(conn: sqlite3.Connection, items_file: Path | str = _DEFAULT
     """Upsert Claude-authored style items from a JSON seed. Idempotent: an item
     with the same standard/exam/question is skipped on re-run.
     Returns {'added', 'skipped'} counts."""
+    # Heal a DB whose content_type CHECK predates 'assessment' (and add the
+    # assessment columns if missing) before inserting assessment rows.
+    from .migrate import migrate_assessment_columns
+
+    migrate_assessment_columns(conn)
+
     data = json.loads(Path(items_file).read_text())
     items = data if isinstance(data, list) else data.get("items", [])
     now = datetime.now(timezone.utc).isoformat()
