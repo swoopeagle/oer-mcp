@@ -17,6 +17,7 @@ All work from this session is documented below. Everything is ready to use.
 - **[WORK_SUMMARY.md](WORK_SUMMARY.md)** — Sprint 1 summary (benchmark fix + test audit + schema)
 - **[LOCAL_EXECUTION_SUMMARY.md](LOCAL_EXECUTION_SUMMARY.md)** — Local DB sync + verify/annotate scripts
 - **[COMPREHENSIVE_SPRINT_SUMMARY.md](COMPREHENSIVE_SPRINT_SUMMARY.md)** — Sprint 2 complete (all 7 tasks)
+- **[SESSION_SUMMARY_2026-07-01.md](SESSION_SUMMARY_2026-07-01.md)** — Full embed+align, assessment items, Claude-verify stage, 7 bug fixes (149→156 tests)
 
 ## 🛠️ Scripts (Ready to Run)
 
