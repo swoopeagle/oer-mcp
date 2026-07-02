@@ -24,7 +24,6 @@ from .crosswalk import load_crosswalks
 from .embed import embed_chunks
 from .load import load_alignments, load_catalog, load_chunks, record_run, write_snapshots
 from .migrate import migrate_alignment_source_check, migrate_assessment_columns
-from .style_gen import run_style_gen
 from .validate_db import print_report, validate
 from .verify import verify
 
@@ -233,6 +232,11 @@ def run_style_gen_pipeline(db_path: Path, sg_db: Path,
                            limit: int | None = None,
                            shard: tuple[int, int] | None = None) -> None:
     """Generate SAT/ACT-style items for all standards not yet covered."""
+    # Lazy import: style_gen depends on the gemma OllamaClient path, which is
+    # separately broken (imports a since-removed class). Keeping it out of the
+    # module top level means the other subcommands (embed-align, verify, …) work.
+    from .style_gen import run_style_gen
+
     conn = connect(db_path, create=True)
     migrate_assessment_columns(conn)
     run_style_gen(conn, str(sg_db), style=style, limit=limit, shard=shard)  # type: ignore[arg-type]
