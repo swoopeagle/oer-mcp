@@ -1,0 +1,105 @@
+{
+  "_note": "Seed crosswalk data. standard_id uses CCSS cluster prefixes so map_to_assessments prefix-match covers all leaf standards in the cluster. Sources: College Board SAT/AP alignment docs, ACT College Readiness Standards.",
+  "crosswalks": [
+
+    // ── SAT Math (College Board, Math Test domains) ────────────────────────────
+    // Source: https://collegereadiness.collegeboard.org/pdf/sat-math-content-specifications.pdf
+
+    {"standard_id": "CCSS.MATH.6.RP",  "exam_series": "SAT", "skill_domain": "Problem Solving and Data Analysis", "notes": "Ratio, rate, and proportional reasoning", "source_url": "https://collegereadiness.collegeboard.org/pdf/sat-math-content-specifications.pdf"},
+    {"standard_id": "CCSS.MATH.7.RP",  "exam_series": "SAT", "skill_domain": "Problem Solving and Data Analysis", "notes": "Proportional relationships, percent", "source_url": "https://collegereadiness.collegeboard.org/pdf/sat-math-content-specifications.pdf"},
+    {"standard_id": "CCSS.MATH.6.SP",  "exam_series": "SAT", "skill_domain": "Problem Solving and Data Analysis", "notes": "Statistical variability and data distributions", "source_url": "https://collegereadiness.collegeboard.org/pdf/sat-math-content-specifications.pdf"},
+    {"standard_id": "CCSS.MATH.7.SP",  "exam_series": "SAT", "skill_domain": "Problem Solving and Data Analysis", "notes": "Probability and sampling", "source_url": "https://collegereadiness.collegeboard.org/pdf/sat-math-content-specifications.pdf"},
+    {"standard_id": "CCSS.MATH.HSS",   "exam_series": "SAT", "skill_domain": "Problem Solving and Data Analysis", "notes": "High school statistics and probability", "source_url": "https://collegereadiness.collegeboard.org/pdf/sat-math-content-specifications.pdf"},
+
+    {"standard_id": "CCSS.MATH.7.EE",  "exam_series": "SAT", "skill_domain": "Heart of Algebra", "notes": "Linear equations and inequalities", "source_url": "https://collegereadiness.collegeboard.org/pdf/sat-math-content-specifications.pdf"},
+    {"standard_id": "CCSS.MATH.8.EE",  "exam_series": "SAT", "skill_domain": "Heart of Algebra", "notes": "Linear equations, systems, exponents", "source_url": "https://collegereadiness.collegeboard.org/pdf/sat-math-content-specifications.pdf"},
+    {"standard_id": "CCSS.MATH.8.F",   "exam_series": "SAT", "skill_domain": "Heart of Algebra", "notes": "Linear functions and relationships", "source_url": "https://collegereadiness.collegeboard.org/pdf/sat-math-content-specifications.pdf"},
+    {"standard_id": "CCSS.MATH.HSA.CED","exam_series": "SAT", "skill_domain": "Heart of Algebra", "notes": "Creating equations", "source_url": "https://collegereadiness.collegeboard.org/pdf/sat-math-content-specifications.pdf"},
+    {"standard_id": "CCSS.MATH.HSA.REI","exam_series": "SAT", "skill_domain": "Heart of Algebra", "notes": "Reasoning with equations and inequalities (linear focus)", "source_url": "https://collegereadiness.collegeboard.org/pdf/sat-math-content-specifications.pdf"},
+
+    {"standard_id": "CCSS.MATH.HSA.SSE","exam_series": "SAT", "skill_domain": "Passport to Advanced Mathematics", "notes": "Seeing structure in expressions (quadratic, polynomial)", "source_url": "https://collegereadiness.collegeboard.org/pdf/sat-math-content-specifications.pdf"},
+    {"standard_id": "CCSS.MATH.HSA.APR","exam_series": "SAT", "skill_domain": "Passport to Advanced Mathematics", "notes": "Arithmetic with polynomial and rational expressions", "source_url": "https://collegereadiness.collegeboard.org/pdf/sat-math-content-specifications.pdf"},
+    {"standard_id": "CCSS.MATH.HSF.IF", "exam_series": "SAT", "skill_domain": "Passport to Advanced Mathematics", "notes": "Interpreting functions (quadratic, exponential, radical)", "source_url": "https://collegereadiness.collegeboard.org/pdf/sat-math-content-specifications.pdf"},
+    {"standard_id": "CCSS.MATH.HSF.BF", "exam_series": "SAT", "skill_domain": "Passport to Advanced Mathematics", "notes": "Building functions", "source_url": "https://collegereadiness.collegeboard.org/pdf/sat-math-content-specifications.pdf"},
+    {"standard_id": "CCSS.MATH.HSF.LE", "exam_series": "SAT", "skill_domain": "Passport to Advanced Mathematics", "notes": "Linear, quadratic, and exponential models", "source_url": "https://collegereadiness.collegeboard.org/pdf/sat-math-content-specifications.pdf"},
+    {"standard_id": "CCSS.MATH.HSN.RN", "exam_series": "SAT", "skill_domain": "Passport to Advanced Mathematics", "notes": "Real number system, rational exponents", "source_url": "https://collegereadiness.collegeboard.org/pdf/sat-math-content-specifications.pdf"},
+
+    {"standard_id": "CCSS.MATH.HSG",   "exam_series": "SAT", "skill_domain": "Additional Topics in Math", "notes": "Geometry: area, volume, coordinate, similarity, trig", "source_url": "https://collegereadiness.collegeboard.org/pdf/sat-math-content-specifications.pdf"},
+    {"standard_id": "CCSS.MATH.HSF.TF", "exam_series": "SAT", "skill_domain": "Additional Topics in Math", "notes": "Trigonometric functions", "source_url": "https://collegereadiness.collegeboard.org/pdf/sat-math-content-specifications.pdf"},
+    {"standard_id": "CCSS.MATH.HSN.CN", "exam_series": "SAT", "skill_domain": "Additional Topics in Math", "notes": "Complex numbers", "source_url": "https://collegereadiness.collegeboard.org/pdf/sat-math-content-specifications.pdf"},
+    {"standard_id": "CCSS.MATH.8.G",   "exam_series": "SAT", "skill_domain": "Additional Topics in Math", "notes": "Geometry: congruence, Pythagorean theorem", "source_url": "https://collegereadiness.collegeboard.org/pdf/sat-math-content-specifications.pdf"},
+
+    // ── ACT Math (ACT College Readiness Standards) ─────────────────────────────
+    // Source: https://www.act.org/content/dam/act/unsecured/documents/ACT_College_Readiness_Standards-Mathematics.pdf
+
+    {"standard_id": "CCSS.MATH.3.OA",  "exam_series": "ACT", "skill_domain": "Pre-Algebra", "notes": "Whole number arithmetic operations", "source_url": "https://www.act.org/content/dam/act/unsecured/documents/ACT_College_Readiness_Standards-Mathematics.pdf"},
+    {"standard_id": "CCSS.MATH.4.NBT", "exam_series": "ACT", "skill_domain": "Pre-Algebra", "notes": "Place value, multi-digit operations", "source_url": "https://www.act.org/content/dam/act/unsecured/documents/ACT_College_Readiness_Standards-Mathematics.pdf"},
+    {"standard_id": "CCSS.MATH.5.NF",  "exam_series": "ACT", "skill_domain": "Pre-Algebra", "notes": "Fractions, decimals, percent", "source_url": "https://www.act.org/content/dam/act/unsecured/documents/ACT_College_Readiness_Standards-Mathematics.pdf"},
+    {"standard_id": "CCSS.MATH.6.NS",  "exam_series": "ACT", "skill_domain": "Pre-Algebra", "notes": "Number sense, integers, fractions, decimals", "source_url": "https://www.act.org/content/dam/act/unsecured/documents/ACT_College_Readiness_Standards-Mathematics.pdf"},
+    {"standard_id": "CCSS.MATH.6.RP",  "exam_series": "ACT", "skill_domain": "Pre-Algebra", "notes": "Ratios, rates, proportions", "source_url": "https://www.act.org/content/dam/act/unsecured/documents/ACT_College_Readiness_Standards-Mathematics.pdf"},
+    {"standard_id": "CCSS.MATH.7.NS",  "exam_series": "ACT", "skill_domain": "Pre-Algebra", "notes": "Rational number operations", "source_url": "https://www.act.org/content/dam/act/unsecured/documents/ACT_College_Readiness_Standards-Mathematics.pdf"},
+
+    {"standard_id": "CCSS.MATH.7.EE",  "exam_series": "ACT", "skill_domain": "Elementary Algebra", "notes": "Linear expressions, equations, inequalities", "source_url": "https://www.act.org/content/dam/act/unsecured/documents/ACT_College_Readiness_Standards-Mathematics.pdf"},
+    {"standard_id": "CCSS.MATH.8.EE",  "exam_series": "ACT", "skill_domain": "Elementary Algebra", "notes": "Systems of linear equations; exponents", "source_url": "https://www.act.org/content/dam/act/unsecured/documents/ACT_College_Readiness_Standards-Mathematics.pdf"},
+
+    {"standard_id": "CCSS.MATH.HSA.SSE","exam_series": "ACT", "skill_domain": "Intermediate Algebra", "notes": "Quadratic equations; polynomial expressions", "source_url": "https://www.act.org/content/dam/act/unsecured/documents/ACT_College_Readiness_Standards-Mathematics.pdf"},
+    {"standard_id": "CCSS.MATH.HSA.REI","exam_series": "ACT", "skill_domain": "Intermediate Algebra", "notes": "Nonlinear equations and systems", "source_url": "https://www.act.org/content/dam/act/unsecured/documents/ACT_College_Readiness_Standards-Mathematics.pdf"},
+    {"standard_id": "CCSS.MATH.HSF.IF", "exam_series": "ACT", "skill_domain": "Intermediate Algebra", "notes": "Functions: domain, range, notation", "source_url": "https://www.act.org/content/dam/act/unsecured/documents/ACT_College_Readiness_Standards-Mathematics.pdf"},
+    {"standard_id": "CCSS.MATH.HSA.APR","exam_series": "ACT", "skill_domain": "Intermediate Algebra", "notes": "Polynomial arithmetic, rational expressions", "source_url": "https://www.act.org/content/dam/act/unsecured/documents/ACT_College_Readiness_Standards-Mathematics.pdf"},
+
+    {"standard_id": "CCSS.MATH.HSG.GPE","exam_series": "ACT", "skill_domain": "Coordinate Geometry", "notes": "Equations of lines, circles, parabolas", "source_url": "https://www.act.org/content/dam/act/unsecured/documents/ACT_College_Readiness_Standards-Mathematics.pdf"},
+    {"standard_id": "CCSS.MATH.8.F",   "exam_series": "ACT", "skill_domain": "Coordinate Geometry", "notes": "Linear functions, slope, graphing", "source_url": "https://www.act.org/content/dam/act/unsecured/documents/ACT_College_Readiness_Standards-Mathematics.pdf"},
+
+    {"standard_id": "CCSS.MATH.HSG.CO", "exam_series": "ACT", "skill_domain": "Plane Geometry", "notes": "Congruence, triangles, quadrilaterals, circles", "source_url": "https://www.act.org/content/dam/act/unsecured/documents/ACT_College_Readiness_Standards-Mathematics.pdf"},
+    {"standard_id": "CCSS.MATH.HSG.MG", "exam_series": "ACT", "skill_domain": "Plane Geometry", "notes": "Modeling with geometry, area, volume", "source_url": "https://www.act.org/content/dam/act/unsecured/documents/ACT_College_Readiness_Standards-Mathematics.pdf"},
+    {"standard_id": "CCSS.MATH.8.G",   "exam_series": "ACT", "skill_domain": "Plane Geometry", "notes": "Geometric transformations, Pythagorean theorem", "source_url": "https://www.act.org/content/dam/act/unsecured/documents/ACT_College_Readiness_Standards-Mathematics.pdf"},
+
+    {"standard_id": "CCSS.MATH.HSF.TF", "exam_series": "ACT", "skill_domain": "Trigonometry", "notes": "Trigonometric functions, identities, equations", "source_url": "https://www.act.org/content/dam/act/unsecured/documents/ACT_College_Readiness_Standards-Mathematics.pdf"},
+
+    // ── AP Calculus AB ─────────────────────────────────────────────────────────
+    // Mostly beyond CCSS; the precursor standards below feed into it.
+    {"standard_id": "CCSS.MATH.HSF.IF", "exam_series": "AP Calculus AB", "skill_domain": "Limits and Continuity", "notes": "Function analysis is the gateway to limits", "source_url": "https://apcentral.collegeboard.org/courses/ap-calculus-ab/course"},
+    {"standard_id": "CCSS.MATH.HSF.BF", "exam_series": "AP Calculus AB", "skill_domain": "Differentiation", "notes": "Rate of change, derivative as a function", "source_url": "https://apcentral.collegeboard.org/courses/ap-calculus-ab/course"},
+    {"standard_id": "CCSS.MATH.HSA.REI","exam_series": "AP Calculus AB", "skill_domain": "Applications of Differentiation", "notes": "Optimization problems", "source_url": "https://apcentral.collegeboard.org/courses/ap-calculus-ab/course"},
+
+    // ── AP Calculus BC ─────────────────────────────────────────────────────────
+    {"standard_id": "CCSS.MATH.HSF.IF", "exam_series": "AP Calculus BC", "skill_domain": "Limits and Continuity", "notes": "Function analysis prerequisite", "source_url": "https://apcentral.collegeboard.org/courses/ap-calculus-bc/course"},
+    {"standard_id": "CCSS.MATH.HSF.BF", "exam_series": "AP Calculus BC", "skill_domain": "Differentiation and Integration", "notes": "Rate of change, area under curve", "source_url": "https://apcentral.collegeboard.org/courses/ap-calculus-bc/course"},
+
+    // ── AP Statistics ──────────────────────────────────────────────────────────
+    {"standard_id": "CCSS.MATH.HSS.ID", "exam_series": "AP Statistics", "skill_domain": "Exploring Data", "notes": "Interpreting data displays, distributions", "source_url": "https://apcentral.collegeboard.org/courses/ap-statistics/course"},
+    {"standard_id": "CCSS.MATH.HSS.IC", "exam_series": "AP Statistics", "skill_domain": "Sampling and Experimentation", "notes": "Study design, sampling methods", "source_url": "https://apcentral.collegeboard.org/courses/ap-statistics/course"},
+    {"standard_id": "CCSS.MATH.HSS.CP", "exam_series": "AP Statistics", "skill_domain": "Probability", "notes": "Conditional probability, independence", "source_url": "https://apcentral.collegeboard.org/courses/ap-statistics/course"},
+    {"standard_id": "CCSS.MATH.7.SP",  "exam_series": "AP Statistics", "skill_domain": "Probability", "notes": "Probability foundations", "source_url": "https://apcentral.collegeboard.org/courses/ap-statistics/course"},
+    {"standard_id": "CCSS.MATH.HSS.MD", "exam_series": "AP Statistics", "skill_domain": "Statistical Inference", "notes": "Probability distributions, expected value", "source_url": "https://apcentral.collegeboard.org/courses/ap-statistics/course"},
+
+    // ── AP Precalculus ─────────────────────────────────────────────────────────
+    {"standard_id": "CCSS.MATH.HSF.IF", "exam_series": "AP Precalculus", "skill_domain": "Polynomial and Rational Functions", "notes": "Analyzing polynomial and rational function behavior", "source_url": "https://apcentral.collegeboard.org/courses/ap-precalculus/course"},
+    {"standard_id": "CCSS.MATH.HSF.LE", "exam_series": "AP Precalculus", "skill_domain": "Exponential and Logarithmic Functions", "notes": "Exponential growth/decay models", "source_url": "https://apcentral.collegeboard.org/courses/ap-precalculus/course"},
+    {"standard_id": "CCSS.MATH.HSF.TF", "exam_series": "AP Precalculus", "skill_domain": "Trigonometric and Polar Functions", "notes": "Trig functions, unit circle, polar coordinates", "source_url": "https://apcentral.collegeboard.org/courses/ap-precalculus/course"},
+    {"standard_id": "CCSS.MATH.HSA.APR","exam_series": "AP Precalculus", "skill_domain": "Polynomial and Rational Functions", "notes": "Polynomial arithmetic and factoring", "source_url": "https://apcentral.collegeboard.org/courses/ap-precalculus/course"},
+
+    // ── NAEP (grade-level domain crosswalk — NAEP frameworks map to CCSS) ──────
+    {"standard_id": "CCSS.MATH.4.OA",  "exam_series": "NAEP Grade 4", "skill_domain": "Number Properties and Operations", "notes": "NAEP Grade 4 Number Properties; ~40% of grade 4 items", "source_url": "https://nces.ed.gov/nationsreportcard/mathematics/framework.aspx"},
+    {"standard_id": "CCSS.MATH.4.NBT", "exam_series": "NAEP Grade 4", "skill_domain": "Number Properties and Operations", "notes": "Place value and multi-digit operations", "source_url": "https://nces.ed.gov/nationsreportcard/mathematics/framework.aspx"},
+    {"standard_id": "CCSS.MATH.4.NF",  "exam_series": "NAEP Grade 4", "skill_domain": "Number Properties and Operations", "notes": "Fractions", "source_url": "https://nces.ed.gov/nationsreportcard/mathematics/framework.aspx"},
+    {"standard_id": "CCSS.MATH.4.MD",  "exam_series": "NAEP Grade 4", "skill_domain": "Measurement", "notes": "Measurement and data", "source_url": "https://nces.ed.gov/nationsreportcard/mathematics/framework.aspx"},
+    {"standard_id": "CCSS.MATH.4.G",   "exam_series": "NAEP Grade 4", "skill_domain": "Geometry", "notes": "Shape properties", "source_url": "https://nces.ed.gov/nationsreportcard/mathematics/framework.aspx"},
+
+    {"standard_id": "CCSS.MATH.8.NS",  "exam_series": "NAEP Grade 8", "skill_domain": "Number Properties and Operations", "notes": "Rational/irrational numbers", "source_url": "https://nces.ed.gov/nationsreportcard/mathematics/framework.aspx"},
+    {"standard_id": "CCSS.MATH.8.EE",  "exam_series": "NAEP Grade 8", "skill_domain": "Algebra", "notes": "Linear equations; exponents; functions", "source_url": "https://nces.ed.gov/nationsreportcard/mathematics/framework.aspx"},
+    {"standard_id": "CCSS.MATH.8.F",   "exam_series": "NAEP Grade 8", "skill_domain": "Algebra", "notes": "Functions", "source_url": "https://nces.ed.gov/nationsreportcard/mathematics/framework.aspx"},
+    {"standard_id": "CCSS.MATH.7.RP",  "exam_series": "NAEP Grade 8", "skill_domain": "Number Properties and Operations", "notes": "Proportional reasoning", "source_url": "https://nces.ed.gov/nationsreportcard/mathematics/framework.aspx"},
+    {"standard_id": "CCSS.MATH.8.G",   "exam_series": "NAEP Grade 8", "skill_domain": "Geometry", "notes": "Transformations; Pythagorean theorem; volume", "source_url": "https://nces.ed.gov/nationsreportcard/mathematics/framework.aspx"},
+    {"standard_id": "CCSS.MATH.8.SP",  "exam_series": "NAEP Grade 8", "skill_domain": "Data Analysis and Probability", "notes": "Scatter plots, linear association", "source_url": "https://nces.ed.gov/nationsreportcard/mathematics/framework.aspx"},
+
+    // ── Smarter Balanced (general entry — items themselves carry standard tags) ─
+    {"standard_id": "CCSS.MATH.3",     "exam_series": "Smarter Balanced Grade 3", "skill_domain": "Grade 3 Mathematics", "notes": "All Gr 3 CCSS domains", "source_url": "https://sampleitems.smarterbalanced.org/"},
+    {"standard_id": "CCSS.MATH.4",     "exam_series": "Smarter Balanced Grade 4", "skill_domain": "Grade 4 Mathematics", "notes": "All Gr 4 CCSS domains", "source_url": "https://sampleitems.smarterbalanced.org/"},
+    {"standard_id": "CCSS.MATH.5",     "exam_series": "Smarter Balanced Grade 5", "skill_domain": "Grade 5 Mathematics", "notes": "All Gr 5 CCSS domains", "source_url": "https://sampleitems.smarterbalanced.org/"},
+    {"standard_id": "CCSS.MATH.6",     "exam_series": "Smarter Balanced Grade 6", "skill_domain": "Grade 6 Mathematics", "notes": "All Gr 6 CCSS domains", "source_url": "https://sampleitems.smarterbalanced.org/"},
+    {"standard_id": "CCSS.MATH.7",     "exam_series": "Smarter Balanced Grade 7", "skill_domain": "Grade 7 Mathematics", "notes": "All Gr 7 CCSS domains", "source_url": "https://sampleitems.smarterbalanced.org/"},
+    {"standard_id": "CCSS.MATH.8",     "exam_series": "Smarter Balanced Grade 8", "skill_domain": "Grade 8 Mathematics", "notes": "All Gr 8 CCSS domains", "source_url": "https://sampleitems.smarterbalanced.org/"},
+    {"standard_id": "CCSS.MATH.HS",    "exam_series": "Smarter Balanced Grade 11", "skill_domain": "High School Mathematics", "notes": "HS CCSS domains (Gr 11 summative)", "source_url": "https://sampleitems.smarterbalanced.org/"}
+  ]
+}

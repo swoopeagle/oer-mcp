@@ -1,5 +1,8 @@
-# Data artifacts — databases are distributed via Hugging Face, never git
-data/
+# Data artifacts — databases are distributed via Hugging Face, never git.
+# Anchored to the repo root so package source-data dirs (e.g.
+# packages/ingestion/src/oer_ingestion/data/*.json seeds) stay tracked; *.db
+# below still keeps any actual database out of git regardless of location.
+/data/
 *.db
 *.db-shm
 *.db-wal
