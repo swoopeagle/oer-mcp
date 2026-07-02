@@ -41,8 +41,18 @@ the whole corpus instead of 7% of it.
 ### T3 — Benchmark (fleet, in progress at session end)
 Re-ran the pairwise content-grounding benchmark on the enriched corpus to refresh
 `bench.json` (retiring the stale absolute-rubric artifact). Runs on gemma as the
-generator by design — a *weak* generator best exposes OER lift. Result to be
-appended when the run completes.
+generator by design — a *weak* generator best exposes OER lift.
+
+**Outcome: run failed as a measurement, not committed.** The full 20-topic run
+completed (~50 min) but every one of the 60 pairwise judgments was unparseable
+(`unparsed=20` per comparison). Root cause: `gemma4:31b-it-q8_0` on the Studio
+returns an **empty string** on short calls via *both* `/api/generate` and
+`/api/chat` (confirmed directly), so the judge (num_predict=8) produced no verdict.
+The garbage `bench.json` was discarded (committed version restored).
+**Follow-up:** use a judge model that actually responds (try `qwen2.5:72b` or a
+different gemma quant), or — better per the Claude-first policy — use Claude as the
+judge while keeping a weak local generator. The benchmark *code* (fixed
+ground-truth reference) is sound; only the judge model was the problem.
 
 ### T4 — Dev cleanup
 Cross-referenced the two confusingly-named "D9" benchmarks
