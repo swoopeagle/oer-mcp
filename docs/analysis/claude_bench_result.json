@@ -1,0 +1,178 @@
+{
+  "n_topics": 7,
+  "comparisons": {
+    "both_vs_standardgraph": {
+      "wins": 6,
+      "losses": 1,
+      "ties": 0,
+      "unparsed": 0,
+      "win_rate": 0.857
+    },
+    "both_vs_none": {
+      "wins": 7,
+      "losses": 0,
+      "ties": 0,
+      "unparsed": 0,
+      "win_rate": 1.0
+    },
+    "standardgraph_vs_none": {
+      "wins": 6,
+      "losses": 1,
+      "ties": 0,
+      "unparsed": 0,
+      "win_rate": 0.857
+    }
+  },
+  "both_vs_standardgraph_win_rate": 0.857,
+  "target_met": true,
+  "raw": [
+    {
+      "topic": "The meaning of the equal sign",
+      "standard_id": "CCSS.MATH.1.OA.D.7",
+      "left": "standardgraph",
+      "right": "both",
+      "winner": "both"
+    },
+    {
+      "topic": "The meaning of the equal sign",
+      "standard_id": "CCSS.MATH.1.OA.D.7",
+      "left": "none",
+      "right": "both",
+      "winner": "both"
+    },
+    {
+      "topic": "The meaning of the equal sign",
+      "standard_id": "CCSS.MATH.1.OA.D.7",
+      "left": "standardgraph",
+      "right": "none",
+      "winner": "none"
+    },
+    {
+      "topic": "Dividing unit fractions by whole numbers",
+      "standard_id": "CCSS.MATH.5.NF.B.7",
+      "left": "both",
+      "right": "standardgraph",
+      "winner": "both"
+    },
+    {
+      "topic": "Dividing unit fractions by whole numbers",
+      "standard_id": "CCSS.MATH.5.NF.B.7",
+      "left": "none",
+      "right": "both",
+      "winner": "both"
+    },
+    {
+      "topic": "Dividing unit fractions by whole numbers",
+      "standard_id": "CCSS.MATH.5.NF.B.7",
+      "left": "standardgraph",
+      "right": "none",
+      "winner": "standardgraph"
+    },
+    {
+      "topic": "Ratio and rate reasoning to solve problems",
+      "standard_id": "CCSS.MATH.6.RP.3",
+      "left": "standardgraph",
+      "right": "both",
+      "winner": "both"
+    },
+    {
+      "topic": "Ratio and rate reasoning to solve problems",
+      "standard_id": "CCSS.MATH.6.RP.3",
+      "left": "both",
+      "right": "none",
+      "winner": "both"
+    },
+    {
+      "topic": "Ratio and rate reasoning to solve problems",
+      "standard_id": "CCSS.MATH.6.RP.3",
+      "left": "standardgraph",
+      "right": "none",
+      "winner": "standardgraph"
+    },
+    {
+      "topic": "Solving two-step linear equations",
+      "standard_id": "CCSS.MATH.7.EE.4",
+      "left": "standardgraph",
+      "right": "both",
+      "winner": "both"
+    },
+    {
+      "topic": "Solving two-step linear equations",
+      "standard_id": "CCSS.MATH.7.EE.4",
+      "left": "none",
+      "right": "both",
+      "winner": "both"
+    },
+    {
+      "topic": "Solving two-step linear equations",
+      "standard_id": "CCSS.MATH.7.EE.4",
+      "left": "none",
+      "right": "standardgraph",
+      "winner": "standardgraph"
+    },
+    {
+      "topic": "Properties of integer exponents",
+      "standard_id": "CCSS.MATH.8.EE.1",
+      "left": "both",
+      "right": "standardgraph",
+      "winner": "both"
+    },
+    {
+      "topic": "Properties of integer exponents",
+      "standard_id": "CCSS.MATH.8.EE.1",
+      "left": "none",
+      "right": "both",
+      "winner": "both"
+    },
+    {
+      "topic": "Properties of integer exponents",
+      "standard_id": "CCSS.MATH.8.EE.1",
+      "left": "none",
+      "right": "standardgraph",
+      "winner": "standardgraph"
+    },
+    {
+      "topic": "Understanding functions as inputs and outputs",
+      "standard_id": "CCSS.MATH.8.F.1",
+      "left": "both",
+      "right": "standardgraph",
+      "winner": "both"
+    },
+    {
+      "topic": "Understanding functions as inputs and outputs",
+      "standard_id": "CCSS.MATH.8.F.1",
+      "left": "none",
+      "right": "both",
+      "winner": "both"
+    },
+    {
+      "topic": "Understanding functions as inputs and outputs",
+      "standard_id": "CCSS.MATH.8.F.1",
+      "left": "none",
+      "right": "standardgraph",
+      "winner": "standardgraph"
+    },
+    {
+      "topic": "Deriving the equation of a circle",
+      "standard_id": "CCSS.MATH.HSG.GPE.A.1",
+      "left": "standardgraph",
+      "right": "both",
+      "winner": "standardgraph"
+    },
+    {
+      "topic": "Deriving the equation of a circle",
+      "standard_id": "CCSS.MATH.HSG.GPE.A.1",
+      "left": "none",
+      "right": "both",
+      "winner": "both"
+    },
+    {
+      "topic": "Deriving the equation of a circle",
+      "standard_id": "CCSS.MATH.HSG.GPE.A.1",
+      "left": "standardgraph",
+      "right": "none",
+      "winner": "standardgraph"
+    }
+  ],
+  "generator": "claude"
+}

@@ -1,5 +1,43 @@
 # Benchmark Investigation — Root Cause Analysis
 
+## ✅ FINAL RESOLUTION (2026-07-02) — the real root cause + a positive result
+
+The pairwise rebuild (below) fixed the *rubric*, but the benchmark still showed "OER
+doesn't help." The actual culprit was a **silent contract bug**: `fetch_for_standard`
+was refactored (S4) to return a `{standard_id, count, results}` envelope, but
+`benchmark._oer_context` still did `if isinstance(res, dict): return ""`. So it
+returned empty **every time** — the `both` condition received *no OER content* and the
+judge's ground-truth reference was *always empty*. Every prior "OER doesn't help"
+number was an artifact of comparing two near-identical (OER-free) conditions.
+
+Fixed (`ce9ea1a`): read `results` out of the envelope; regression-tested. Confirmed
+OER context now flows (e.g. 2.2k chars of IM content for 6.RP.3).
+
+**Corrected result — Claude as generator, gemma3:27b as independent judge, 7 topics
+(grade 1→HS), judged against the ground-truth OER reference** (`run_benchmark_from_segments`;
+segments + result in `docs/analysis/claude_bench_*.json`):
+
+| comparison | win | loss | tie | win-rate |
+|---|---|---|---|---|
+| both vs standardgraph | 6 | 1 | 0 | **0.86 ✅ (target ≥0.60)** |
+| both vs none | 7 | 0 | 0 | **1.00** |
+| standardgraph vs none | 6 | 1 | 0 | 0.86 |
+
+So once OER content is actually delivered and consumed by a capable client (Claude,
+the real MCP consumer), it clearly improves grounding. Caveats: small n, single
+judgment/pair; the judge scores fidelity-to-reference so `both` is somewhat favored by
+construction (the `both`-vs-`none` 100% is the cleaner "context helps" signal); a
+weaker consumer may see less lift. **Top follow-up:** retrieval quality — `fetch` often
+surfaces IM teacher-facilitation prose over student-facing worked examples; improving
+*what* is retrieved should push this higher.
+
+Why gemma failed as generator where Claude succeeded: gemma4:31b-q8 returned empty
+strings on short calls (unusable judge); gemma3:27b hung for hours on the 512-token
+generations. Claude-generate + gemma3:27b-judge (short calls only) sidesteps both and
+measures the real deployment scenario.
+
+---
+
 **Status:** ✅ **RESOLVED (2026-07).** The ceiling effect described below came from an
 absolute 1–5 rubric. The benchmark was rebuilt as a **pairwise-preference** design
 (`oer_ingestion.benchmark`), which fixes all three primary root causes:
