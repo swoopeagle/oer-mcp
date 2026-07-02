@@ -26,18 +26,34 @@ from pathlib import Path
 
 _DEFAULT_FILE = Path(__file__).parent / "data" / "style_items.json"
 
-_EXAM_TO_STYLE = {"SAT": "sat", "ACT": "act"}
+# One style "family" (source/book) per exam family; grade-specific exam series
+# (e.g. "Smarter Balanced Grade 5") all roll up into their family's book.
+_FAMILY = {"sat": "SAT", "act": "ACT", "sbac": "Smarter Balanced", "naep": "NAEP"}
 
 
-def _ensure_book(conn: sqlite3.Connection, style: str, exam_series: str, now: str) -> None:
+def _style_slug(exam_series: str) -> str:
+    """Map an exam_series string to its style-family slug."""
+    if exam_series == "SAT":
+        return "sat"
+    if exam_series == "ACT":
+        return "act"
+    if exam_series.startswith("Smarter Balanced"):
+        return "sbac"
+    if exam_series.startswith("NAEP"):
+        return "naep"
+    raise ValueError(f"unsupported exam_series {exam_series!r} (SAT/ACT/Smarter Balanced/NAEP)")
+
+
+def _ensure_book(conn: sqlite3.Connection, style: str, now: str) -> None:
     source_id = f"style-gen-{style}"
+    family = _FAMILY[style]
     conn.execute(
         """INSERT INTO sources (id, full_name, license, license_url, base_url, last_indexed)
            VALUES (?,?,?,?,?,?)
            ON CONFLICT(id) DO UPDATE SET last_indexed=excluded.last_indexed""",
         (
             source_id,
-            f"{exam_series}-Style Questions (AI-Generated)",
+            f"{family}-Style Questions (AI-Generated)",
             "CC BY 4.0",
             "https://creativecommons.org/licenses/by/4.0/",
             "https://github.com/swoopeagle/oer-mcp",
@@ -51,7 +67,7 @@ def _ensure_book(conn: sqlite3.Connection, style: str, exam_series: str, now: st
         (
             f"style-gen-{style}-math",
             source_id,
-            f"{exam_series}-Style Math Questions (AI-Generated, K-12)",
+            f"{family}-Style Math Questions (AI-Generated, K-12)",
             "mathematics",
             "K-12",
             "CC BY 4.0",
@@ -78,11 +94,9 @@ def load_style_items(conn: sqlite3.Connection, items_file: Path | str = _DEFAULT
 
     for item in items:
         exam_series = item["exam_series"]
-        style = _EXAM_TO_STYLE.get(exam_series)
-        if style is None:
-            raise ValueError(f"unknown exam_series {exam_series!r} (expected SAT or ACT)")
+        style = _style_slug(exam_series)
         if style not in books_ready:
-            _ensure_book(conn, style, exam_series, now)
+            _ensure_book(conn, style, now)
             books_ready.add(style)
 
         standard_id = item["standard_id"]

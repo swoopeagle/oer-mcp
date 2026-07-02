@@ -120,6 +120,31 @@
       "standard_id": "CCSS.MATH.HSS.ID.1", "exam_series": "SAT", "item_type": "multiple_choice", "dok_level": 2, "difficulty": 0.44, "grade_band": "9-12",
       "question": "For the data set 4, 7, 7, 9, 13, which statement correctly compares the mean and the median?\n(A) The mean is greater than the median by 1.\n(B) The median is greater than the mean by 1.\n(C) The mean and median are equal.\n(D) The mean is greater than the median by 2.",
       "answer_key": "A. Mean = (4 + 7 + 7 + 9 + 13) / 5 = 40 / 5 = 8; median (middle value) = 7. The mean exceeds the median by 1, pulled up by the larger value 13."
+    },
+    {
+      "standard_id": "CCSS.MATH.3.NF.2", "exam_series": "Smarter Balanced Grade 3", "item_type": "multiple_choice", "dok_level": 2, "difficulty": 0.35, "grade_band": "K-5",
+      "question": "A number line from 0 to 1 is divided into 4 equal parts. What fraction does the third tick mark after 0 represent?\n(A) 1/3\n(B) 3/4\n(C) 4/3\n(D) 3",
+      "answer_key": "B. Dividing 0 to 1 into 4 equal parts makes each part 1/4. The third tick mark after 0 is at 3 of those parts, or 3/4."
+    },
+    {
+      "standard_id": "CCSS.MATH.4.NBT.A.1", "exam_series": "Smarter Balanced Grade 4", "item_type": "multiple_choice", "dok_level": 2, "difficulty": 0.38, "grade_band": "K-5",
+      "question": "In the number 770, the value of the 7 in the hundreds place is how many times the value of the 7 in the tens place?\n(A) 7\n(B) 10\n(C) 70\n(D) 100",
+      "answer_key": "B. The 7 in the hundreds place is worth 700; the 7 in the tens place is worth 70. 700 / 70 = 10, so it is 10 times as large."
+    },
+    {
+      "standard_id": "CCSS.MATH.4.NBT.A.1", "exam_series": "NAEP Grade 4", "item_type": "multiple_choice", "dok_level": 1, "difficulty": 0.30, "grade_band": "K-5",
+      "question": "In which number does the digit 8 represent 800?\n(A) 1,080\n(B) 8,024\n(C) 4,853\n(D) 3,208",
+      "answer_key": "C. 800 means an 8 in the hundreds place. In 4,853 the 8 is in the hundreds place (800). In 1,080 it is 80, in 8,024 it is 8,000, and in 3,208 the hundreds digit is 2."
+    },
+    {
+      "standard_id": "CCSS.MATH.5.NF.B.7", "exam_series": "Smarter Balanced Grade 5", "item_type": "multiple_choice", "dok_level": 2, "difficulty": 0.40, "grade_band": "K-5",
+      "question": "Maria has 1/2 pound of clay and divides it equally among 3 students. How many pounds of clay does each student get?\n(A) 1/6\n(B) 1/5\n(C) 2/3\n(D) 3/2",
+      "answer_key": "A. Sharing 1/2 pound among 3 equal groups is (1/2) / 3 = 1/6 pound each."
+    },
+    {
+      "standard_id": "CCSS.MATH.5.NBT.B.5", "exam_series": "Smarter Balanced Grade 5", "item_type": "multiple_choice", "dok_level": 1, "difficulty": 0.35, "grade_band": "K-5",
+      "question": "What is 34 x 26?\n(A) 680\n(B) 764\n(C) 884\n(D) 904",
+      "answer_key": "C. 34 x 26 = 34 x 20 + 34 x 6 = 680 + 204 = 884."
     }
   ]
 }
