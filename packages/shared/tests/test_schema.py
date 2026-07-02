@@ -5,7 +5,13 @@ import sqlite3
 
 import pytest
 
-from oer_shared.db import attached_schemas, connect, init_schema
+from oer_shared.db import (
+    _CHUNK_ASSESSMENT_COLUMNS,
+    attached_schemas,
+    connect,
+    init_schema,
+    migrate_schema,
+)
 
 
 @pytest.fixture
@@ -103,6 +109,45 @@ def test_constraints(conn):
             " alignment_score, alignment_source) VALUES "
             "('openstax-prealgebra-2e-m81285-expo','CCSS.MATH.6.RP.A.3','ccss',0.5,'embedding')"
         )
+
+
+def test_migrate_adds_missing_assessment_columns():
+    """A DB whose chunks table predates the assessment columns is healed by
+    migrate_schema (ALTER ADD COLUMN), and the migration is idempotent."""
+    c = sqlite3.connect(":memory:")
+    c.row_factory = sqlite3.Row
+    init_schema(c)  # fresh schema already has the columns
+
+    # Simulate a legacy DB: drop the assessment columns back off.
+    for name, _ in _CHUNK_ASSESSMENT_COLUMNS:
+        c.execute(f"ALTER TABLE chunks DROP COLUMN {name}")
+    present = {r["name"] for r in c.execute("PRAGMA table_info(chunks)")}
+    assert not any(name in present for name, _ in _CHUNK_ASSESSMENT_COLUMNS)
+
+    added = migrate_schema(c)
+    assert set(added) == {name for name, _ in _CHUNK_ASSESSMENT_COLUMNS}
+    present = {r["name"] for r in c.execute("PRAGMA table_info(chunks)")}
+    assert all(name in present for name, _ in _CHUNK_ASSESSMENT_COLUMNS)
+
+    # Idempotent: a second run adds nothing.
+    assert migrate_schema(c) == []
+    c.close()
+
+
+def test_connect_create_auto_migrates_legacy_db(tmp_path):
+    """Opening a legacy DB with create=True runs init_schema → migrate_schema,
+    so the assessment columns are present without a manual migration step."""
+    path = tmp_path / "legacy.db"
+    c = connect(path, create=True)
+    for name, _ in _CHUNK_ASSESSMENT_COLUMNS:
+        c.execute(f"ALTER TABLE chunks DROP COLUMN {name}")
+    c.commit()
+    c.close()
+
+    c = connect(path, create=True)  # reopen — init_schema migrates
+    present = {r["name"] for r in c.execute("PRAGMA table_info(chunks)")}
+    assert all(name in present for name, _ in _CHUNK_ASSESSMENT_COLUMNS)
+    c.close()
 
 
 def test_two_db_attach(tmp_path):

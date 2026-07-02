@@ -130,7 +130,7 @@ sqlite3 data/oer_core.db "SELECT COUNT(DISTINCT standard_id) FROM standard_align
 | `get_chunk` | Retrieve a specific chunk by ID, with neighbours and alignments |
 | `check_coverage` | Coverage bands (strong/moderate/light/none) and gaps for a standard/cluster |
 | `list_sources` | Live inventory of sources, books, chunks, and attached databases |
-| `map_to_assessments` | Map a standard to high-stakes exams (SAT/ACT/AP/state/NAEP) — crosswalk domains + available items per exam; surfaces gaps |
+| `map_to_assessments` | Map a standard to high-stakes exams (SAT/ACT/AP/state/NAEP) — crosswalk domains + available items per exam; surfaces gaps. Returns `items_status`: `ready` (item store queryable) or `no_item_store` (legacy DB without assessment columns) |
 | `get_learning_path` | **Prerequisite-aware path**: BFS over StandardGraph prereqs → OER content per rung, bottom-up; surfaces `prerequisite_gaps` |
 | `get_capabilities` | Self-describing manifest: sources, standard systems, exam series, grade bands, and available tools |
 
@@ -144,6 +144,16 @@ publisher_guide / llm_verified / human: always "strong" (score not compared to t
 `check_coverage` uses these bands per `oer_shared.coverage`. Annotate stage targets `score ≥ 0.78` embedding rows (the "strong" embedding band, D20).
 
 ## Assessment content types and databases
+
+> **Status (2026-07):** the assessment *plumbing* is complete — schema columns,
+> `exam_crosswalks` table, adapters (`naep`, `smarter_balanced`, `ap_frq`), and the
+> `map_to_assessments` tool are all in place — but **no assessment content is loaded
+> yet**: `data/oer_core.db` has 0 assessment chunks and 0 crosswalk rows. The tool
+> therefore returns empty crosswalk/items envelopes (with `items_status="ready"`)
+> until the adapters are run. DBs built before the assessment columns landed are
+> healed automatically by `migrate_schema` on the next `connect(create=True)`;
+> `map_to_assessments` reports `items_status="no_item_store"` on any DB still missing
+> them rather than erroring.
 
 **content_type = 'assessment'** — new fifth value alongside exposition/worked_example/exercise_set/summary. Assessment-only columns (all NULL for other types):
 - `item_type`: "multiple_choice" | "constructed_response" | "performance_task"

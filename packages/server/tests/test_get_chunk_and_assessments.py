@@ -214,6 +214,29 @@ def test_map_to_assessments_include_items_true(conn):
     assert items[0]["answer_key"] == "Correct answer is C"
 
 
+def test_map_to_assessments_ready_status(conn):
+    """A current DB reports items_status='ready' (item store is queryable)."""
+    result = queries.map_to_assessments(conn, "CCSS.MATH.6.RP.A.3")
+    assert result["items_status"] == "ready"
+
+
+def test_map_to_assessments_legacy_db_degrades(conn):
+    """A DB predating the assessment columns must not crash: crosswalk still
+    resolves, items_status flags 'no_item_store', and no items are returned."""
+    # Simulate a legacy chunks table by dropping the assessment columns.
+    for col in ("item_type", "dok_level", "answer_key", "exam_series",
+                "exam_year", "difficulty", "item_generation"):
+        conn.execute(f"ALTER TABLE main.chunks DROP COLUMN {col}")
+    _crosswalk(conn, "CCSS.MATH.6.RP.A.3", "SAT", "Passport")
+    conn.commit()
+
+    result = queries.map_to_assessments(conn, "CCSS.MATH.6.RP.A.3")
+    assert result["items_status"] == "no_item_store"
+    assert result["items_by_exam"] == {}
+    assert len(result["crosswalk"]) == 1  # crosswalk is independent of chunk cols
+    assert result["crosswalk_coverage"] == "full"
+
+
 def test_map_to_assessments_include_items_false(conn):
     """When include_items=False, content and answer_key are stripped."""
     _crosswalk(conn, "CCSS.MATH.6.RP.A.3", "SAT", "Passport")

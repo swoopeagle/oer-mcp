@@ -23,6 +23,14 @@ def _fts_match(query: str) -> str | None:
     return " OR ".join(f'"{t}"' for t in terms)
 
 
+def _has_assessment_columns(conn, schema) -> bool:
+    """True if this schema's chunks table carries the assessment columns.
+    Old DBs built before the assessment feature lack them (query_only server
+    can't migrate); callers skip the item lookup for such schemas."""
+    cols = {r["name"] for r in conn.execute(f"PRAGMA {schema}.table_info(chunks)")}
+    return "exam_series" in cols
+
+
 def _alignments_for(conn, schema, chunk_id) -> list[StandardAlignment]:
     rows = conn.execute(
         f"""SELECT standard_id, standard_system, alignment_score, alignment_source,
@@ -502,7 +510,11 @@ def map_to_assessments(
 
     # Collect assessment items aligned to this standard, grouped by exam_series.
     items_by_exam: dict[str, list[dict]] = {}
+    items_available = False
     for schema in attached_schemas(conn):
+        if not _has_assessment_columns(conn, schema):
+            continue  # DB predates assessment columns — no items to serve here.
+        items_available = True
         rows = conn.execute(
             f"""SELECT c.id, c.source_id, c.title, c.content_type, c.grade_band,
                        c.content, c.source_url, c.attribution,
@@ -545,6 +557,9 @@ def map_to_assessments(
         "items_by_exam": items_by_exam,
         "gaps": gaps,
         "crosswalk_coverage": "full" if crosswalk else "unavailable",
+        # "ready" once any attached DB carries assessment columns; "no_item_store"
+        # on legacy DBs so callers can distinguish "no items yet" from "can't serve".
+        "items_status": "ready" if items_available else "no_item_store",
     }
 
 

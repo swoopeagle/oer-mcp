@@ -10,11 +10,47 @@ from importlib import resources
 from pathlib import Path
 
 
+# Columns added to `chunks` after the assessment feature landed. `CREATE TABLE
+# IF NOT EXISTS` never alters a pre-existing table, so DBs built before these
+# columns existed need an explicit ADD COLUMN migration. All nullable → safe and
+# non-destructive to backfill onto an old DB.
+_CHUNK_ASSESSMENT_COLUMNS = [
+    ("item_type", "TEXT"),
+    ("dok_level", "INTEGER"),
+    ("answer_key", "TEXT"),
+    ("exam_series", "TEXT"),
+    ("exam_year", "INTEGER"),
+    ("difficulty", "REAL"),
+    ("item_generation", "TEXT"),
+]
+
+
+def migrate_schema(conn: sqlite3.Connection) -> list[str]:
+    """Additive column migrations that IF-NOT-EXISTS DDL can't express.
+
+    Idempotent: only ALTERs columns that are actually missing. Returns the list
+    of columns added (empty when the DB is already current). Requires a writable
+    connection — callers run this on the create/build path, never on the
+    query_only server path.
+    """
+    existing = {r["name"] for r in conn.execute("PRAGMA table_info(chunks)")}
+    added: list[str] = []
+    for name, decl in _CHUNK_ASSESSMENT_COLUMNS:
+        if name not in existing:
+            conn.execute(f"ALTER TABLE chunks ADD COLUMN {name} {decl}")
+            added.append(name)
+    if added:
+        conn.commit()
+    return added
+
+
 def init_schema(conn: sqlite3.Connection) -> None:
-    """Apply schema.sql (idempotent — everything is IF NOT EXISTS)."""
+    """Apply schema.sql (idempotent — everything is IF NOT EXISTS), then run
+    additive migrations for columns that pre-existing tables would otherwise miss."""
     sql = resources.files("oer_shared").joinpath("schema.sql").read_text()
     conn.executescript(sql)
     conn.commit()
+    migrate_schema(conn)
 
 
 def connect(
