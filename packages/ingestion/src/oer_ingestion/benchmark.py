@@ -1,5 +1,12 @@
 """Combined-MCP benchmark (D9, PRD §13) — pairwise preference design.
 
+NOTE — sibling benchmark: scripts/eval/e2e_benchmark.py is the *integration* D9
+(spawns both MCP servers over stdio, drives real tool calls, YES/PARTIAL/NO +
+head-to-head judge). THIS module is the focused content-grounding eval: no MCP
+server, calls the query layer directly, judges pairwise which segment is better
+grounded in real OER excerpts. Writes bench.json.
+
+
 An earlier absolute 1-5 rubric saturated (a weak local judge scored ~everything
 5/5, so no lift was measurable). This version fixes both failure modes:
 

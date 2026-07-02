@@ -1,5 +1,17 @@
 """D9 end-to-end benchmark — local LLM agent + live MCP servers via stdio.
 
+NOTE — there are two D9 benchmarks with different scopes; don't confuse them:
+  * THIS file (scripts/eval/e2e_benchmark.py): integration-style. Spawns both MCP
+    servers over stdio, drives real tool calls, and scores answers with
+    deterministic checks + a YES/PARTIAL/NO judge and a head-to-head A/B compare.
+    Measures whether the *wired-up system* answers curriculum questions better.
+  * oer_ingestion.benchmark: a focused **pairwise content-grounding** eval. No MCP
+    server; it calls the query layer directly, generates a teaching segment three
+    ways (none/standardgraph/both) and asks a judge which is better grounded in
+    real OER excerpts. Reports both-vs-standardgraph win-rate → bench.json.
+Use this one for end-to-end/tool-calling regressions; use the other for measuring
+content-grounding lift.
+
 Headline question: does adding oer-mcp to standardgraph improve curriculum
 content answers?
 
