@@ -5,8 +5,29 @@ from oer_ingestion.benchmark import (
     Comparison,
     _aggregate,
     _judge_reference,
+    _oer_context,
     parse_pref,
 )
+
+
+def test_oer_context_reads_fetch_envelope():
+    """Regression: fetch_for_standard returns a {standard_id,count,results} envelope
+    (D-S4), not a bare list. _oer_context must read results out of it — otherwise
+    the benchmark's 'both' condition (and judge reference) silently get no OER."""
+
+    class EnvelopeQ:
+        def fetch_for_standard(self, conn, sid, limit=2, include_content=True):
+            return {"standard_id": sid, "count": 1,
+                    "results": [{"attribution": "OpenStax Prealgebra", "content": "A ratio compares two quantities."}]}
+
+    ctx = _oer_context(None, "CCSS.MATH.6.RP.3", EnvelopeQ())
+    assert "OpenStax Prealgebra" in ctx and "ratio compares" in ctx
+
+    class EmptyEnvelopeQ:
+        def fetch_for_standard(self, conn, sid, limit=2, include_content=True):
+            return {"standard_id": sid, "count": 0, "results": []}
+
+    assert _oer_context(None, "CCSS.MATH.K.CC.5", EmptyEnvelopeQ()) == ""
 
 
 def test_judge_reference_is_ground_truth_with_fallback():

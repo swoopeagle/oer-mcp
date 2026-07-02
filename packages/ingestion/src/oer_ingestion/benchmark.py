@@ -145,10 +145,13 @@ def _standard_text(sg, standard_id: str) -> str:
 
 
 def _oer_context(oer_conn, standard_id: str, queries) -> str:
+    # fetch_for_standard returns the {standard_id, count, results} envelope (D-S4).
+    # Read results out of it; tolerate a bare list for backward-compat.
     res = queries.fetch_for_standard(oer_conn, standard_id, limit=2, include_content=True)
-    if isinstance(res, dict):  # no_content
+    results = res.get("results", []) if isinstance(res, dict) else res
+    if not results:
         return ""
-    parts = [f"From {r['attribution']}:\n{(r['content'] or '')[:900]}" for r in res]
+    parts = [f"From {r['attribution']}:\n{(r['content'] or '')[:900]}" for r in results]
     return "Reference content (use these example types and methods):\n" + "\n\n".join(parts) if parts else ""
 
 
@@ -270,6 +273,62 @@ def run_benchmark(
     sg.close()
     oer_conn.close()
     return _aggregate(comparisons, len(topics))
+
+
+def run_benchmark_from_segments(
+    segments: dict[str, dict[str, str]],
+    oer_db: str | Path, sg_db: str | Path, *,
+    judge_model: str | None = None,
+    addon_db: str | Path | None = None, seed: int = 0,
+) -> dict:
+    """Judge-only benchmark over pre-generated segments (e.g. Claude-authored).
+
+    `segments` maps standard_id -> {"topic": str, "none": str, "standardgraph": str,
+    "both": str}. The generator step is skipped; everything else — the fixed
+    ground-truth OER reference, blind A/B randomization, judge model, aggregation —
+    is identical to run_benchmark. This measures whether OER context helps the
+    segment author (Claude, the real MCP consumer) while keeping an independent
+    judge model.
+    """
+    import sqlite3
+
+    from oer_server import queries
+    from oer_shared.db import connect
+
+    judge_model = judge_model or config.ANNOTATE_MODEL
+    rng = random.Random(seed)
+    sg = sqlite3.connect(f"file:{sg_db}?mode=ro", uri=True)
+    oer_conn = connect(oer_db, addon_db)
+
+    comparisons: list[Comparison] = []
+    with httpx.Client() as client:
+        for sid, seg in segments.items():
+            topic = seg.get("topic", sid)
+            plans = {c: seg[c] for c in CONDITIONS}
+            stext = _standard_text(sg, sid)
+            ref_materials = _judge_reference(oer_conn, sid, queries)
+            for left_cond, right_cond in PAIRS:
+                a_cond, b_cond = (left_cond, right_cond) if rng.random() < 0.5 else (right_cond, left_cond)
+                try:
+                    verdict = _ollama(
+                        judge_model,
+                        JUDGE_PROMPT.format(topic=topic, standard_id=sid, standard_text=stext,
+                                            reference_materials=ref_materials,
+                                            a=plans[a_cond], b=plans[b_cond]),
+                        client, temperature=0, num_predict=8,
+                    )
+                except httpx.HTTPError:
+                    comparisons.append(Comparison(topic, sid, a_cond, b_cond, None))
+                    continue
+                pref = parse_pref(verdict)
+                winner = "tie" if pref == "TIE" else a_cond if pref == "A" else b_cond if pref == "B" else None
+                comparisons.append(Comparison(topic, sid, a_cond, b_cond, winner))
+
+    sg.close()
+    oer_conn.close()
+    result = _aggregate(comparisons, len(segments))
+    result["generator"] = "claude"
+    return result
 
 
 def _aggregate(comparisons: list[Comparison], n_topics: int) -> dict:
