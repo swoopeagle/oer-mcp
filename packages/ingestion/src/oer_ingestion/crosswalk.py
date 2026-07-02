@@ -21,10 +21,20 @@ from pathlib import Path
 _DEFAULT_FILE = Path(__file__).parent / "data" / "exam_crosswalks.json"
 
 
+def _strip_jsonc_comments(text: str) -> str:
+    """Drop full-line ``//`` comments so the seed file can carry section headers
+    and source citations. Conservative on purpose: only whole-line comments are
+    removed (leading whitespace allowed), never trailing ``//`` — that would
+    corrupt ``https://`` inside string values like source_url."""
+    return "\n".join(
+        line for line in text.splitlines() if not line.lstrip().startswith("//")
+    )
+
+
 def load_crosswalks(conn: sqlite3.Connection, crosswalk_file: Path | str) -> dict[str, int]:
-    """Upsert crosswalk rows from a JSON file into exam_crosswalks.
+    """Upsert crosswalk rows from a JSON(C) file into exam_crosswalks.
     Returns {'added', 'updated'} counts."""
-    data = json.loads(Path(crosswalk_file).read_text())
+    data = json.loads(_strip_jsonc_comments(Path(crosswalk_file).read_text()))
     rows = data if isinstance(data, list) else data.get("crosswalks", [])
     added = updated = 0
     now = datetime.now(timezone.utc).isoformat()

@@ -147,13 +147,20 @@ publisher_guide / llm_verified / human: always "strong" (score not compared to t
 
 > **Status (2026-07):** the assessment *plumbing* is complete — schema columns,
 > `exam_crosswalks` table, adapters (`naep`, `smarter_balanced`, `ap_frq`), and the
-> `map_to_assessments` tool are all in place — but **no assessment content is loaded
-> yet**: `data/oer_core.db` has 0 assessment chunks and 0 crosswalk rows. The tool
-> therefore returns empty crosswalk/items envelopes (with `items_status="ready"`)
-> until the adapters are run. DBs built before the assessment columns landed are
-> healed automatically by `migrate_schema` on the next `connect(create=True)`;
-> `map_to_assessments` reports `items_status="no_item_store"` on any DB still missing
-> them rather than erroring.
+> `map_to_assessments` tool are all in place.
+> - **Crosswalk: LOADED.** `data/oer_core.db` carries 70 crosswalk rows across 15
+>   exam series (SAT/ACT/AP/NAEP/Smarter Balanced) from the seed file. Load/refresh
+>   with `uv run python -m oer_ingestion.crosswalk --db data/oer_core.db` (idempotent
+>   upsert). `map_to_assessments` matches a leaf standard against its own id **and
+>   every ancestor prefix**, so `8.EE.1` picks up the `8.EE` cluster rows and the
+>   grade-8 row.
+> - **Items: NOT loaded yet.** 0 assessment chunks — the item adapters fetch from
+>   live external sites (NAEP NQT, SBAC sample-item API, College Board PDFs) and
+>   have unverified endpoints (`# TODO: confirm params`), so they're fleet work, not
+>   dev-machine work. Every exam in the crosswalk therefore shows up in `gaps`.
+> - DBs built before the assessment columns landed are healed automatically by
+>   `migrate_schema` on the next `connect(create=True)`; `map_to_assessments` reports
+>   `items_status="no_item_store"` on any DB still missing them rather than erroring.
 
 **content_type = 'assessment'** — new fifth value alongside exposition/worked_example/exercise_set/summary. Assessment-only columns (all NULL for other types):
 - `item_type`: "multiple_choice" | "constructed_response" | "performance_task"

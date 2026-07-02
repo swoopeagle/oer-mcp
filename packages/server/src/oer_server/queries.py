@@ -478,24 +478,21 @@ def map_to_assessments(
     - items: available assessment chunks per exam (released or style-generated)
     - gaps: exam series in the crosswalk that have no items in the corpus yet
     Spans all attached databases (core + ncsa + ap)."""
-    # Crosswalk lives in main only (reference data, not content).
+    # Crosswalk lives in main only (reference data, not content). The seed stores
+    # CCSS cluster/grade *prefixes* (e.g. "CCSS.MATH.8.EE", "CCSS.MATH.8") so a
+    # leaf standard maps to every exam that tests its cluster or grade. Match the
+    # standard itself plus each ancestor prefix, trimming trailing dot-components:
+    # 8.EE.1 → {8.EE.1, 8.EE, 8, ...}, so it picks up the 8.EE cluster row
+    # (SAT/ACT/NAEP) and the grade-8 row (Smarter Balanced Grade 8).
+    parts = standard_id.split(".")
+    candidates = [".".join(parts[:i]) for i in range(len(parts), 0, -1)]
+    placeholders = ",".join("?" * len(candidates))
     xwalk_rows = conn.execute(
-        "SELECT exam_series, skill_domain, notes, source_url "
-        "FROM main.exam_crosswalks WHERE standard_id = ? ORDER BY exam_series",
-        (standard_id,),
+        f"SELECT exam_series, skill_domain, notes, source_url "
+        f"FROM main.exam_crosswalks WHERE standard_id IN ({placeholders}) "
+        f"ORDER BY exam_series",
+        candidates,
     ).fetchall()
-
-    # Prefix fallback: strip trailing cluster letter if no exact match.
-    if not xwalk_rows:
-        prefix = standard_id
-        parts = standard_id.split(".")
-        if len(parts[-1]) == 1 and parts[-1].isupper():
-            prefix = ".".join(parts[:-1])
-        xwalk_rows = conn.execute(
-            "SELECT exam_series, skill_domain, notes, source_url "
-            "FROM main.exam_crosswalks WHERE standard_id LIKE ? ORDER BY exam_series",
-            (prefix + "%",),
-        ).fetchall()
 
     crosswalk = [
         {

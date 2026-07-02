@@ -179,6 +179,25 @@ def test_map_to_assessments_gaps_in_crosswalk(conn):
     assert "ACT" in result["gaps"]  # but in crosswalk
 
 
+def test_map_to_assessments_leaf_matches_cluster_and_grade(conn):
+    """A leaf standard maps to crosswalk rows seeded at cluster AND grade prefixes
+    (the seed stores prefixes; a leaf query walks its ancestors to find them)."""
+    _crosswalk(conn, "CCSS.MATH.8.EE", "SAT", "Heart of Algebra")
+    _crosswalk(conn, "CCSS.MATH.8.EE", "NAEP Grade 8", "Algebra")
+    _crosswalk(conn, "CCSS.MATH.8", "Smarter Balanced Grade 8", "Grade 8 Mathematics")
+    # An unrelated cluster at the same grade must NOT match.
+    _crosswalk(conn, "CCSS.MATH.8.G", "SAT", "Additional Topics in Math")
+    conn.commit()
+
+    result = queries.map_to_assessments(conn, "CCSS.MATH.8.EE.1", include_items=False)
+    domains = {(c["exam_series"], c["skill_domain"]) for c in result["crosswalk"]}
+    assert ("SAT", "Heart of Algebra") in domains        # via cluster 8.EE
+    assert ("NAEP Grade 8", "Algebra") in domains         # via cluster 8.EE
+    assert ("Smarter Balanced Grade 8", "Grade 8 Mathematics") in domains  # via grade 8
+    assert ("SAT", "Additional Topics in Math") not in domains  # 8.G is a sibling
+    assert result["crosswalk_coverage"] == "full"
+
+
 def test_map_to_assessments_prefix_fallback(conn):
     """Cluster letter fallback: CCSS.MATH.6.RP.A → CCSS.MATH.6.RP when no exact match.
 
