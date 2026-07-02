@@ -1,0 +1,29 @@
+{
+  "_note": "Claude-authored alignment verifications. Each entry is a human-model judgment on a specific chunk<->standard alignment produced by the embedding stage. verdict='verified' upgrades the row to llm_verified with a coverage note; verdict='reject' marks it stale (a false positive the cosine score over-rated). Applied by oer_ingestion.verify_seed. This is the Claude-driven replacement for the gemma verify stage on curated, high-value standards.",
+  "verifications": [
+    {
+      "chunk_id": "openstax-prealgebra-2e-m81320-expo4",
+      "standard_id": "CCSS.MATH.7.EE.4",
+      "verdict": "verified",
+      "note": "Teaches translating real-world application problems into linear equations and solving them via the addition/subtraction properties of equality — the core of 7.EE.4 (use variables to construct and solve equations that model problems)."
+    },
+    {
+      "chunk_id": "openstax-algebra-and-trigonometry-2e-m51261-expo5",
+      "standard_id": "CCSS.MATH.8.F.1",
+      "verdict": "verified",
+      "note": "Introduces function notation and the vertical line test, establishing that a function assigns each input exactly one output — the definition at the heart of 8.F.1."
+    },
+    {
+      "chunk_id": "openstax-prealgebra-2e-m81303-expo5",
+      "standard_id": "CCSS.MATH.6.RP.3",
+      "verdict": "verified",
+      "note": "Covers the ratio/rate vocabulary and phrase-to-expression translation that underpins ratio and rate reasoning (6.RP.3); foundational/supporting coverage rather than full problem-solving."
+    },
+    {
+      "chunk_id": "openstax-prealgebra-2e-m81270-ex3",
+      "standard_id": "CCSS.MATH.8.EE.1",
+      "verdict": "reject",
+      "note": "Rejected: this chunk evaluates a single power (x^2 at x=10), a grade-6 exponent-notation skill. 8.EE.1 requires the properties of integer exponents (product/quotient/power rules, negative exponents), which this does not teach. The 0.81 embedding score is a false positive."
+    }
+  ]
+}
