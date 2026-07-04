@@ -16,6 +16,10 @@ ADDON_DB_PATH = Path(os.environ.get("OER_ADDON_DB_PATH", str(DATA_DIR / "oer_ncs
 # educational use). Partitioned separately so deployments can exclude it.
 AP_DB_PATH = Path(os.environ.get("OER_AP_DB_PATH", str(DATA_DIR / "oer_ap.db")))
 
+# Optional state database: state released exam items (e.g. NY Regents — state
+# copyright with educational-reproduction permission, not CC). Partitioned like AP.
+STATE_DB_PATH = Path(os.environ.get("OER_STATE_DB_PATH", str(DATA_DIR / "oer_state.db")))
+
 # Build-time only (ingestion Stages 4–6); never required at query time.
 OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://169.254.1.1:11434")
 # "generate" (default) or "chat" — some hosts/models only answer via /api/chat.

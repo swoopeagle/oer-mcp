@@ -161,6 +161,54 @@ def test_ranking_respects_confidence_across_dbs(multi_db):
         assert out["results"][0]["alignment_source"] == "publisher_guide"
 
 
+def test_state_partition_attach_and_span(multi_db, tmp_path):
+    """connect() attaches the state DB as 'state' and queries span it (D11 ext)."""
+    core, path = multi_db
+    core.close()
+
+    # Build a state DB with one Regents-style assessment chunk
+    state = sqlite3.connect(str(tmp_path / "state.db"))
+    src = connect(tmp_path / "schema_src.db", create=True)
+    for table in ["sources", "books", "chunks", "standard_alignments"]:
+        sql = src.execute(
+            "SELECT sql FROM sqlite_master WHERE type='table' AND name=?", (table,)
+        ).fetchone()
+        state.execute(sql[0])
+    src.close()
+    state.execute(
+        "INSERT INTO sources VALUES ('nysed-regents','NY Regents','NYSED educational use',"
+        "'u','https://www.nysedregents.org','2026-07-04',datetime('now'))"
+    )
+    state.execute(
+        "INSERT INTO books (id, source_id, title, subject, grade_band, license, url)"
+        " VALUES ('regents-alg1','nysed-regents','Regents Algebra I','mathematics','9-12',"
+        "'NYSED educational use','u')"
+    )
+    state.execute(
+        "INSERT INTO chunks (id, book_id, source_id, title, content, content_type,"
+        " word_count, source_url, attribution, stale, last_verified, item_type,"
+        " exam_series, exam_year, item_generation)"
+        " VALUES ('reg1','regents-alg1','nysed-regents','Regents Q1','solve for x',"
+        "'assessment',3,'u','attr',0,'2026-07-04','multiple_choice',"
+        "'NY Regents Algebra I',2024,'released')"
+    )
+    state.execute(
+        "INSERT INTO standard_alignments (chunk_id, standard_id, standard_system,"
+        " alignment_score, alignment_source, stale)"
+        " VALUES ('reg1','CCSS.MATH.HSA.REI.B.3','ccss',0.85,'embedding',0)"
+    )
+    state.commit()
+    state.close()
+
+    conn = connect(path / "core.db", path / "ncsa.db", None, tmp_path / "state.db")
+    from oer_shared.db import attached_schemas
+    assert set(attached_schemas(conn)) == {"main", "ncsa", "state"}
+
+    out = queries.fetch_for_standard(conn, "CCSS.MATH.HSA.REI.B.3")
+    assert any(r["chunk_id"] == "reg1" for r in out["results"])
+    conn.close()
+
+
 def test_deduplication_across_databases(multi_db):
     """Same chunk appearing in multiple DBs shouldn't be duplicated."""
     core, path = multi_db

@@ -11,7 +11,7 @@ import numpy as np
 from oer_shared.db import attached_schemas
 from oer_shared.models import ChunkResult, SourceInfo, SourceInventory, StandardAlignment
 
-_SCHEMA_LABELS = {"main": "core", "ncsa": "ncsa", "ap": "ap"}
+_SCHEMA_LABELS = {"main": "core", "ncsa": "ncsa", "ap": "ap", "state": "state"}
 
 
 def _fts_match(query: str) -> str | None:

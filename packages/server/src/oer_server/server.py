@@ -40,7 +40,8 @@ def _error(exc: Exception) -> dict:
 def get_conn():
     global _conn
     if _conn is None:
-        _conn = connect(config.CORE_DB_PATH, config.ADDON_DB_PATH, config.AP_DB_PATH)
+        _conn = connect(config.CORE_DB_PATH, config.ADDON_DB_PATH, config.AP_DB_PATH,
+                        config.STATE_DB_PATH)
     return _conn
 
 

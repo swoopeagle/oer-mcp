@@ -57,14 +57,16 @@ def connect(
     core_path: str | Path,
     addon_path: str | Path | None = None,
     ap_path: str | Path | None = None,
+    state_path: str | Path | None = None,
     *,
     create: bool = False,
 ) -> sqlite3.Connection:
-    """Open the core DB; attach the NC-SA add-on and AP databases if present.
+    """Open the core DB; attach the NC-SA add-on, AP, and state databases if present.
 
     create=True initialises the schema on the core DB (ingestion/tests);
     the server runs with create=False and fails loudly on a missing core DB.
-    The add-on and AP databases are always optional — silently skipped when absent.
+    The add-on, AP, and state databases are always optional — silently skipped
+    when absent.
     """
     core_path = Path(core_path)
     if not create and not core_path.exists():
@@ -90,6 +92,8 @@ def connect(
         conn.execute("ATTACH DATABASE ? AS ncsa", (str(addon_path),))
     if ap_path is not None and Path(ap_path).exists():
         conn.execute("ATTACH DATABASE ? AS ap", (str(ap_path),))
+    if state_path is not None and Path(state_path).exists():
+        conn.execute("ATTACH DATABASE ? AS state", (str(state_path),))
     # query_only hardens the server against accidental writes; set last so ATTACHes work.
     if not create:
         conn.execute("PRAGMA query_only = ON")
@@ -97,6 +101,6 @@ def connect(
 
 
 def attached_schemas(conn: sqlite3.Connection) -> list[str]:
-    """Schemas holding OER content: ['main'], ['main', 'ncsa'], or all three."""
+    """Schemas holding OER content: ['main'] plus any of 'ncsa', 'ap', 'state'."""
     rows = conn.execute("PRAGMA database_list").fetchall()
-    return [r["name"] for r in rows if r["name"] in ("main", "ncsa", "ap")]
+    return [r["name"] for r in rows if r["name"] in ("main", "ncsa", "ap", "state")]
