@@ -10,22 +10,27 @@ FastMCP server exposing open-licensed K–12 math content (OpenStax textbooks + 
 packages/
   shared/           → oer-shared: config, DB helpers, Pydantic models, schema.sql
   ingestion/        → oer-ingestion: adapters + 7-stage pipeline
-  server/           → oer-server: FastMCP stdio server (6 tools)
+  server/           → oer-server: FastMCP stdio server (8 tools)
 
-Three-database layout:
-  oer_core.db   CC BY content (OpenStax 1e, Illustrative Mathematics, Smarter Balanced, NAEP, PARCC)
+Four-database layout:
+  oer_core.db   CC BY / public domain content (OpenStax 1e, Illustrative Mathematics,
+                Smarter Balanced, NAEP)
   oer_ncsa.db   CC BY-NC-SA content (Khan transcripts, OpenStax 2e, OpenMiddle)
-  oer_ap.db     AP free-response items (College Board copyright, educational use — partitioned separately)
+  oer_ap.db     AP free-response items (College Board copyright, educational use)
+  oer_state.db  State released exam items (NY Regents, MCAS — state copyright,
+                educational-reproduction permission, not CC)
 
 data/oer_core.db          → dev/pipeline DB
 data/oer_ncsa.db          → dev/pipeline DB
 data/oer_ap.db            → dev/pipeline DB
+data/oer_state.db         → dev/pipeline DB
 ~/.oer-mcp/oer_core.db   → installed user DB (default)
 ~/.oer-mcp/oer_ncsa.db   → installed user DB (optional add-on, --with-khan)
 ~/.oer-mcp/oer_ap.db     → installed user DB (optional add-on, --with-ap)
+~/.oer-mcp/oer_state.db  → installed user DB (optional add-on, --with-state)
 
-Server attaches ncsa and ap at runtime if present; all queries transparently
-span whichever databases are attached via attached_schemas().
+Server attaches ncsa, ap, and state at runtime if present; all queries
+transparently span whichever databases are attached via attached_schemas().
 
 scripts/
   overnight_run.sh            → full ingestion pipeline
@@ -36,19 +41,25 @@ scripts/
 
 ## Key facts
 
-- **Core DB (CC BY):** OpenStax (13 books) + Illustrative Mathematics K–12 + style-generated assessments
-- **NC-SA DB (CC BY-NC-SA):** Khan Academy math transcripts (3,322 videos)
-- **Chunks (local `data/oer_core.db`, 2026-07-04):** 16,415 (14,065 OpenStax + 1,796 IM K-5/6-8/HS + 525 SBAC + 29 style-gen). OpenStax/IM/Khan all embedded.
-- **NC-SA chunks (local `data/oer_ncsa.db`, 2026-07-04):** 3,919 (3,322 Khan transcripts + 597 OpenMiddle DOK-3 problems). All Khan embedded + aligned.
-- **AP chunks (local `data/oer_ap.db`, 2026-07-04):** 85 AP FRQ questions (Calc AB/BC, Stats, Precalculus) from 2023-2026. College Board copyright — partitioned DB.
-- **CCSS coverage (local build):** **486 distinct standard IDs** in core; **485** in ncsa; publisher_guide alignments = core 3,124 + ncsa 3,463
-- **Alignments (local build):** core 43,029 + ncsa 14,704 = **57,733 total**; confidence hierarchy: `human` > `publisher_guide` > `llm_verified` > `embedding`
+- **Core DB (CC BY / public domain):** OpenStax (13 books) + Illustrative Mathematics K–12 + Smarter Balanced + NAEP + style-generated assessments
+- **NC-SA DB (CC BY-NC-SA):** Khan Academy transcripts + OpenMiddle
+- **State DB (state copyright, educational-reproduction permission):** NY Regents + MCAS
+- **AP DB (College Board copyright, educational use):** AP FRQ
+- **Chunks (local `data/oer_core.db`, 2026-07-04):** 17,684 (14,065 OpenStax + 1,796 IM K-5/6-8/HS + 525 SBAC + 1,269 NAEP + 29 style-gen). All embedded.
+- **NC-SA chunks (local `data/oer_ncsa.db`, 2026-07-04):** 3,919 (3,322 Khan transcripts + 597 OpenMiddle DOK-3 problems). All embedded + aligned.
+- **State chunks (local `data/oer_state.db`, 2026-07-04):** 2,038 (1,672 NY Regents Algebra I/Geometry/Algebra II questions + 366 MCAS released items). All embedded + aligned.
+- **AP chunks (local `data/oer_ap.db`, 2026-07-04):** 85 AP FRQ questions (Calc AB/BC, Stats, Precalculus) from 2023-2026.
+- **CCSS coverage (local build):** core 486 distinct standards, ncsa 485, state 312
+- **Alignments (local build):** core 47,880 + ncsa 14,704 + state 5,087 = **67,671 total** across 4 DBs; confidence hierarchy: `human` > `publisher_guide` > `llm_verified` > `embedding`
 - **IM adapter:** Full K-12 coverage — K-5, 6-8, and HS. All carry `publisher_guide` alignments (CCSS "Addressing" tags per lesson); no LLM verify needed. K-5 tags are often cluster-level (e.g. `CCSS.MATH.3.MD.B`); `fetch_for_standard` does parent-prefix matching.
 - **Khan adapter:** Kolibri channel DB → VTT transcript → exposition chunks. No CCSS tags in export → aligned via embedding (555 strong alignments ≥0.78 across 150 standards).
-- **SBAC adapter:** 525 math items (grades 3-8 + HS) from sampleitems.smarterbalanced.org API. 310 carry publisher CCSS alignment + all 525 have DOK. CC BY → core DB.
+- **SBAC adapter:** 525 math items (grades 3-8 + HS) from sampleitems.smarterbalanced.org API — search endpoint returns full metadata inline (CCSS standard, DOK, interaction type); item text itself is QTI-rendered and not extractable, so chunks carry metadata + a link. 310 carry publisher CCSS alignment; all 525 have DOK.
+- **NAEP adapter:** 1,269 items across grades 4/8/12, 1990-2024, from the reverse-engineered NQT API (nationsreportcard.gov/nqt — sessionless JSON, no auth). `getTabular` catalog + `GetItem` (text via screenshot alt-attributes) + `GetItemScoreGuide` (answer key) + `GetItemPerformanceData` (national % correct → difficulty). Fetch is async/concurrent (12-way) — the naive sequential version would have taken 1.5-2+ hours for ~3,800 requests; concurrent fetch takes ~9 min. Public domain → core DB.
 - **OpenMiddle adapter:** 597 DOK-3 constructed-response problems with publisher CCSS tags (429 standards). CC BY-NC-SA → ncsa DB.
-- **AP FRQ adapter:** PDF extraction from College Board. Covers Calc AB/BC, Statistics, Precalculus (2023-2026). © College Board → partitioned oer_ap.db.
-- **HuggingFace dataset:** `swoopeagle/oer-mcp` (files: `oer_core.db`, `oer_ncsa.db`) — NEEDS RE-UPLOAD after 2026-07-04 build
+- **AP FRQ adapter:** PDF extraction from College Board (apstudents.collegeboard.org index, apcentral.collegeboard.org media host for the actual PDFs — different subdomains). Covers Calc AB/BC, Statistics, Precalculus (2023-2026). © College Board → partitioned oer_ap.db.
+- **NY Regents adapter:** 1,672 questions from 70 released exams (Algebra I/Geometry/Algebra II, 2015-2026) at nysedregents.org. PDF text extraction needs a font-aware remap (`adapters/_pdf.py:extract_pdf_text_mathpi`) — NYSED's Mathematical Pi fonts have wrong ToUnicode maps, so `+`/`−`/`=`/`≤` etc. extract as digit glyphs via plain pypdf; pdfminer.six + per-character font inspection fixes it. MC answer keys parsed from companion `-sk.pdf` scoring keys (816/1,108 MC items). 9 pre-2018 Geometry Common Core exams (`geomcc*` filename variant) fetch but yield 0 chunks — an even-older PDF layout the remap table doesn't cover; not chased further. © NYSED → oer_state.db.
+- **MCAS adapter:** 366 released items (grades 3-8, 10; 2023 & 2025) from the Cognia Item Library API (mcas.cognia.org/item-catalog — sessionless JSON). Full item text + choices decoded from Lighthouse's URL-encoded prompt/distractor JSON; answer keys from `ScoringRubric`. 100% publisher MA-framework standard alignment (mapped to CCSS IDs). © MA DESE → oer_state.db.
+- **HuggingFace dataset:** `swoopeagle/oer-mcp` (files: `oer_core.db`, `oer_ncsa.db`) — NEEDS RE-UPLOAD after 2026-07-04 build; consider also publishing `oer_state.db`
 
 ## Tailscale devices
 
@@ -151,20 +162,23 @@ publisher_guide / llm_verified / human: always "strong" (score not compared to t
 
 ## Assessment content types and databases
 
-> **Status (2026-07):** the assessment *plumbing* is complete — schema columns,
-> `exam_crosswalks` table, adapters (`naep`, `smarter_balanced`, `ap_frq`), and the
-> `map_to_assessments` tool are all in place.
+> **Status (2026-07-04):** plumbing complete AND items loaded across all four
+> tiers — core, ncsa, ap, and the new state partition.
 > - **Crosswalk: LOADED.** `data/oer_core.db` carries 70 crosswalk rows across 15
 >   exam series (SAT/ACT/AP/NAEP/Smarter Balanced) from the seed file. Load/refresh
 >   with `uv run python -m oer_ingestion.crosswalk --db data/oer_core.db` (idempotent
 >   upsert). `map_to_assessments` matches a leaf standard against its own id **and
 >   every ancestor prefix**, so `8.EE.1` picks up the `8.EE` cluster rows and the
 >   grade-8 row.
-> - **Items: LOADED.** 554 assessment chunks in core (525 SBAC + 29 style-gen),
->   85 AP FRQ in oer_ap.db. SBAC adapter uses verified `/BrowseItems/search` API
->   (metadata-only; item text rendered by external QTI viewer). AP FRQ adapter
->   extracts questions from College Board PDFs via pypdf. NAEP NQT has no stable
->   public API (SPA with undiscoverable endpoints) — needs browser-based approach.
+> - **Items: LOADED across all 4 DBs.** core: 554 SBAC/style-gen + 1,269 NAEP =
+>   1,823 assessment chunks. state (new): 1,672 NY Regents + 366 MCAS = 2,038.
+>   ap: 85 AP FRQ. A representative check (`CCSS.MATH.7.EE.4`) now returns items
+>   from SAT, ACT, 4 SBAC grade bands, NAEP Gr 8, and 3 MCAS grade bands with
+>   **zero gaps** — up from every exam showing as a gap at the start of this pass.
+>   PARCC and full STAAR/Digital-Item-Library-style state coverage remain out of
+>   scope (PARCC: states are dropping it, shaky license claim on the archived
+>   items; STAAR: TEA moved released items behind a Cambium SPA not yet reverse-
+>   engineered — same technique that cracked NAEP/MCAS should work, just not done).
 > - DBs built before the assessment columns landed are healed automatically by
 >   `migrate_schema` on the next `connect(create=True)`; `map_to_assessments` reports
 >   `items_status="no_item_store"` on any DB still missing them rather than erroring.
@@ -173,7 +187,7 @@ publisher_guide / llm_verified / human: always "strong" (score not compared to t
 - `item_type`: "multiple_choice" | "constructed_response" | "performance_task"
 - `dok_level`: Webb's DOK 1–4
 - `answer_key`: correct answer / scoring guidance. Style-generated items always carry one (gemma-authored); released items carry one when source provides it.
-- `exam_series`: "AP Calculus BC" | "SAT" | "NAEP Grade 8" | "Smarter Balanced Gr 6" etc.
+- `exam_series`: "AP Calculus BC" | "SAT" | "NAEP Grade 8" | "Smarter Balanced Gr 6" | "NY Regents Algebra I" | "MCAS Grade 7" etc.
 - `exam_year`: year of release; NULL for style-generated
 - `difficulty`: 0–1 normalized (NAEP % correct nationally; SAT difficulty band)
 - `item_generation`: "released" | "style_generated"
@@ -181,7 +195,8 @@ publisher_guide / llm_verified / human: always "strong" (score not compared to t
 **Item source tiers:**
 | Tier | Sources | DB | Rationale |
 |---|---|---|---|
-| Open (ingest verbatim) | Smarter Balanced (CC BY), NAEP (public domain), PARCC (public domain), IM assessments (CC BY), OpenMiddle (CC BY-NC-SA) | core or ncsa | Clean license; standard adapter pattern |
+| Open (ingest verbatim) | Smarter Balanced (CC BY), NAEP (public domain), IM assessments (CC BY), OpenMiddle (CC BY-NC-SA) | core or ncsa | Clean license; standard adapter pattern |
+| Educational-use (verbatim) | NY Regents, MCAS | **state** | State copyright with explicit educational-reproduction permission; not CC — partitioned so deployments can exclude |
 | Gray zone (verbatim) | AP free-response questions | **ap** | College Board copyright; educational use argument strong; partitioned so deployments can exclude |
 | Style-generated | SAT-style, ACT-style | core | Not CB's items; gemma-generated from style reference; `item_generation='style_generated'`; always carries answer key |
 
