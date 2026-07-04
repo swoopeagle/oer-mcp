@@ -36,13 +36,15 @@ scripts/
 
 ## Key facts
 
-- **Core DB (CC BY):** OpenStax statistics (1e) + Illustrative Mathematics 6–8 + any CC BY expansions
-- **NC-SA DB (CC BY-NC-SA):** OpenStax 2e math books + Khan Academy transcripts
-- **Chunks (local `data/oer_core.db`, 2026-07-01):** 14,488 (14,065 OpenStax + 423 IM) + 29 Claude-authored assessment items
-- **CCSS coverage (local build, denominator 343 CCSS math standards):** **277/343 (81%)** have *any* alignment; **210/343 (61%)** have a *strong/verified* alignment (`human`/`publisher_guide`/`llm_verified` or embedding ≥ 0.78). Best-tier breakdown: 172 verified/publisher · 38 strong-embed · 47 moderate-embed · 20 light-embed. NOTE: the older "327/343 (95%)" figure was an earlier/production claim — not verified against this build; treat 61% strong / 81% any as the honest current numbers until the HF production DB is re-measured.
-- **Alignments (local build):** 32,906 across 277 distinct CCSS standards; confidence hierarchy: `human` > `publisher_guide` > `llm_verified` > `embedding`
-- **IM adapter:** First source with real `publisher_guide` alignments (CCSS "Addressing" tags per lesson); no LLM verify needed for those
-- **HuggingFace dataset:** `swoopeagle/oer-mcp` (files: `oer_core.db`, `oer_ncsa.db`)
+- **Core DB (CC BY):** OpenStax (13 books) + Illustrative Mathematics K–12 + style-generated assessments
+- **NC-SA DB (CC BY-NC-SA):** Khan Academy math transcripts (3,322 videos)
+- **Chunks (local `data/oer_core.db`, 2026-07-03):** 15,890 (14,094 OpenStax + 1,796 IM K-5/6-8/HS) + 29 style-generated assessment items
+- **NC-SA chunks (local `data/oer_ncsa.db`, 2026-07-03):** 3,322 Khan transcripts (509 K-5, 435 6-8, 1153 9-12, 1225 ungraded)
+- **CCSS coverage (local build, denominator 343 CCSS math standards):** **376 distinct standard IDs** have alignment (includes cluster-level K-5 IDs); publisher_guide = 2,814 alignments across all grades K-HS
+- **Alignments (local build):** 35,277 across 376 distinct standard IDs; confidence hierarchy: `human` > `publisher_guide` > `llm_verified` > `embedding`
+- **IM adapter:** Full K-12 coverage — K-5, 6-8, and HS. All carry `publisher_guide` alignments (CCSS "Addressing" tags per lesson); no LLM verify needed. K-5 tags are often cluster-level (e.g. `CCSS.MATH.3.MD.B`); `fetch_for_standard` does parent-prefix matching.
+- **Khan adapter:** Kolibri channel DB → VTT transcript → exposition chunks. No CCSS tags in export → alignment requires embed+align pass on fleet.
+- **HuggingFace dataset:** `swoopeagle/oer-mcp` (files: `oer_core.db`, `oer_ncsa.db`) — NEEDS RE-UPLOAD after this build
 
 ## Tailscale devices
 
