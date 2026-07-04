@@ -16,3 +16,8 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/oer_ingestion"]
+
+[dependency-groups]
+dev = [
+    "pypdf>=6.14.2",
+]

@@ -35,30 +35,32 @@ LICENSE = "© College Board — Educational Use"
 LICENSE_URL = "https://apstudents.collegeboard.org/"
 
 _BASE = "https://apstudents.collegeboard.org"
+_CENTRAL_BASE = "https://apcentral.collegeboard.org"
+_MEDIA_BASE = "https://apcentral.collegeboard.org"
 # Year range to ingest. College Board typically posts 10+ years of FRQs.
-_YEARS = list(range(2015, 2025))
+_YEARS = list(range(2015, 2027))
 
 AP_SUBJECTS = {
     "ap-calculus-ab": {
-        "slug": "calculus-ab",
+        "slug": "ap-calculus-ab",
         "title": "AP Calculus AB",
         "grade_band": "9-12",
         "exam_series": "AP Calculus AB",
     },
     "ap-calculus-bc": {
-        "slug": "calculus-bc",
+        "slug": "ap-calculus-bc",
         "title": "AP Calculus BC",
         "grade_band": "9-12",
         "exam_series": "AP Calculus BC",
     },
     "ap-statistics": {
-        "slug": "statistics",
+        "slug": "ap-statistics",
         "title": "AP Statistics",
         "grade_band": "9-12",
         "exam_series": "AP Statistics",
     },
     "ap-precalculus": {
-        "slug": "precalculus",
+        "slug": "ap-precalculus",
         "title": "AP Precalculus",
         "grade_band": "9-12",
         "exam_series": "AP Precalculus",
@@ -69,7 +71,7 @@ _PDF_LINK_RE = re.compile(
     r'href="([^"]+(?:frq|free.response)[^"]*\.pdf)"',
     re.IGNORECASE,
 )
-_QUESTION_SPLIT_RE = re.compile(r"\n(?=(?:Question|Problem)\s+\d+\b)", re.IGNORECASE)
+_QUESTION_SPLIT_RE = re.compile(r"\n(?=(?:Question|Problem)\s+\d+\b|\d+\.\s+[A-Z])", re.IGNORECASE)
 
 
 def _extract_pdf_text(pdf_bytes: bytes) -> str:
@@ -97,14 +99,29 @@ def _split_questions(full_text: str, year: int, subject_slug: str) -> list[dict]
         part = part.strip()
         if len(part.split()) < 20:
             continue
-        # First part may be cover page — skip if it lacks question content
-        if i == 0 and not re.search(r"\d+\s*points?", part, re.IGNORECASE):
+        # First part is always the cover page / preamble — skip it
+        if i == 0:
             continue
-        q_num = i if i > 0 else 1
-        # Attempt to read question number from text
+        q_num = i
+        # Extract question number: "Question 3" or "3. A customer..."
         m = re.match(r"(?:Question|Problem)\s+(\d+)", part, re.IGNORECASE)
+        if not m:
+            m = re.match(r"(\d+)\.\s+", part)
         if m:
             q_num = int(m.group(1))
+        # Strip boilerplate footers/headers from middle of text
+        part = re.sub(
+            r"AP®.*?Free-Response Questions\s*", "", part
+        )
+        part = re.sub(
+            r"Write your responses to this question.*?booklet\.\s*", "", part,
+            flags=re.DOTALL,
+        )
+        part = re.sub(r"GO ON TO THE NEXT PAGE\.\s*\d*", "", part)
+        part = re.sub(r"© \d{4} College Board\..*?collegeboard\.org\.", "", part)
+        part = part.strip()
+        if len(part.split()) < 20:
+            continue
         out.append({"q_num": q_num, "text": part})
     return out
 
@@ -154,33 +171,43 @@ class APFRQAdapter(SourceAdapter):
         now = datetime.now(timezone.utc).isoformat()
         raw: list[RawContent] = []
         with httpx.Client(timeout=self.timeout,
-                          headers={"User-Agent": "oer-mcp/0.1 (educator tool)",
+                          headers={"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
                                    "Accept": "text/html,application/pdf"}) as client:
             for sid in self.subjects:
                 info = AP_SUBJECTS.get(sid)
                 if not info:
                     continue
-                index_url = f"{_BASE}/courses/{info['slug']}/free-response-questions-by-year"
-                try:
-                    resp = client.get(index_url, follow_redirects=True)
-                except httpx.HTTPError as e:
-                    print(f"[ap-frq] {sid} index fetch failed: {e}")
-                    continue
-                if resp.status_code != 200:
-                    print(f"[ap-frq] {sid} index: HTTP {resp.status_code}")
+                index_urls = [
+                    f"{_BASE}/courses/{info['slug']}/free-response-questions-by-year",
+                    f"{_CENTRAL_BASE}/courses/{info['slug']}/exam/past-exam-questions",
+                ]
+                resp = None
+                for index_url in index_urls:
+                    try:
+                        resp = client.get(index_url, follow_redirects=True)
+                        if resp.status_code == 200:
+                            break
+                    except httpx.HTTPError:
+                        continue
+                if not resp or resp.status_code != 200:
+                    print(f"[ap-frq] {sid} index: no working URL found")
                     continue
 
                 # Find PDF links on the index page
                 pdf_urls = _PDF_LINK_RE.findall(resp.text)
                 for pdf_path in pdf_urls:
-                    # Filter to years we want
-                    year_match = re.search(r"(20\d{2})", pdf_path)
-                    if not year_match:
-                        continue
-                    year = int(year_match.group(1))
+                    # Extract year: CB uses 2-digit (ap23) or 4-digit (2023)
+                    year_match = re.search(r"ap(\d{2})-", pdf_path)
+                    if year_match:
+                        year = 2000 + int(year_match.group(1))
+                    else:
+                        year_match_4 = re.search(r"(20\d{2})", pdf_path)
+                        if not year_match_4:
+                            continue
+                        year = int(year_match_4.group(1))
                     if year not in self.years:
                         continue
-                    pdf_url = pdf_path if pdf_path.startswith("http") else _BASE + pdf_path
+                    pdf_url = pdf_path if pdf_path.startswith("http") else _MEDIA_BASE + pdf_path
                     try:
                         pdf_resp = client.get(pdf_url, follow_redirects=True)
                     except httpx.HTTPError as e:

@@ -2,14 +2,21 @@
 
 Source: https://sampleitems.smarterbalanced.org/
 Items are pre-tagged with CCSS standards by the publisher → publisher_guide tier.
-Covers grades 3–8 and HS (grade 11) for ELA and Math; we ingest Math only.
+Covers grades 3–8 and HS (grade 11) for Math.
 
-Access: public JSON API backed by the SBAC Digital Library. The sample items site
-exposes a REST API without authentication for released sample items. Full item bank
-(~20k items) requires an educator account and the Digital Library API at
-https://digitallibrary.smarterbalanced.org/ — see TODO below.
+Access: The sample items site exposes a JSON API (XHR-style, needs Accept/XHR headers)
+at /BrowseItems/search. The search endpoint returns all metadata inline:
+  - commonCoreStandardId + ccssDescription
+  - depthOfKnowledge
+  - interactionTypeCode/Label
+  - domain, claim, target
+  - grade
 
-Chunk ID: "sbac-{grade}-{item_key}-{item_type}"
+Item rendered content is served via external QTI viewer (not extractable). We store
+the publisher metadata and a link to view the live item — valuable for coverage
+analysis and crosswalk population.
+
+Chunk ID: "sbac-gr{grade}-{itemKey}"
 Book ID:  "sbac-math-gr{grade}"
 DB:       oer_core.db (CC BY 4.0)
 """
@@ -28,25 +35,10 @@ from .base import RawContent, SourceAdapter, ValidationResult
 LICENSE = "CC BY 4.0"
 LICENSE_URL = "https://creativecommons.org/licenses/by/4.0/"
 
-# TODO: verify exact API endpoint after manual inspection of network traffic on
-# https://sampleitems.smarterbalanced.org/BrowseItems. The URL below is the
-# documented public search endpoint; params may need adjustment.
-_API_BASE = "https://sampleitems.smarterbalanced.org"
-_SEARCH_PATH = "/api/items/search"
+_BASE = "https://sampleitems.smarterbalanced.org"
+_SEARCH_PATH = "/BrowseItems/search"
 
-GRADES = [3, 4, 5, 6, 7, 8, 11]  # 11 = HS
-
-_ITEM_TYPE_MAP = {
-    "mc": "multiple_choice",
-    "ms": "multiple_choice",   # multi-select → closest fit
-    "sa": "constructed_response",
-    "wer": "constructed_response",
-    "er": "constructed_response",
-    "te": "constructed_response",
-    "eq": "constructed_response",
-    "gi": "performance_task",
-    "sim": "performance_task",
-}
+GRADES = [3, 4, 5, 6, 7, 8, 11]
 
 _GRADE_BAND = {
     **{g: "K-5" for g in [3, 4, 5]},
@@ -54,23 +46,63 @@ _GRADE_BAND = {
     11: "9-12",
 }
 
+_ITEM_TYPE_MAP = {
+    "mc": "multiple_choice",
+    "ms": "multiple_choice",
+    "sa": "constructed_response",
+    "wer": "constructed_response",
+    "er": "constructed_response",
+    "te": "constructed_response",
+    "eq": "constructed_response",
+    "gi": "performance_task",
+    "sim": "performance_task",
+    "mi": "constructed_response",
+    "ti": "constructed_response",
+    "htq": "constructed_response",
+}
+
+_HEADERS = {
+    "Accept": "application/json",
+    "X-Requested-With": "XMLHttpRequest",
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
+}
+
 
 def _ccss_id(short: str) -> str | None:
-    """SBAC CCSS tag → StandardGraph ID.
-    SBAC uses forms like 'CCSS.Math.Content.6.RP.A.3' or '6.RP.A.3'."""
-    short = re.sub(r"^CCSS\.Math\.Content\.", "", short).strip()
+    """SBAC standard tag → StandardGraph ID.
+
+    SBAC uses bare forms like '3.OA.8', '6.RP.3', '8.EE.1', 'F-IF.4'.
+    SG format: K-5 keeps cluster letter, 6-8 drops it, HS keeps it.
+    """
+    if not short or not short.strip():
+        return None
+    short = short.strip()
+
+    # HS format: e.g. "F-IF.4" or "A-SSE.3"
+    if re.match(r"^[A-Z]-[A-Z]{1,4}\.", short):
+        parts = short.split("-", 1)
+        domain_letter = parts[0]
+        rest = parts[1]
+        return f"CCSS.MATH.HS{domain_letter}.{rest}"
+
     parts = short.split(".")
-    # drop cluster letter (single uppercase after the domain)
-    if len(parts) >= 4 and len(parts[2]) == 1 and parts[2].isalpha():
-        parts = [parts[0], parts[1], *parts[3:]]
-    elif len(parts) == 3 and parts[2].isalpha():
-        return None  # cluster-level header
-    # drop trailing lowercase sub-part
-    if parts and len(parts[-1]) == 1 and parts[-1].islower():
-        parts = parts[:-1]
     if len(parts) < 3:
         return None
-    return "CCSS.MATH." + ".".join(parts)
+
+    grade_str = parts[0]
+    try:
+        grade = int(grade_str) if grade_str != "K" else 0
+    except ValueError:
+        return None
+
+    if grade <= 5:
+        return "CCSS.MATH." + short
+    else:
+        # 6-8: drop cluster letter if present (single uppercase char in position 2)
+        if len(parts) >= 4 and len(parts[2]) == 1 and parts[2].isupper():
+            stripped = [parts[0], parts[1], *parts[3:]]
+            return "CCSS.MATH." + ".".join(stripped)
+        return "CCSS.MATH." + short
 
 
 class SmarterBalancedAdapter(SourceAdapter):
@@ -81,7 +113,7 @@ class SmarterBalancedAdapter(SourceAdapter):
         self.grades = grades or GRADES
         self.timeout = timeout
         self.max_items = max_items
-        self._meta: dict[str, dict] = {}
+        self._items: list[dict] = []
 
     def catalog(self) -> dict:
         return {
@@ -89,7 +121,7 @@ class SmarterBalancedAdapter(SourceAdapter):
                 "id": self.source_id,
                 "full_name": "Smarter Balanced Assessment Consortium (SBAC) Sample Items",
                 "license": LICENSE, "license_url": LICENSE_URL,
-                "base_url": _API_BASE,
+                "base_url": _BASE,
             },
             "books": [
                 {
@@ -99,154 +131,190 @@ class SmarterBalancedAdapter(SourceAdapter):
                     "subject": "mathematics",
                     "grade_band": _GRADE_BAND[g],
                     "license": LICENSE,
-                    "url": f"{_API_BASE}/BrowseItems",
+                    "url": f"{_BASE}/BrowseItems",
                 }
                 for g in self.grades
             ],
         }
 
     def fetch(self) -> list[RawContent]:
+        """Fetch all math items from SBAC search API (single request returns all)."""
         now = datetime.now(timezone.utc).isoformat()
         raw: list[RawContent] = []
-        with httpx.Client(timeout=self.timeout,
-                          headers={"User-Agent": "oer-mcp/0.1 (educator tool)"}) as client:
-            for grade in self.grades:
-                page = 0
-                while True:
-                    # TODO: verify exact params after inspecting network traffic.
-                    # Common SBAC API params: subject, grade, page, pageSize.
-                    resp = client.get(
-                        _API_BASE + _SEARCH_PATH,
-                        params={
-                            "subject": "MATH",
-                            "grade": grade,
-                            "page": page,
-                            "pageSize": 50,
-                        },
-                    )
-                    if resp.status_code != 200:
-                        print(f"[sbac] grade {grade} page {page}: HTTP {resp.status_code}")
-                        break
-                    data = resp.json()
-                    items = data.get("items") or data.get("results") or []
-                    if not items:
-                        break
-                    for item in items:
-                        key = str(item.get("itemKey") or item.get("id") or "")
-                        if not key:
-                            continue
-                        item["_grade"] = grade
-                        self._meta[key] = item
-                        raw.append(RawContent(
-                            source_id=self.source_id,
-                            key=key,
-                            url=f"{_API_BASE}/Item/Show?bankKey=187&itemKey={key}",
-                            fetched_at=now,
-                            payload=resp.text,  # store raw page JSON
-                        ))
-                        if self.max_items and len(raw) >= self.max_items:
-                            return raw
-                    # pagination
-                    total = data.get("total", 0)
-                    if (page + 1) * 50 >= total:
-                        break
-                    page += 1
+        self._items = []
+
+        with httpx.Client(timeout=self.timeout, headers=_HEADERS) as client:
+            # The SBAC search returns all grades in one response regardless of
+            # the grade param, so just fetch once with grade=3 and filter client-side
+            try:
+                resp = client.get(
+                    _BASE + _SEARCH_PATH,
+                    params={"subject": "MATH", "grade": "3"},
+                )
+                if resp.status_code != 200:
+                    print(f"[sbac] search: HTTP {resp.status_code}")
+                    return raw
+                data = resp.json()
+            except (httpx.HTTPError, ValueError) as e:
+                print(f"[sbac] search error: {e}")
+                return raw
+
+            items = data if isinstance(data, list) else data.get("items", [])
+            # Filter to math items in our target grades
+            grade_set = set(self.grades)
+            math_items = []
+            for item in items:
+                if item.get("subjectCode") != "MATH":
+                    continue
+                # Map SBAC's grade field to actual grade number
+                label = item.get("gradeLabel", "")
+                grade_num = _parse_grade_label(label)
+                if grade_num and grade_num in grade_set:
+                    item["_grade"] = grade_num
+                    math_items.append(item)
+
+            print(f"[sbac] {len(math_items)} math items across grades {sorted(grade_set)}")
+
+            for item in math_items:
+                item_key = item.get("itemKey")
+                bank_key = item.get("bankKey", 200)
+                if not item_key:
+                    continue
+                self._items.append(item)
+                raw.append(RawContent(
+                    source_id=self.source_id,
+                    key=f"{bank_key}-{item_key}",
+                    url=f"{_BASE}/Item/Details/{bank_key}-{item_key}",
+                    fetched_at=now,
+                    payload="",
+                ))
+                if self.max_items and len(raw) >= self.max_items:
+                    break
+
         return raw
 
     def parse(self, raw: list[RawContent]) -> list[ContentChunk]:
-        import json
         chunks: list[ContentChunk] = []
-        seen: set[str] = set()
 
-        for item in raw:
-            meta = self._meta.get(item.key)
-            if not meta or item.key in seen:
+        for item in self._items:
+            grade = item.get("_grade", 0)
+            bank_key = item.get("bankKey", 200)
+            item_key = item.get("itemKey")
+            if not item_key:
                 continue
-            seen.add(item.key)
 
-            grade = meta.get("_grade", 0)
             grade_band = _GRADE_BAND.get(grade, "9-12")
-            raw_type = (meta.get("interactionType") or meta.get("type") or "").lower()
+
+            # Interaction type
+            raw_type = (item.get("interactionTypeCode") or "").lower()
             item_type = _ITEM_TYPE_MAP.get(raw_type, "constructed_response")
+            interaction_label = item.get("interactionTypeLabel") or raw_type.upper()
 
-            # Item content: SBAC items have stimulus + question stem
-            stimulus = meta.get("stimulusContent") or meta.get("stimulus") or ""
-            stem = meta.get("itemContent") or meta.get("content") or ""
-            text = "\n\n".join(p for p in [stimulus, stem] if p).strip()
-            if not text or len(text.split()) < 5:
-                continue
+            # Standard
+            std_raw = item.get("commonCoreStandardId") or ""
+            ccss_id = _ccss_id(std_raw)
+            ccss_desc = item.get("ccssDescription") or ""
 
-            # Answer key: SBAC releases answer keys for many item types
-            answer = meta.get("answerKey") or meta.get("correctAnswer") or ""
-
-            # Difficulty: SBAC provides difficulty band
-            diff_raw = meta.get("difficulty") or meta.get("depthOfKnowledge") or 0
+            # DOK
+            dok_raw = item.get("depthOfKnowledge")
             try:
-                difficulty = float(diff_raw) / 4.0 if diff_raw else None
-            except (TypeError, ValueError):
-                difficulty = None
-
-            dok = meta.get("depthOfKnowledge")
-            try:
-                dok = int(dok) if dok else None
+                dok = int(dok_raw) if dok_raw else None
             except (TypeError, ValueError):
                 dok = None
 
-            # Standards
-            std_list = meta.get("standards") or meta.get("alignedStandards") or []
-            if isinstance(std_list, str):
-                std_list = [std_list]
-            aligns = []
-            for s in std_list:
-                cid = _ccss_id(str(s))
-                if cid:
-                    aligns.append(StandardAlignment(
-                        standard_id=cid, standard_system="ccss",
-                        alignment_score=0.95, alignment_source="publisher_guide",
-                        coverage_notes="SBAC item tagged to this standard by publisher.",
-                    ))
+            # Claim/target
+            claim_label = item.get("claimLabel") or ""
+            target_desc = item.get("targetDescription") or ""
+            domain = item.get("domain") or ""
 
-            title = f"SBAC Grade {grade} Math Item {item.key}"
-            attribution = (
-                f"Smarter Balanced Assessment Consortium, Math Grade {grade} Sample Item "
-                f"{item.key}. {LICENSE} (© Smarter Balanced Assessment Consortium, "
-                f"sampleitems.smarterbalanced.org)"
+            # Build content
+            parts = [
+                f"Smarter Balanced Grade {grade} Mathematics Assessment Item",
+                f"Type: {interaction_label}",
+            ]
+            if std_raw:
+                parts.append(f"Standard: CCSS.MATH.Content.{std_raw}")
+            if ccss_desc:
+                parts.append(f"Standard Description: {ccss_desc}")
+            if dok:
+                parts.append(f"Depth of Knowledge: Level {dok}")
+            if domain:
+                parts.append(f"Domain: {domain}")
+            if claim_label:
+                parts.append(f"Claim: {claim_label}")
+            if target_desc:
+                parts.append(f"Target: {target_desc}")
+            parts.append(
+                f"\nView item: {_BASE}/Item/Details/{bank_key}-{item_key}"
             )
+
+            content = "\n".join(parts)
+
+            # Alignments
+            aligns = []
+            if ccss_id:
+                aligns.append(StandardAlignment(
+                    standard_id=ccss_id, standard_system="ccss",
+                    alignment_score=0.95, alignment_source="publisher_guide",
+                    coverage_notes=(
+                        f"SBAC item {item_key} aligned by publisher. "
+                        f"DOK {dok or '?'}, {interaction_label}."
+                    ),
+                ))
+
+            title = f"SBAC Grade {grade} Math: {interaction_label} (Item {item_key})"
+            attribution = (
+                f"Smarter Balanced Assessment Consortium, Mathematics Grade {grade} "
+                f"Sample Item {item_key}. {LICENSE} "
+                f"(© Smarter Balanced, sampleitems.smarterbalanced.org)"
+            )
+
             chunks.append(ContentChunk(
-                id=f"sbac-gr{grade}-{item.key}-{item_type[:4]}",
+                id=f"sbac-gr{grade}-{item_key}",
                 book_id=f"sbac-math-gr{grade}",
                 source_id=self.source_id,
                 title=title,
-                content=text,
+                content=content,
                 content_type="assessment",
                 grade_band=grade_band,
-                word_count=len(text.split()),
-                source_url=item.url,
+                word_count=len(content.split()),
+                source_url=f"{_BASE}/Item/Details/{bank_key}-{item_key}",
                 attribution=attribution,
                 standard_alignments=aligns,
                 item_type=item_type,
                 dok_level=dok,
-                answer_key=answer or None,
+                answer_key=None,
                 exam_series=f"Smarter Balanced Grade {grade}",
-                exam_year=meta.get("year") or meta.get("releaseYear"),
-                difficulty=difficulty,
+                exam_year=None,
+                difficulty=None,
                 item_generation="released",
             ))
         return chunks
 
     def validate(self, chunks: list[ContentChunk]) -> ValidationResult:
         errors = [f"{c.id}: empty content" for c in chunks if not c.content.strip()]
-        errors += [f"{c.id}: empty attribution" for c in chunks if not c.attribution]
         if not chunks:
-            errors.append("no chunks produced — verify SBAC API endpoint and params")
+            errors.append("no chunks produced — verify SBAC API connectivity")
         with_std = sum(1 for c in chunks if c.standard_alignments)
-        no_dok = sum(1 for c in chunks if c.dok_level is None)
+        with_dok = sum(1 for c in chunks if c.dok_level is not None)
+        no_std = len(chunks) - with_std
         return ValidationResult(
             ok=not errors, errors=errors,
-            warnings=[f"{no_dok} items missing DOK level"] if no_dok else [],
+            warnings=[f"{no_std} items missing standard alignment"] if no_std else [],
             stats={
                 "total": len(chunks),
                 "with_publisher_std": with_std,
-                "missing_dok": no_dok,
+                "with_dok": with_dok,
+                "missing_std": no_std,
             },
         )
+
+
+def _parse_grade_label(label: str) -> int | None:
+    """'Grade 3' → 3, 'High School' → 11, etc."""
+    if "high school" in label.lower():
+        return 11
+    m = re.search(r"Grade\s+(\d+)", label, re.IGNORECASE)
+    if m:
+        return int(m.group(1))
+    return None

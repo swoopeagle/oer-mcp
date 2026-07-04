@@ -38,12 +38,16 @@ scripts/
 
 - **Core DB (CC BY):** OpenStax (13 books) + Illustrative Mathematics K–12 + style-generated assessments
 - **NC-SA DB (CC BY-NC-SA):** Khan Academy math transcripts (3,322 videos)
-- **Chunks (local `data/oer_core.db`, 2026-07-04):** 15,890 (14,094 OpenStax + 1,796 IM K-5/6-8/HS) + 29 style-generated assessment items. All 15,890 embedded.
-- **NC-SA chunks (local `data/oer_ncsa.db`, 2026-07-04):** 3,322 Khan transcripts (509 K-5, 435 6-8, 1153 9-12, 1225 ungraded). All 3,322 embedded + aligned.
-- **CCSS coverage (local build):** **377 distinct standard IDs** aligned (includes cluster-level K-5 IDs); publisher_guide = 2,814 alignments across all grades K-HS; Khan adds 150 strong-embed standards
-- **Alignments (local build):** core 40,773 + ncsa 11,241 = **52,014 total** across 377 distinct standard IDs; confidence hierarchy: `human` > `publisher_guide` > `llm_verified` > `embedding`
+- **Chunks (local `data/oer_core.db`, 2026-07-04):** 16,415 (14,065 OpenStax + 1,796 IM K-5/6-8/HS + 525 SBAC + 29 style-gen). OpenStax/IM/Khan all embedded.
+- **NC-SA chunks (local `data/oer_ncsa.db`, 2026-07-04):** 3,919 (3,322 Khan transcripts + 597 OpenMiddle DOK-3 problems). All Khan embedded + aligned.
+- **AP chunks (local `data/oer_ap.db`, 2026-07-04):** 85 AP FRQ questions (Calc AB/BC, Stats, Precalculus) from 2023-2026. College Board copyright — partitioned DB.
+- **CCSS coverage (local build):** **486 distinct standard IDs** aligned in core; 429 in ncsa (OpenMiddle publisher_guide); publisher_guide alignments = core 3,073 + ncsa 3,463
+- **Alignments (local build):** core 41,083 + ncsa 14,704 = **55,787 total**; confidence hierarchy: `human` > `publisher_guide` > `llm_verified` > `embedding`
 - **IM adapter:** Full K-12 coverage — K-5, 6-8, and HS. All carry `publisher_guide` alignments (CCSS "Addressing" tags per lesson); no LLM verify needed. K-5 tags are often cluster-level (e.g. `CCSS.MATH.3.MD.B`); `fetch_for_standard` does parent-prefix matching.
 - **Khan adapter:** Kolibri channel DB → VTT transcript → exposition chunks. No CCSS tags in export → aligned via embedding (555 strong alignments ≥0.78 across 150 standards).
+- **SBAC adapter:** 525 math items (grades 3-8 + HS) from sampleitems.smarterbalanced.org API. 310 carry publisher CCSS alignment + all 525 have DOK. CC BY → core DB.
+- **OpenMiddle adapter:** 597 DOK-3 constructed-response problems with publisher CCSS tags (429 standards). CC BY-NC-SA → ncsa DB.
+- **AP FRQ adapter:** PDF extraction from College Board. Covers Calc AB/BC, Statistics, Precalculus (2023-2026). © College Board → partitioned oer_ap.db.
 - **HuggingFace dataset:** `swoopeagle/oer-mcp` (files: `oer_core.db`, `oer_ncsa.db`) — NEEDS RE-UPLOAD after 2026-07-04 build
 
 ## Tailscale devices
@@ -156,10 +160,11 @@ publisher_guide / llm_verified / human: always "strong" (score not compared to t
 >   upsert). `map_to_assessments` matches a leaf standard against its own id **and
 >   every ancestor prefix**, so `8.EE.1` picks up the `8.EE` cluster rows and the
 >   grade-8 row.
-> - **Items: NOT loaded yet.** 0 assessment chunks — the item adapters fetch from
->   live external sites (NAEP NQT, SBAC sample-item API, College Board PDFs) and
->   have unverified endpoints (`# TODO: confirm params`), so they're fleet work, not
->   dev-machine work. Every exam in the crosswalk therefore shows up in `gaps`.
+> - **Items: LOADED.** 554 assessment chunks in core (525 SBAC + 29 style-gen),
+>   85 AP FRQ in oer_ap.db. SBAC adapter uses verified `/BrowseItems/search` API
+>   (metadata-only; item text rendered by external QTI viewer). AP FRQ adapter
+>   extracts questions from College Board PDFs via pypdf. NAEP NQT has no stable
+>   public API (SPA with undiscoverable endpoints) — needs browser-based approach.
 > - DBs built before the assessment columns landed are healed automatically by
 >   `migrate_schema` on the next `connect(create=True)`; `map_to_assessments` reports
 >   `items_status="no_item_store"` on any DB still missing them rather than erroring.
