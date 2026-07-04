@@ -109,13 +109,14 @@ def run_khan(db_path: Path, snapshot_root: Path, channel_db: str,
 
 
 def run_im(db_path: Path, snapshot_root: Path, courses: list[str] | None = None,
-           max_lessons: int | None = None) -> None:
-    """Ingest Illustrative Mathematics 6–8 (First Edition, CC BY 4.0) into the
-    *core* DB — it is permissively licensed so it grows the default install. Each
-    lesson's "Addressing" CCSS standards load as publisher_guide alignments (the
-    first real publisher tags in the corpus; no LLM verify needed for those)."""
-    adapter = IllustrativeMathAdapter(courses=courses, max_lessons=max_lessons)
-    print(f"[fetch] IM crawl (courses={adapter.courses}, max_lessons={max_lessons})")
+           max_lessons: int | None = None, path_family: str = "ms") -> None:
+    """Ingest Illustrative Mathematics (First Edition, CC BY 4.0) into the
+    *core* DB. Supports path_family: 'ms' (6-8), 'k5' (K-5), 'hs' (9-12).
+    Each lesson's "Addressing" CCSS standards load as publisher_guide alignments."""
+    adapter = IllustrativeMathAdapter(courses=courses, max_lessons=max_lessons,
+                                     path_family=path_family)
+    label = {"k5": "K-5", "ms": "6-8", "hs": "HS"}[path_family]
+    print(f"[fetch] IM {label} crawl (courses={adapter.courses}, max_lessons={max_lessons})")
     raw = adapter.fetch()
     print(f"[fetch] {len(raw)} lessons")
     snaps = write_snapshots(raw, snapshot_root, ext="html")
@@ -295,7 +296,7 @@ def run_validate(db_path: Path) -> None:
 def main() -> None:
     p = argparse.ArgumentParser(description="OER ingestion pipeline")
     p.add_argument("source", choices=[
-        "openstax", "khan", "im",
+        "openstax", "khan", "im", "im-k5", "im-hs",
         "smarter-balanced", "naep", "ap-frq",
         "crosswalks", "style-gen",
         "embed-align", "annotate", "verify", "validate", "migrate",
@@ -341,7 +342,14 @@ def main() -> None:
     elif args.source == "khan":
         run_khan(Path(args.db), Path(args.snapshots), args.channel_db, args.max_videos)
     elif args.source == "im":
-        run_im(Path(args.db), Path(args.snapshots), args.courses, args.max_lessons)
+        run_im(Path(args.db), Path(args.snapshots), args.courses, args.max_lessons,
+               path_family="ms")
+    elif args.source == "im-k5":
+        run_im(Path(args.db), Path(args.snapshots), args.courses, args.max_lessons,
+               path_family="k5")
+    elif args.source == "im-hs":
+        run_im(Path(args.db), Path(args.snapshots), args.courses, args.max_lessons,
+               path_family="hs")
     elif args.source == "smarter-balanced":
         run_smarter_balanced(Path(args.db), Path(args.snapshots),
                              grades=args.grades, max_items=args.max_items)

@@ -282,8 +282,10 @@ def fetch_for_standard(
     """
     rows: list[tuple] = []
     for schema in attached_schemas(conn):
-        clauses = ["a.standard_id = ?", "a.stale = 0", "c.stale = 0"]
-        params: list = [standard_id]
+        # Match exact standard OR content tagged at a parent cluster level
+        clauses = ["(a.standard_id = ? OR ? LIKE a.standard_id || '.%')",
+                   "a.stale = 0", "c.stale = 0"]
+        params: list = [standard_id, standard_id]
         if source:
             clauses.append("c.source_id = ?")
             params.append(source)
