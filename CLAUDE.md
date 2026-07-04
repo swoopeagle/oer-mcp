@@ -38,13 +38,13 @@ scripts/
 
 - **Core DB (CC BY):** OpenStax (13 books) + Illustrative Mathematics K–12 + style-generated assessments
 - **NC-SA DB (CC BY-NC-SA):** Khan Academy math transcripts (3,322 videos)
-- **Chunks (local `data/oer_core.db`, 2026-07-03):** 15,890 (14,094 OpenStax + 1,796 IM K-5/6-8/HS) + 29 style-generated assessment items
-- **NC-SA chunks (local `data/oer_ncsa.db`, 2026-07-03):** 3,322 Khan transcripts (509 K-5, 435 6-8, 1153 9-12, 1225 ungraded)
-- **CCSS coverage (local build, denominator 343 CCSS math standards):** **376 distinct standard IDs** have alignment (includes cluster-level K-5 IDs); publisher_guide = 2,814 alignments across all grades K-HS
-- **Alignments (local build):** 35,277 across 376 distinct standard IDs; confidence hierarchy: `human` > `publisher_guide` > `llm_verified` > `embedding`
+- **Chunks (local `data/oer_core.db`, 2026-07-04):** 15,890 (14,094 OpenStax + 1,796 IM K-5/6-8/HS) + 29 style-generated assessment items. All 15,890 embedded.
+- **NC-SA chunks (local `data/oer_ncsa.db`, 2026-07-04):** 3,322 Khan transcripts (509 K-5, 435 6-8, 1153 9-12, 1225 ungraded). All 3,322 embedded + aligned.
+- **CCSS coverage (local build):** **377 distinct standard IDs** aligned (includes cluster-level K-5 IDs); publisher_guide = 2,814 alignments across all grades K-HS; Khan adds 150 strong-embed standards
+- **Alignments (local build):** core 40,773 + ncsa 11,241 = **52,014 total** across 377 distinct standard IDs; confidence hierarchy: `human` > `publisher_guide` > `llm_verified` > `embedding`
 - **IM adapter:** Full K-12 coverage — K-5, 6-8, and HS. All carry `publisher_guide` alignments (CCSS "Addressing" tags per lesson); no LLM verify needed. K-5 tags are often cluster-level (e.g. `CCSS.MATH.3.MD.B`); `fetch_for_standard` does parent-prefix matching.
-- **Khan adapter:** Kolibri channel DB → VTT transcript → exposition chunks. No CCSS tags in export → alignment requires embed+align pass on fleet.
-- **HuggingFace dataset:** `swoopeagle/oer-mcp` (files: `oer_core.db`, `oer_ncsa.db`) — NEEDS RE-UPLOAD after this build
+- **Khan adapter:** Kolibri channel DB → VTT transcript → exposition chunks. No CCSS tags in export → aligned via embedding (555 strong alignments ≥0.78 across 150 standards).
+- **HuggingFace dataset:** `swoopeagle/oer-mcp` (files: `oer_core.db`, `oer_ncsa.db`) — NEEDS RE-UPLOAD after 2026-07-04 build
 
 ## Tailscale devices
 
