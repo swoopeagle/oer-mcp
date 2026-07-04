@@ -1,6 +1,7 @@
 from .ap_frq import APFRQAdapter
 from .base import RawContent, SourceAdapter, ValidationResult
 from .khan import KhanAcademyAdapter
+from .mcas import MCASAdapter
 from .naep import NAEPAdapter
 from .open_middle import OpenMiddleAdapter
 from .openstax import BookSpec, OpenStaxAdapter
@@ -19,4 +20,5 @@ __all__ = [
     "APFRQAdapter",
     "OpenMiddleAdapter",
     "RegentsAdapter",
+    "MCASAdapter",
 ]

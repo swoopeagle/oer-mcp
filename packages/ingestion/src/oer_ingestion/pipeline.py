@@ -16,7 +16,7 @@ from pathlib import Path
 from oer_shared import config
 from oer_shared.db import connect
 
-from .adapters import APFRQAdapter, BookSpec, KhanAcademyAdapter, NAEPAdapter, OpenMiddleAdapter, OpenStaxAdapter, RegentsAdapter, SmarterBalancedAdapter
+from .adapters import APFRQAdapter, BookSpec, KhanAcademyAdapter, MCASAdapter, NAEPAdapter, OpenMiddleAdapter, OpenStaxAdapter, RegentsAdapter, SmarterBalancedAdapter
 from .adapters.illustrative_math import IllustrativeMathAdapter
 from .align import align_chunks
 from .annotate import annotate
@@ -264,6 +264,33 @@ def run_regents(db_path: Path, snapshot_root: Path,
     conn.close()
 
 
+def run_mcas(db_path: Path, snapshot_root: Path,
+             grades: list[str] | None = None,
+             max_items: int | None = None) -> None:
+    """Ingest MCAS released items into the state DB (oer_state.db)."""
+    adapter = MCASAdapter(grades=grades, max_items=max_items)
+    print(f"[fetch] MCAS (grades={adapter.grades})")
+    raw = adapter.fetch()
+    print(f"[fetch] {len(raw)} items")
+    chunks = adapter.parse(raw)
+    result = adapter.validate(chunks)
+    print(f"[chunk] {result.stats}")
+    if not result.ok:
+        raise SystemExit(f"[chunk] validation failed: {result.errors[:5]}")
+    for w in result.warnings:
+        print(f"[chunk][warn] {w}")
+    conn = connect(db_path, create=True)
+    migrate_assessment_columns(conn)
+    load_catalog(conn, adapter.catalog())
+    counts = load_chunks(conn, chunks)
+    acounts = load_alignments(conn, chunks)
+    record_run(conn, adapter.source_id, counts, warnings=result.warnings)
+    total = conn.execute("SELECT COUNT(*) FROM chunks WHERE content_type='assessment'").fetchone()[0]
+    print(f"[load] added={counts['added']} updated={counts['updated']} | "
+          f"pub alignments={acounts['added']} | total assessment={total}")
+    conn.close()
+
+
 def run_crosswalks(db_path: Path, crosswalk_file: Path | None = None) -> None:
     """Load exam crosswalk data (standard → exam domain) into the core DB."""
     from pathlib import Path as _Path
@@ -345,7 +372,7 @@ def main() -> None:
     p = argparse.ArgumentParser(description="OER ingestion pipeline")
     p.add_argument("source", choices=[
         "openstax", "khan", "im", "im-k5", "im-hs", "open-middle",
-        "smarter-balanced", "naep", "ap-frq", "regents",
+        "smarter-balanced", "naep", "ap-frq", "regents", "mcas",
         "crosswalks", "style-gen",
         "embed-align", "annotate", "verify", "validate", "migrate",
     ])
@@ -415,6 +442,10 @@ def main() -> None:
         run_regents(Path(args.db), Path(args.snapshots),
                     courses=args.regents_courses, years=args.years,
                     max_exams=args.max_items)
+    elif args.source == "mcas":
+        run_mcas(Path(args.db), Path(args.snapshots),
+                 grades=[str(g) for g in args.grades] if args.grades else None,
+                 max_items=args.max_items)
     elif args.source == "crosswalks":
         run_crosswalks(Path(args.db),
                        Path(args.crosswalk_file) if args.crosswalk_file else None)

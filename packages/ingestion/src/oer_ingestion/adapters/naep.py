@@ -24,8 +24,8 @@ Book ID:  "naep-math-gr{grade}"
 
 from __future__ import annotations
 
+import asyncio
 import re
-import time
 from datetime import datetime, timezone
 
 import httpx
@@ -132,12 +132,12 @@ class NAEPAdapter(SourceAdapter):
     def __init__(self, grades: list[int] | None = None,
                  years: list[int] | None = None, *,
                  timeout: float = 30.0, max_items: int | None = None,
-                 delay: float = 0.15):
+                 concurrency: int = 12):
         self.grades = grades or GRADES
         self.years = years or YEARS
         self.timeout = timeout
         self.max_items = max_items
-        self.delay = delay
+        self.concurrency = concurrency
         self._meta: dict[str, dict] = {}
 
     def catalog(self) -> dict:
@@ -163,58 +163,76 @@ class NAEPAdapter(SourceAdapter):
         }
 
     def fetch(self) -> list[RawContent]:
+        return asyncio.run(self._fetch_async())
+
+    async def _fetch_async(self) -> list[RawContent]:
         now = datetime.now(timezone.utc).isoformat()
         raw: list[RawContent] = []
-        with httpx.Client(timeout=self.timeout, headers=_HEADERS) as client:
-            resp = client.post(_API + "/getTabular",
-                               json=_catalog_body(self.grades, self.years))
+        limits = httpx.Limits(max_connections=self.concurrency,
+                              max_keepalive_connections=self.concurrency)
+        async with httpx.AsyncClient(timeout=self.timeout, headers=_HEADERS,
+                                     limits=limits) as client:
+            resp = await client.post(_API + "/getTabular",
+                                     json=_catalog_body(self.grades, self.years))
             resp.raise_for_status()
             grid = resp.json().get("gridItemsList", [])
-            print(f"[naep] catalog: {len(grid)} items")
+            if self.max_items:
+                grid = grid[:self.max_items]
+            print(f"[naep] catalog: {len(grid)} items, concurrency={self.concurrency}")
 
-            for i, item in enumerate(grid):
+            sem = asyncio.Semaphore(self.concurrency)
+            done = 0
+            lock = asyncio.Lock()
+
+            async def fetch_one(item: dict) -> tuple[str, dict] | None:
+                nonlocal done
                 table_id = item.get("itemTableID")
                 if not table_id:
-                    continue
+                    return None
                 detail: dict = {"grid": item}
+                async with sem:
+                    try:
+                        r = await client.get(f"{_API}/GetItem", params={"tableID": table_id})
+                        if r.status_code == 200:
+                            detail["item"] = r.json()
+                    except (httpx.HTTPError, ValueError):
+                        pass
+                    try:
+                        r = await client.get(f"{_API}/GetItemScoreGuide",
+                                             params={"tableID": table_id})
+                        if r.status_code == 200:
+                            detail["scoreguide"] = r.text
+                    except httpx.HTTPError:
+                        pass
+                    try:
+                        r = await client.post(f"{_API}/GetItemPerformanceData", json={
+                            "itemTableID": int(table_id), "ndeSystemId": "1",
+                            "subjectCode": "MAT", "jurisdictionsSelected": "NT",
+                            "output": 0, "showStandardError": False,
+                            "statistics": ["MN", "RP"], "variablesSelected": "TOTAL",
+                        })
+                        if r.status_code == 200:
+                            detail["perf"] = r.json()
+                    except (httpx.HTTPError, ValueError):
+                        pass
+                async with lock:
+                    done += 1
+                    if done % 100 == 0:
+                        print(f"[naep] fetched {done}/{len(grid)} item details")
+                return str(table_id), detail
 
-                try:
-                    r = client.get(f"{_API}/GetItem", params={"tableID": table_id})
-                    if r.status_code == 200:
-                        detail["item"] = r.json()
-                except (httpx.HTTPError, ValueError):
-                    pass
-                try:
-                    r = client.get(f"{_API}/GetItemScoreGuide",
-                                   params={"tableID": table_id})
-                    if r.status_code == 200:
-                        detail["scoreguide"] = r.text
-                except httpx.HTTPError:
-                    pass
-                try:
-                    r = client.post(f"{_API}/GetItemPerformanceData", json={
-                        "itemTableID": int(table_id), "ndeSystemId": "1",
-                        "subjectCode": "MAT", "jurisdictionsSelected": "NT",
-                        "output": 0, "showStandardError": False,
-                        "statistics": ["MN", "RP"], "variablesSelected": "TOTAL",
-                    })
-                    if r.status_code == 200:
-                        detail["perf"] = r.json()
-                except (httpx.HTTPError, ValueError):
-                    pass
+            results = await asyncio.gather(*(fetch_one(item) for item in grid))
 
-                self._meta[str(table_id)] = detail
-                raw.append(RawContent(
-                    source_id=self.source_id, key=str(table_id),
-                    url=f"https://www.nationsreportcard.gov/nqt/{table_id}",
-                    fetched_at=now, payload="",
-                ))
-                if (i + 1) % 100 == 0:
-                    print(f"[naep] fetched {i + 1}/{len(grid)} item details")
-                if self.max_items and len(raw) >= self.max_items:
-                    break
-                if self.delay:
-                    time.sleep(self.delay)
+        for result in results:
+            if result is None:
+                continue
+            key, detail = result
+            self._meta[key] = detail
+            raw.append(RawContent(
+                source_id=self.source_id, key=key,
+                url=f"https://www.nationsreportcard.gov/nqt/{key}",
+                fetched_at=now, payload="",
+            ))
         return raw
 
     def parse(self, raw: list[RawContent]) -> list[ContentChunk]:

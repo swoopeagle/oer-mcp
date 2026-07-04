@@ -131,15 +131,18 @@ class RegentsAdapter(SourceAdapter):
                     continue
 
                 # Filename drift across years: 2025+ 'algone-62025-exam.pdf',
-                # 2016-24 'algone62024-exam.pdf', plus '-examp'/'-exama' variants.
-                # Large-type editions (-examlt, -exam-lt, -ltexam) never match.
+                # 2016-24 'algone62024-exam.pdf', 2015-17 geometry 'geomcc62016',
+                # plus -examp/-exama/-examw/-examr/-exampr variants. Large-type
+                # editions (-examlt, -exam-lt, -ltexam) never match.
                 exam_paths = re.findall(
-                    rf'href="([^"]*{info["slug"]}-?(\d{{5}})-exam[ap]?\.pdf)"',
+                    rf'href="([^"]*{info["slug"]}(?:cc)?-?(\d{{5}})-exam(?!lt|-lt)[a-z]{{0,2}}\.pdf)"',
                     resp.text,
                 )
                 for rel_path, admin in exam_paths:
                     month, year = _parse_admin(admin)
                     if year not in self.years:
+                        continue
+                    if f"{info['slug']}-{admin}" in self._meta:
                         continue
                     exam_url = rel_path if rel_path.startswith("http") \
                         else f"{_BASE}/{info['dir']}/{rel_path}"
@@ -154,7 +157,7 @@ class RegentsAdapter(SourceAdapter):
 
                     # Companion scoring key (best-effort)
                     sk_answers: dict[int, str] = {}
-                    sk_url = re.sub(r"-exam[ap]?\.pdf$", "-sk.pdf", exam_url)
+                    sk_url = re.sub(r"-exam[a-z]{0,2}\.pdf$", "-sk.pdf", exam_url)
                     try:
                         sk = client.get(sk_url)
                         if sk.status_code == 200 and sk.content[:4] == b"%PDF":
