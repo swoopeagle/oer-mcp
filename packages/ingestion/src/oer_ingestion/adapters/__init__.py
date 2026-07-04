@@ -4,6 +4,7 @@ from .khan import KhanAcademyAdapter
 from .naep import NAEPAdapter
 from .open_middle import OpenMiddleAdapter
 from .openstax import BookSpec, OpenStaxAdapter
+from .regents import RegentsAdapter
 from .smarter_balanced import SmarterBalancedAdapter
 
 __all__ = [
@@ -17,4 +18,5 @@ __all__ = [
     "NAEPAdapter",
     "APFRQAdapter",
     "OpenMiddleAdapter",
+    "RegentsAdapter",
 ]

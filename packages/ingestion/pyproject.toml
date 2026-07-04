@@ -19,5 +19,6 @@ packages = ["src/oer_ingestion"]
 
 [dependency-groups]
 dev = [
+    "pdfminer-six>=20260107",
     "pypdf>=6.14.2",
 ]

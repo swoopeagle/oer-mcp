@@ -1,27 +1,31 @@
 """NAEP adapter — National Assessment of Educational Progress released items.
 
-Source: NCES Questions Tool — https://nces.ed.gov/nationsreportcard/nqt/
+Source: NAEP Questions Tool — https://www.nationsreportcard.gov/nqt/
 License: Public domain (U.S. federal government work, 17 U.S.C. § 105)
-Volume: ~1,500 released math items across grades 4, 8, and 12
-DB: oer_core.db (public domain)
+DB: oer_core.db
+
+Endpoints (reverse-engineered from the NQT SPA, 2026-07; all sessionless):
+  POST /nqt/api/queryresults/getTabular            item catalog w/ metadata
+  GET  /nqt/api/queryresults/GetItem?tableID=N     item HTML (text lives in the
+                                                   screenshot's alt attribute for
+                                                   image-rendered items)
+  GET  /nqt/api/queryresults/GetItemScoreGuide?tableID=N   answer key HTML
+  POST /nqt/api/queryresults/GetItemPerformanceData        choice-level national
+                                                   distributions; the starred
+                                                   choice's percent → difficulty
 
 Each item carries national percent-correct data — a real-world difficulty signal
-unavailable from any other source in the corpus. DOK level is inferred from NAEP's
-own cognitive complexity classification (Low/Medium/High → DOK 1/2/3).
+unavailable from any other source in the corpus. NAEP cognitive complexity
+(Low/Moderate/High) maps to DOK 1/2/3. No CCSS tags → embedding alignment.
 
-The NCES Questions Tool has a JSON API used by its search interface. The endpoint
-below returns items in JSON; CCSS alignment is NOT publisher-tagged on NAEP items
-(NAEP predates widespread CCSS adoption) so items land as embedding alignment only
-after the align stage.
-
-Chunk ID: "naep-{grade}-{block}-{position}"
+Chunk ID: "naep-gr{grade}-{tableID}"
 Book ID:  "naep-math-gr{grade}"
-DB:       oer_core.db
 """
 
 from __future__ import annotations
 
 import re
+import time
 from datetime import datetime, timezone
 
 import httpx
@@ -33,35 +37,107 @@ from .base import RawContent, SourceAdapter, ValidationResult
 LICENSE = "Public Domain"
 LICENSE_URL = "https://nces.ed.gov/nationsreportcard/about/"
 
-# NAEP Questions Tool API — verified against nces.ed.gov/nationsreportcard/nqt/
-# TODO: confirm exact params by inspecting XHR in browser dev tools on the NQT site.
-_API_BASE = "https://nces.ed.gov/nationsreportcard"
-_SEARCH_PATH = "/api/v1/questions/search"
+_API = "https://www.nationsreportcard.gov/nqt/api/queryresults"
 
 GRADES = [4, 8, 12]
 _GRADE_BAND = {4: "K-5", 8: "6-8", 12: "9-12"}
 
-# NAEP cognitive complexity → Webb's DOK
-_COG_TO_DOK = {"low": 1, "medium": 2, "high": 3}
+# NAEP assessment years available in the NQT (from the querypanel payload).
+YEARS = [2024, 2022, 2017, 2013, 2011, 2009, 2007, 2005, 2003, 1996, 1992, 1990]
+
+_COMPLEXITY_TO_DOK = {"low": 1, "moderate": 2, "high": 3}
 
 _ITEM_TYPE_MAP = {
-    "multiple choice": "multiple_choice",
     "mc": "multiple_choice",
-    "short constructed response": "constructed_response",
-    "extended constructed response": "constructed_response",
+    "sr": "multiple_choice",       # selected response
     "scr": "constructed_response",
     "ecr": "constructed_response",
+    "cr": "constructed_response",
 }
+
+_HEADERS = {
+    "Content-Type": "application/json",
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
+}
+
+_TAG_RE = re.compile(r"<[^>]+>")
+_ALT_RE = re.compile(r'alt="([^"]+)"')
+
+
+def _catalog_body(grades: list[int], years: list[int]) -> dict:
+    """Minimal getTabular payload the server accepts (verified 2026-07)."""
+    return {
+        "SubjectCode": "MAT",
+        "GradeStr": ",".join(str(g) for g in grades),
+        "SystemID": "1",
+        "SubjectGradeInfo": [{
+            "subject": "MAT", "label": "Mathematics", "ndeSystemID": "1",
+            "ndeSystem": "NDEMAIN", "isSelected": True,
+            "gradeList": [
+                {"cohort": i + 1, "grade": str(g), "gradeLabel": f"Grade {g}",
+                 "isSelected": True, "isAge": False, "numMCItems": 0}
+                for i, g in enumerate(grades)
+            ],
+        }],
+        "YearsInfo": [
+            {"year": y, "sample": "R3" if y > 2000 else "R2", "tab": None,
+             "yearSample": f"{y}{'R3' if y > 2000 else 'R2'}",
+             "isSelected": True, "framework": 0}
+            for y in years
+        ],
+    }
+
+
+def _item_text(item_html: str) -> str:
+    """Extract question text from GetItem HTML. Image-rendered items carry the
+    full text in the screenshot's alt attribute; HTML items are stripped of tags."""
+    alts = _ALT_RE.findall(item_html)
+    best_alt = max(alts, key=len) if alts else ""
+    if "QUESTION TEXT:" in best_alt:
+        text = best_alt
+        text = re.sub(r"^Screen shot of an interactive question\.\s*", "", text)
+        text = text.replace("QUESTION TEXT:", "").strip()
+        text = re.sub(r"\s*ANSWER CHOICES:\s*", "\n", text)
+        return _unescape(text)
+    # HTML-rendered item: strip tags
+    text = _TAG_RE.sub(" ", item_html)
+    return _unescape(re.sub(r"\s+", " ", text).strip())
+
+
+def _unescape(s: str) -> str:
+    import html
+    return html.unescape(s.replace("\\r\\n", "\n")).strip()
+
+
+def _answer_from_scoreguide(guide_html: str) -> str | None:
+    text = _unescape(re.sub(r"\s+", " ", _TAG_RE.sub(" ", guide_html)).strip())
+    return text[:500] if text else None
+
+
+def _pct_correct(perf: dict) -> float | None:
+    """National percent for the starred (correct) choice, as 0–1."""
+    try:
+        for series in perf["result"]["series"]:
+            for dp in series["dataPoints"]:
+                if "*" in (dp.get("AxisLabel") or ""):
+                    return float(dp["YValues"][0]) / 100.0
+    except (KeyError, TypeError, ValueError, IndexError):
+        pass
+    return None
 
 
 class NAEPAdapter(SourceAdapter):
     source_id = "naep"
 
-    def __init__(self, grades: list[int] | None = None, *,
-                 timeout: float = 30.0, max_items: int | None = None):
+    def __init__(self, grades: list[int] | None = None,
+                 years: list[int] | None = None, *,
+                 timeout: float = 30.0, max_items: int | None = None,
+                 delay: float = 0.15):
         self.grades = grades or GRADES
+        self.years = years or YEARS
         self.timeout = timeout
         self.max_items = max_items
+        self.delay = delay
         self._meta: dict[str, dict] = {}
 
     def catalog(self) -> dict:
@@ -70,7 +146,7 @@ class NAEPAdapter(SourceAdapter):
                 "id": self.source_id,
                 "full_name": "National Assessment of Educational Progress (NAEP) Released Items",
                 "license": LICENSE, "license_url": LICENSE_URL,
-                "base_url": "https://nces.ed.gov/nationsreportcard/nqt/",
+                "base_url": "https://www.nationsreportcard.gov/nqt/",
             },
             "books": [
                 {
@@ -80,7 +156,7 @@ class NAEPAdapter(SourceAdapter):
                     "subject": "mathematics",
                     "grade_band": _GRADE_BAND[g],
                     "license": LICENSE,
-                    "url": "https://nces.ed.gov/nationsreportcard/nqt/",
+                    "url": "https://www.nationsreportcard.gov/nqt/",
                 }
                 for g in self.grades
             ],
@@ -89,129 +165,111 @@ class NAEPAdapter(SourceAdapter):
     def fetch(self) -> list[RawContent]:
         now = datetime.now(timezone.utc).isoformat()
         raw: list[RawContent] = []
-        with httpx.Client(timeout=self.timeout,
-                          headers={"User-Agent": "oer-mcp/0.1 (educator tool)"}) as client:
-            for grade in self.grades:
-                page = 0
-                while True:
-                    # TODO: verify exact params after inspecting NQT network traffic.
-                    # Likely params: subject, grade, type (released), page, pageSize.
-                    resp = client.get(
-                        _API_BASE + _SEARCH_PATH,
-                        params={
-                            "subject": "mathematics",
-                            "grade": grade,
-                            "status": "released",
-                            "page": page,
-                            "pageSize": 50,
-                        },
-                    )
-                    if resp.status_code != 200:
-                        print(f"[naep] grade {grade} page {page}: HTTP {resp.status_code}")
-                        break
-                    data = resp.json()
-                    items = data.get("items") or data.get("questions") or []
-                    if not items:
-                        break
-                    for item in items:
-                        key = str(item.get("questionId") or item.get("id") or "")
-                        if not key:
-                            continue
-                        item["_grade"] = grade
-                        self._meta[key] = item
-                        raw.append(RawContent(
-                            source_id=self.source_id,
-                            key=key,
-                            url=f"https://nces.ed.gov/nationsreportcard/nqt/Search#{key}",
-                            fetched_at=now,
-                            payload=resp.text,
-                        ))
-                        if self.max_items and len(raw) >= self.max_items:
-                            return raw
-                    total = data.get("total", 0)
-                    if (page + 1) * 50 >= total:
-                        break
-                    page += 1
+        with httpx.Client(timeout=self.timeout, headers=_HEADERS) as client:
+            resp = client.post(_API + "/getTabular",
+                               json=_catalog_body(self.grades, self.years))
+            resp.raise_for_status()
+            grid = resp.json().get("gridItemsList", [])
+            print(f"[naep] catalog: {len(grid)} items")
+
+            for i, item in enumerate(grid):
+                table_id = item.get("itemTableID")
+                if not table_id:
+                    continue
+                detail: dict = {"grid": item}
+
+                try:
+                    r = client.get(f"{_API}/GetItem", params={"tableID": table_id})
+                    if r.status_code == 200:
+                        detail["item"] = r.json()
+                except (httpx.HTTPError, ValueError):
+                    pass
+                try:
+                    r = client.get(f"{_API}/GetItemScoreGuide",
+                                   params={"tableID": table_id})
+                    if r.status_code == 200:
+                        detail["scoreguide"] = r.text
+                except httpx.HTTPError:
+                    pass
+                try:
+                    r = client.post(f"{_API}/GetItemPerformanceData", json={
+                        "itemTableID": int(table_id), "ndeSystemId": "1",
+                        "subjectCode": "MAT", "jurisdictionsSelected": "NT",
+                        "output": 0, "showStandardError": False,
+                        "statistics": ["MN", "RP"], "variablesSelected": "TOTAL",
+                    })
+                    if r.status_code == 200:
+                        detail["perf"] = r.json()
+                except (httpx.HTTPError, ValueError):
+                    pass
+
+                self._meta[str(table_id)] = detail
+                raw.append(RawContent(
+                    source_id=self.source_id, key=str(table_id),
+                    url=f"https://www.nationsreportcard.gov/nqt/{table_id}",
+                    fetched_at=now, payload="",
+                ))
+                if (i + 1) % 100 == 0:
+                    print(f"[naep] fetched {i + 1}/{len(grid)} item details")
+                if self.max_items and len(raw) >= self.max_items:
+                    break
+                if self.delay:
+                    time.sleep(self.delay)
         return raw
 
     def parse(self, raw: list[RawContent]) -> list[ContentChunk]:
         chunks: list[ContentChunk] = []
-        seen: set[str] = set()
-
-        for item in raw:
-            meta = self._meta.get(item.key)
-            if not meta or item.key in seen:
+        for rc in raw:
+            detail = self._meta.get(rc.key)
+            if not detail:
                 continue
-            seen.add(item.key)
+            grid = detail["grid"]
+            grade = grid.get("gradeAsInt") or 4
+            year = grid.get("yearAsInt")
+            block = grid.get("blockID") or "?"
+            qnum = grid.get("questionNum") or "?"
+            desc = grid.get("description") or ""
 
-            grade = meta.get("_grade", 4)
-            grade_band = _GRADE_BAND.get(grade, "K-5")
-
-            # Item text: NAEP items have stem + answer choices for MC
-            stem = meta.get("questionText") or meta.get("stem") or meta.get("content") or ""
-            choices = meta.get("answerChoices") or meta.get("choices") or []
-            if choices and isinstance(choices, list):
-                choices_text = "\n".join(
-                    f"{c.get('label','')}) {c.get('text','')}"
-                    for c in choices if isinstance(c, dict)
-                )
-                text = f"{stem}\n\n{choices_text}".strip() if choices_text else stem
-            else:
-                text = stem.strip()
-
+            item_html = (detail.get("item") or {}).get("itemHTML", "")
+            text = _item_text(item_html) if item_html else ""
             if not text or len(text.split()) < 5:
+                # Fall back to the catalog description so coverage survives
+                # items whose content is purely graphical.
+                text = desc
+            if not text or len(text.split()) < 3:
                 continue
 
-            raw_type = (meta.get("itemType") or meta.get("type") or "").lower()
+            raw_type = (grid.get("type") or "").lower()
             item_type = _ITEM_TYPE_MAP.get(raw_type, "constructed_response")
+            dok = _COMPLEXITY_TO_DOK.get((grid.get("complexity") or "").lower())
+            answer = _answer_from_scoreguide(detail.get("scoreguide", ""))
+            difficulty = _pct_correct(detail.get("perf", {}))
+            content_area = grid.get("contentArea") or ""
 
-            # Correct answer
-            answer = meta.get("correctAnswer") or meta.get("answerKey") or ""
-            scoring = meta.get("scoringGuide") or meta.get("rubric") or ""
-            answer_key = "; ".join(p for p in [answer, scoring] if p) or None
+            body = f"{desc}\n\n{text}" if desc and desc not in text else text
+            if content_area:
+                body += f"\n\nContent area: {content_area}"
 
-            # Difficulty: NAEP reports % correct nationally
-            pct_correct = meta.get("percentCorrect") or meta.get("difficulty")
-            try:
-                difficulty = float(pct_correct) / 100.0 if pct_correct else None
-            except (TypeError, ValueError):
-                difficulty = None
-
-            # DOK from NAEP cognitive complexity
-            cog = (meta.get("cognitiveComplexity") or "").lower()
-            dok = _COG_TO_DOK.get(cog)
-
-            # Year
-            year = meta.get("year") or meta.get("assessmentYear")
-            try:
-                year = int(str(year)[:4]) if year else None
-            except (TypeError, ValueError):
-                year = None
-
-            block = meta.get("block") or "?"
-            pos = meta.get("position") or meta.get("itemNumber") or item.key
-            title = f"NAEP Grade {grade} Math Item {block}-{pos}"
             attribution = (
                 f"National Assessment of Educational Progress (NAEP), "
-                f"Mathematics Grade {grade}, {year or 'released'}. "
+                f"Mathematics Grade {grade}, {year}, Block {block} Question {qnum}. "
                 f"Public Domain. National Center for Education Statistics, "
-                f"U.S. Department of Education. nces.ed.gov/nationsreportcard"
+                f"U.S. Department of Education. nationsreportcard.gov"
             )
-
             chunks.append(ContentChunk(
-                id=f"naep-gr{grade}-{item.key}",
+                id=f"naep-gr{grade}-{rc.key}",
                 book_id=f"naep-math-gr{grade}",
                 source_id=self.source_id,
-                title=title,
-                content=text,
+                title=f"NAEP Grade {grade} ({year}): {desc[:80]}",
+                content=body,
                 content_type="assessment",
-                grade_band=grade_band,
-                word_count=len(text.split()),
-                source_url=item.url,
+                grade_band=_GRADE_BAND.get(grade, "K-5"),
+                word_count=len(body.split()),
+                source_url="https://www.nationsreportcard.gov/nqt/searchquestions",
                 attribution=attribution,
                 item_type=item_type,
                 dok_level=dok,
-                answer_key=answer_key,
+                answer_key=answer,
                 exam_series=f"NAEP Grade {grade}",
                 exam_year=year,
                 difficulty=difficulty,
@@ -222,13 +280,16 @@ class NAEPAdapter(SourceAdapter):
     def validate(self, chunks: list[ContentChunk]) -> ValidationResult:
         errors = [f"{c.id}: empty content" for c in chunks if not c.content.strip()]
         if not chunks:
-            errors.append("no chunks produced — verify NAEP API endpoint and params")
+            errors.append("no chunks produced — verify NQT API endpoints")
         with_diff = sum(1 for c in chunks if c.difficulty is not None)
+        with_answer = sum(1 for c in chunks if c.answer_key)
+        with_dok = sum(1 for c in chunks if c.dok_level)
         return ValidationResult(
             ok=not errors, errors=errors, warnings=[],
             stats={
                 "total": len(chunks),
                 "with_difficulty": with_diff,
-                "missing_difficulty": len(chunks) - with_diff,
+                "with_answer": with_answer,
+                "with_dok": with_dok,
             },
         )
