@@ -2,6 +2,7 @@ from .ap_frq import APFRQAdapter
 from .base import RawContent, SourceAdapter, ValidationResult
 from .khan import KhanAcademyAdapter
 from .naep import NAEPAdapter
+from .open_middle import OpenMiddleAdapter
 from .openstax import BookSpec, OpenStaxAdapter
 from .smarter_balanced import SmarterBalancedAdapter
 
@@ -15,4 +16,5 @@ __all__ = [
     "SmarterBalancedAdapter",
     "NAEPAdapter",
     "APFRQAdapter",
+    "OpenMiddleAdapter",
 ]

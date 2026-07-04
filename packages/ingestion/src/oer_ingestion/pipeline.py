@@ -16,7 +16,7 @@ from pathlib import Path
 from oer_shared import config
 from oer_shared.db import connect
 
-from .adapters import APFRQAdapter, BookSpec, KhanAcademyAdapter, NAEPAdapter, OpenStaxAdapter, SmarterBalancedAdapter
+from .adapters import APFRQAdapter, BookSpec, KhanAcademyAdapter, NAEPAdapter, OpenMiddleAdapter, OpenStaxAdapter, SmarterBalancedAdapter
 from .adapters.illustrative_math import IllustrativeMathAdapter
 from .align import align_chunks
 from .annotate import annotate
@@ -105,6 +105,31 @@ def run_khan(db_path: Path, snapshot_root: Path, channel_db: str,
     record_run(conn, adapter.source_id, counts, warnings=result.warnings)
     total = conn.execute("SELECT COUNT(*) FROM chunks").fetchone()[0]
     print(f"[load] added={counts['added']} updated={counts['updated']} | db total={total}")
+    conn.close()
+
+
+def run_open_middle(db_path: Path, snapshot_root: Path,
+                    max_problems: int | None = None) -> None:
+    """Ingest OpenMiddle DOK-3 problems (CC BY-NC-SA) into the NC-SA database."""
+    adapter = OpenMiddleAdapter(max_problems=max_problems)
+    print(f"[fetch] OpenMiddle (max_problems={max_problems})")
+    raw = adapter.fetch()
+    print(f"[fetch] {len(raw)} problems")
+    snaps = write_snapshots(raw, snapshot_root, ext="html")
+    print(f"[snapshot] wrote {len(snaps)} HTML files")
+    chunks = adapter.parse(raw)
+    result = adapter.validate(chunks)
+    print(f"[chunk] {result.stats}")
+    if not result.ok:
+        raise SystemExit(f"[chunk] validation failed: {result.errors[:5]}")
+    conn = connect(db_path, create=True)
+    load_catalog(conn, adapter.catalog())
+    counts = load_chunks(conn, chunks)
+    acounts = load_alignments(conn, chunks)
+    record_run(conn, adapter.source_id, counts, warnings=[])
+    total = conn.execute("SELECT COUNT(*) FROM chunks WHERE source_id='open-middle'").fetchone()[0]
+    print(f"[load] added={counts['added']} updated={counts['updated']} | "
+          f"publisher alignments={acounts['added']} | total open-middle={total}")
     conn.close()
 
 
@@ -296,7 +321,7 @@ def run_validate(db_path: Path) -> None:
 def main() -> None:
     p = argparse.ArgumentParser(description="OER ingestion pipeline")
     p.add_argument("source", choices=[
-        "openstax", "khan", "im", "im-k5", "im-hs",
+        "openstax", "khan", "im", "im-k5", "im-hs", "open-middle",
         "smarter-balanced", "naep", "ap-frq",
         "crosswalks", "style-gen",
         "embed-align", "annotate", "verify", "validate", "migrate",
@@ -350,6 +375,8 @@ def main() -> None:
     elif args.source == "im-hs":
         run_im(Path(args.db), Path(args.snapshots), args.courses, args.max_lessons,
                path_family="hs")
+    elif args.source == "open-middle":
+        run_open_middle(Path(args.db), Path(args.snapshots), args.max_items)
     elif args.source == "smarter-balanced":
         run_smarter_balanced(Path(args.db), Path(args.snapshots),
                              grades=args.grades, max_items=args.max_items)
