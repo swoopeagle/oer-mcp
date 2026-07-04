@@ -175,10 +175,14 @@ publisher_guide / llm_verified / human: always "strong" (score not compared to t
 >   ap: 85 AP FRQ. A representative check (`CCSS.MATH.7.EE.4`) now returns items
 >   from SAT, ACT, 4 SBAC grade bands, NAEP Gr 8, and 3 MCAS grade bands with
 >   **zero gaps** — up from every exam showing as a gap at the start of this pass.
->   PARCC and full STAAR/Digital-Item-Library-style state coverage remain out of
->   scope (PARCC: states are dropping it, shaky license claim on the archived
->   items; STAAR: TEA moved released items behind a Cambium SPA not yet reverse-
->   engineered — same technique that cracked NAEP/MCAS should work, just not done).
+>   PARCC dropped (states abandoning it, shaky license claim on archived items).
+>   **STAAR investigated and dead-ended**: since 2022-23 STAAR is online-only —
+>   TEA's released-questions page links straight into Cambium's TDS test-delivery
+>   platform (`txpt.cambiumtds.com`), which requires a proctor-issued Session ID
+>   even for guest/practice access. No public browsable item catalog exists (unlike
+>   MCAS's Cognia API) — this isn't a "wrong endpoint" problem, it's a genuine
+>   access-control wall. Not worth further attempts without an actual TX educator
+>   session code.
 > - DBs built before the assessment columns landed are healed automatically by
 >   `migrate_schema` on the next `connect(create=True)`; `map_to_assessments` reports
 >   `items_status="no_item_store"` on any DB still missing them rather than erroring.
