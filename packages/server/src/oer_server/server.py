@@ -217,7 +217,11 @@ def get_capabilities() -> dict:
     Call this first to discover what content, standard systems, exam series,
     grade bands, and tools this server exposes — without any trial-and-error
     queries. The response enumerates every attached database, source, and tool
-    available in this deployment.
+    available in this deployment, plus a `coverage` block (distinct standards
+    covered overall and per database, alignment counts by confidence tier,
+    released-item counts by exam series, grade bands, and whether the
+    prerequisite graph is available for get_learning_path) so a consuming agent
+    can self-assess and route before issuing queries.
     """
     from . import queries
 

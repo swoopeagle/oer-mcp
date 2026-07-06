@@ -55,7 +55,8 @@ def test_capabilities_has_required_keys(conn):
     caps = queries.get_capabilities(conn)
     for key in ("databases_attached", "sources", "standard_systems", "content_types",
                 "exam_series", "grade_bands", "alignment_sources",
-                "alignment_confidence_bands", "tools", "total_chunks", "total_alignments"):
+                "alignment_confidence_bands", "tools", "total_chunks", "total_alignments",
+                "coverage"):
         assert key in caps, f"missing key: {key}"
 
 
@@ -125,6 +126,44 @@ def test_capabilities_totals_match_db(conn):
     caps = queries.get_capabilities(conn)
     assert caps["total_chunks"] == 2
     assert caps["total_alignments"] == 2
+
+
+# ── coverage stats block (D-machine-use: agent self-assessment) ──────────────
+
+
+def test_capabilities_coverage_block_shape(conn):
+    """coverage block carries the stats a routing agent needs to self-assess."""
+    conn.commit()
+    cov = queries.get_capabilities(conn)["coverage"]
+    for key in ("distinct_standards_covered", "distinct_standards_by_database",
+                "alignments_by_confidence", "assessment_items_by_exam",
+                "assessment_item_count", "grade_bands_covered",
+                "prerequisite_graph_available"):
+        assert key in cov, f"missing coverage key: {key}"
+
+
+def test_capabilities_coverage_counts_reflect_db(conn):
+    """Distinct-standard and per-confidence counts reflect real rows."""
+    _chunk(conn, "c1"); _chunk(conn, "c2")
+    _align(conn, "c1", standard="CCSS.MATH.6.RP.A.1", source="embedding")
+    _align(conn, "c2", standard="CCSS.MATH.6.RP.A.3", source="llm_verified")
+    conn.commit()
+    cov = queries.get_capabilities(conn)["coverage"]
+    assert cov["distinct_standards_covered"] == 2
+    assert cov["distinct_standards_by_database"]["core"] == 2
+    assert cov["alignments_by_confidence"]["embedding"] == 1
+    assert cov["alignments_by_confidence"]["llm_verified"] == 1
+
+
+def test_capabilities_assessment_items_by_exam(conn):
+    """Assessment items are counted per exam series (assessment content_type only)."""
+    _chunk(conn, "c1", ctype="assessment", exam_series="SAT")
+    _chunk(conn, "c2", ctype="assessment", exam_series="SAT")
+    _chunk(conn, "c3", ctype="exposition")  # not assessment → excluded
+    conn.commit()
+    cov = queries.get_capabilities(conn)["coverage"]
+    assert cov["assessment_items_by_exam"]["SAT"] == 2
+    assert cov["assessment_item_count"] == 2
 
 
 # ── wrapper tests (delegation + error path) ──────────────────────────────────

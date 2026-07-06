@@ -8,6 +8,7 @@ import sqlite3
 
 import numpy as np
 
+from oer_shared import config
 from oer_shared.db import attached_schemas
 from oer_shared.models import ChunkResult, SourceInfo, SourceInventory, StandardAlignment
 
@@ -774,6 +775,11 @@ def get_capabilities(conn: sqlite3.Connection) -> dict:
     standard_systems: list[str] = []
     exam_series: list[str] = []
     grade_bands: list[str] = []
+    # Coverage stats — let a consuming agent self-assess/route without probing.
+    distinct_standards: set[str] = set()
+    standards_by_db: dict[str, int] = {}
+    alignments_by_confidence: dict[str, int] = {}
+    assessment_items_by_exam: dict[str, int] = {}
     for schema in schemas:
         for row in conn.execute(
             f"SELECT DISTINCT standard_system FROM {schema}.standard_alignments WHERE stale=0"
@@ -793,6 +799,33 @@ def get_capabilities(conn: sqlite3.Connection) -> dict:
             if row[0] and row[0] not in grade_bands:
                 grade_bands.append(row[0])
 
+        db_standards = {
+            r[0]
+            for r in conn.execute(
+                f"SELECT DISTINCT standard_id FROM {schema}.standard_alignments WHERE stale=0"
+            ).fetchall()
+            if r[0]
+        }
+        standards_by_db[_SCHEMA_LABELS[schema]] = len(db_standards)
+        distinct_standards |= db_standards
+
+        for src, n in conn.execute(
+            f"SELECT alignment_source, COUNT(*) FROM {schema}.standard_alignments "
+            "WHERE stale=0 GROUP BY alignment_source"
+        ).fetchall():
+            if src:
+                alignments_by_confidence[src] = alignments_by_confidence.get(src, 0) + n
+
+        for exam, n in conn.execute(
+            f"SELECT exam_series, COUNT(*) FROM {schema}.chunks "
+            "WHERE content_type='assessment' AND exam_series IS NOT NULL AND stale=0 "
+            "GROUP BY exam_series"
+        ).fetchall():
+            if exam:
+                assessment_items_by_exam[exam] = assessment_items_by_exam.get(exam, 0) + n
+
+    prereq_graph_available = config.STANDARDGRAPH_DB_PATH.exists()
+
     return {
         "databases_attached": [_SCHEMA_LABELS[s] for s in schemas],
         "sources": sources,
@@ -808,6 +841,15 @@ def get_capabilities(conn: sqlite3.Connection) -> dict:
         "tools": _ALL_TOOLS,
         "total_chunks": inventory.total_chunks,
         "total_alignments": inventory.total_standards_aligned,
+        "coverage": {
+            "distinct_standards_covered": len(distinct_standards),
+            "distinct_standards_by_database": standards_by_db,
+            "alignments_by_confidence": alignments_by_confidence,
+            "assessment_items_by_exam": assessment_items_by_exam,
+            "assessment_item_count": sum(assessment_items_by_exam.values()),
+            "grade_bands_covered": sorted(grade_bands),
+            "prerequisite_graph_available": prereq_graph_available,
+        },
     }
 
 
