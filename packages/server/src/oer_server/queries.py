@@ -242,7 +242,7 @@ def search_content(
                 item_generation=row["item_generation"],
             ).model_dump()
         )
-    return {"query": query, "search_mode": mode, "results": results}
+    return {"query": query, "search_mode": mode, "count": len(results), "results": results}
 
 
 # Confidence hierarchy (PRD §10, D20): human > publisher_guide > llm_verified >
