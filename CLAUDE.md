@@ -229,11 +229,16 @@ preference on a grounding-stressing task. The judge scores both segments against
 every pair, so the yardstick never depends on which condition randomly landed in
 slot B.
 
-> **`bench.json` is a stale artifact** from the old absolute-rubric run (schema:
-> `means`/`content_accuracy`/`target_met`). It does **not** reflect the current
-> pairwise design and should be regenerated on a fleet machine with Ollama:
-> `uv run python -m oer_ingestion.benchmark --db data/oer_core.db --sg-db ~/.standardgraph/common_core.db --out bench.json`.
-> Regeneration needs Ollama + the full DB, so it can't run on the dev MacBook.
+> **`bench.json` is the current pairwise result (regenerated 2026-07-06).**
+> Headline: **`both` preferred over `standardgraph` 74%** (14W/5L/1T across 20
+> topics; target ≥60% MET). `both`-vs-`none` 70%, `standardgraph`-vs-`none` 68%.
+> Judge + generator were both `qwen2.5:14b` on the fleet (Windows endpoint) — a
+> working judge that returns parseable A/B/TIE verdicts, unlike `gemma4:31b-it-q8_0`
+> which returned empty judgments. A stronger judge (`qwen2.5:72b` on the Studio)
+> would give a more authoritative number; rerun when the Studio GPU is free:
+> `OLLAMA_BASE_URL=http://100.77.63.73:11434 uv run python -m oer_ingestion.benchmark --db data/oer_core.db --sg-db ~/.standardgraph/common_core.db --gen-model gemma4:12b --judge-model qwen2.5:72b --out bench.json`.
+> Needs Ollama + the full DB (fleet, not the dev MacBook — which can reach fleet
+> Ollama over HTTP but has no local models).
 
 ## Batch execution workflow
 

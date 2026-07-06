@@ -1,689 +1,450 @@
 {
   "n_topics": 20,
-  "scored": {
-    "none": 20,
-    "standardgraph": 20,
-    "both": 20
-  },
-  "means": {
-    "none": {
-      "standards_accuracy": 4.85,
-      "content_accuracy": 4.95,
-      "pedagogical_coherence": 4.6
+  "comparisons": {
+    "both_vs_standardgraph": {
+      "wins": 14,
+      "losses": 5,
+      "ties": 1,
+      "unparsed": 0,
+      "win_rate": 0.737
     },
-    "standardgraph": {
-      "standards_accuracy": 4.9,
-      "content_accuracy": 5.0,
-      "pedagogical_coherence": 4.9
+    "both_vs_none": {
+      "wins": 14,
+      "losses": 6,
+      "ties": 0,
+      "unparsed": 0,
+      "win_rate": 0.7
     },
-    "both": {
-      "standards_accuracy": 4.8,
-      "content_accuracy": 5.0,
-      "pedagogical_coherence": 4.85
+    "standardgraph_vs_none": {
+      "wins": 13,
+      "losses": 6,
+      "ties": 1,
+      "unparsed": 0,
+      "win_rate": 0.684
     }
   },
-  "content_accuracy_lift_both_vs_sg": 0.0,
-  "target_met": false,
-  "plans": [
+  "both_vs_standardgraph_win_rate": 0.737,
+  "target_met": true,
+  "raw": [
     {
       "topic": "Counting objects to 10",
       "standard_id": "CCSS.MATH.K.CC.5",
-      "condition": "none",
-      "text": "**Objective:** Students will be able to count sets of objects up to 10 using one-to-one correspondence.\n\n**Teaching Steps:**\n1. **Demonstration:** Place 6 counters on a table. Point to each counter individually while counting aloud (\"1, 2, 3, 4, 5, 6\"), demonstrating that one touch equals one number.\n2. **Guided Practice:** Display 9 magnets on the board. Have students take turns coming to the board to touch each magnet one by one while the class counts in unison to ensure no objects are skipped or counted twice.\n\n**Practice Problem:**\nCount the stars below and write the total number in the box:\n\u2b50 \u2b50 \u2b50 \u2b50 \u2b50 \u2b50 \u2b50 \u2b50",
-      "scores": {
-        "standards_accuracy": 5,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 5
-      }
+      "left": "standardgraph",
+      "right": "both",
+      "winner": "both"
     },
     {
       "topic": "Counting objects to 10",
       "standard_id": "CCSS.MATH.K.CC.5",
-      "condition": "standardgraph",
-      "text": "**Objective:** Students will accurately count sets of objects up to 10 using one-to-one correspondence.\n\n**Teaching Steps:**\n1. **Modeling:** Demonstrate counting 5 physical blocks by touching each block individually and saying the numbers 1 through 5 aloud to show that one number matches one object.\n2. **Guided Practice:** Display a group of 8 magnets on the board. Lead the class in a choral count, pointing to each magnet together to ensure no objects are skipped or counted twice.\n\n**Practice Problem:**\nCount the stars below and write the total number in the box:\n\u2b50 \u2b50 \u2b50 \u2b50 \u2b50 \u2b50 \u2b50",
-      "scores": {
-        "standards_accuracy": 5,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 5
-      }
+      "left": "none",
+      "right": "both",
+      "winner": "both"
     },
     {
       "topic": "Counting objects to 10",
       "standard_id": "CCSS.MATH.K.CC.5",
-      "condition": "both",
-      "text": "**Objective:** Students will demonstrate one-to-one correspondence by accurately counting sets of objects up to 10.\n\n**Teaching Steps:**\n1. **Modeling One-to-One Correspondence:** Place 6 counters on a desk. Point to each counter individually, moving it slightly as you count aloud: \"1, 2, 3, 4, 5, 6.\" Emphasize that one touch equals one number.\n2. **Guided Counting:** Display a group of 8 magnets on the board. Lead the class in counting together, pausing after each magnet to ensure every student is pointing to and counting each item exactly once.\n\n**Practice Problem:**\nCount the stars below and write the total number in the box:\n\u2b50 \u2b50 \u2b50 \u2b50 \u2b50 \u2b50 \u2b50 \u2b50 \u2b50",
-      "scores": {
-        "standards_accuracy": 5,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 5
-      }
+      "left": "standardgraph",
+      "right": "none",
+      "winner": "tie"
     },
     {
       "topic": "Understanding the equal sign",
       "standard_id": "CCSS.MATH.1.OA.D.7",
-      "condition": "none",
-      "text": "**Objective:** Students will understand the equal sign (=) as a symbol of equivalence (balance) rather than an instruction to \"calculate the answer.\"\n\n**Teaching Steps:**\n1. **The Balance Scale Analogy:** Use a visual of a balance scale. Place a weight of \"5\" on the left side and \"2 + 3\" on the right side. Explain that the equal sign means both sides have the exact same value, keeping the scale perfectly level.\n2. **Redefining the Symbol:** Demonstrate that the \"answer\" does not always have to be on the right. Show that $7 = 7$ is true, $4 + 2 = 6$ is true, and $5 = 3 + 2$ is also true. Emphasize that the equal sign acts as a bridge between two equal amounts.\n\n**Practice Problem:**\nDetermine if the following equation is true or false: \n$9 = 5 + 4$",
-      "scores": {
-        "standards_accuracy": 5,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 5
-      }
+      "left": "both",
+      "right": "standardgraph",
+      "winner": "both"
     },
     {
       "topic": "Understanding the equal sign",
       "standard_id": "CCSS.MATH.1.OA.D.7",
-      "condition": "standardgraph",
-      "text": "**Objective:** Students will understand that the equal sign (=) represents equivalence (balance) rather than an instruction to \"find the answer\" and will determine if addition and subtraction equations are true or false.\n\n**Teaching Steps:**\n\n1.  **The Balance Scale Analogy:** Introduce the equal sign as a balance scale. Explain that for an equation to be \"true,\" the total value on the left side must be exactly the same as the total value on the right side. If the sides are not equal, the equation is \"false.\"\n2.  **Evaluating Expressions:** Demonstrate how to check an equation by solving each side separately. \n    *   *Example:* $4 + 3 = 5 + 2$\n    *   Step A: Solve the left side ($4 + 3 = 7$).\n    *   Step B: Solve the right side ($5 + 2 = 7$).\n    *   Step C: Compare. Since $7 = 7$, the equation is **true**.\n3.  **Identifying Falsehoods:** Show an equation where the totals differ.\n    *   *Example:* $8 - 2 = 5$\n    *   Step A: Solve the left side ($8 - 2 = 6$).\n    *   Step B: Compare $6$ to $5$. Since $6$ does not equal $5$, the equation is **false**.\n\n**Practice Problem:**\n\nDetermine if the following equation is true or false: \n$9 - 4 = 2 + 3$",
-      "scores": {
-        "standards_accuracy": 5,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 5
-      }
+      "left": "none",
+      "right": "both",
+      "winner": "none"
     },
     {
       "topic": "Understanding the equal sign",
       "standard_id": "CCSS.MATH.1.OA.D.7",
-      "condition": "both",
-      "text": "**Objective:** Students will understand that the equal sign represents a state of equivalence (meaning \"the same as\") rather than an instruction to calculate an answer, and will use this understanding to determine if equations are true or false.\n\n**Teaching Steps:**\n\n1.  **Redefining the Symbol:** Explain that the equal sign does not mean \"find the answer.\" Instead, it acts like a balance scale, showing that the quantity on the left side is exactly the same as the quantity on the right side. Demonstrate that $1 + 1 = 2$ is the same as writing $2 = 1 + 1$, because both sides represent the same amount.\n2.  **Comparing Quantities:** Show students how to test if an equation is true or false by calculating the value of each side separately. For example, in the equation $4 + 1 = 5 + 2$, calculate the left side ($5$) and the right side ($7$). Since $5$ is not the same quantity as $7$, the equation is false.\n\n**Practice Problem:**\n\nDetermine if the following equation is **True** or **False**:\n$7 - 2 = 2 + 3$",
-      "scores": {
-        "standards_accuracy": 5,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 5
-      }
+      "left": "standardgraph",
+      "right": "none",
+      "winner": "standardgraph"
     },
     {
       "topic": "Partitioning shapes into halves and fourths",
       "standard_id": "CCSS.MATH.2.G.A.3",
-      "condition": "none",
-      "text": "**Objective:** Students will be able to partition circles and rectangles into two equal parts (halves) and four equal parts (fourths).\n\n**Teaching Steps:**\n1. **Introduction to Halves:** Display a rectangle. Draw a single line through the center to divide it into two pieces. Demonstrate that for these to be \"halves,\" the two parts must be identical in size (equal).\n2. **Introduction to Fourths:** Using the same rectangle, draw a second line perpendicular to the first. Show how the two halves have been split again to create four equal pieces, now called \"fourths.\"\n3. **Visual Verification:** Use a circle to demonstrate that partitioning can happen vertically, horizontally, or diagonally, as long as the resulting pieces are equal in area.\n\n**Practice Problem:**\nDraw a square on your paper. Partition the square into four equal fourths using only straight lines.",
-      "scores": {
-        "standards_accuracy": 5,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 4
-      }
+      "left": "standardgraph",
+      "right": "both",
+      "winner": "tie"
     },
     {
       "topic": "Partitioning shapes into halves and fourths",
       "standard_id": "CCSS.MATH.2.G.A.3",
-      "condition": "standardgraph",
-      "text": "**Objective:** Students will be able to partition circles and rectangles into two and four equal shares and use the terms \"halves\" and \"fourths\" to describe them.\n\n**Teaching Steps:**\n\n1.  **Introduction to Halves:** Draw a rectangle on the board. Draw a single vertical line through the center to split the shape into two identical pieces. Explain that because the pieces are equal in size, they are called \"halves\" and the whole rectangle is composed of \"two halves.\"\n2.  **Introduction to Fourths:** Draw a circle on the board. First, draw a vertical line to create halves. Then, draw a horizontal line through the center to split the halves again. Show that the circle is now divided into four equal parts. Explain that these equal shares are called \"fourths\" and the whole circle is composed of \"four fourths.\"\n\n**Practice Problem:**\nDraw a square on your paper. Partition the square into four equal shares (fourths) using straight lines.",
-      "scores": {
-        "standards_accuracy": 5,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 4
-      }
+      "left": "both",
+      "right": "none",
+      "winner": "both"
     },
     {
       "topic": "Partitioning shapes into halves and fourths",
       "standard_id": "CCSS.MATH.2.G.A.3",
-      "condition": "both",
-      "text": "**Objective:** Students will be able to partition circles and rectangles into halves and fourths by identifying parts that are equal in size.\n\n**Teaching Steps:**\n\n1.  **Defining Halves:** Explain that to divide a shape into halves, it must be split into exactly **two equal sections**. Show a rectangle divided into two unequal parts and explain why this is *not* a half (the areas are different). Then, show a rectangle divided into two identical parts to demonstrate a true half.\n2.  **Defining Fourths:** Explain that to divide a shape into fourths, it must be split into exactly **four equal sections**. Show a circle divided into four parts where one section is much larger than the others; explain that even though there are four parts, they are not fourths because they are not equal. Show a circle divided into four equal \"slices\" to demonstrate true fourths.\n3.  **Checking for Equality:** Teach students to verify partitions by comparing the area of each section. Emphasize that while the shapes of the parts can look different (e.g., long rectangles vs. small squares), the key requirement for halves and fourths is that every share must be the same size.\n\n**Practice Problem:**\n\nLook at the following descriptions of a square. Which one is partitioned into **fourths**?\n\nA) A square divided into 2 equal parts.\nB) A square divided into 4 parts that are all different sizes.\nC) A square divided into 4 parts that are all the same size.",
-      "scores": {
-        "standards_accuracy": 5,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 5
-      }
+      "left": "standardgraph",
+      "right": "none",
+      "winner": "standardgraph"
     },
     {
       "topic": "Understanding a fraction as a number on the number line",
       "standard_id": "CCSS.MATH.3.NF.2",
-      "condition": "none",
-      "text": "**Objective:** Students will be able to represent and locate fractions as specific points on a number line by partitioning intervals into equal parts.\n\n**Teaching Steps:**\n\n1.  **Identify the Denominator (Partitioning):** Draw a number line starting at 0 and ending at 1. Explain that the denominator tells us how many equal segments the interval between 0 and 1 must be divided into. For example, to represent $3/4$, divide the space between 0 and 1 into four equal sections.\n2.  **Identify the Numerator (Locating):** Explain that the numerator tells us how many segments to count starting from zero. Using the $3/4$ example, start at 0 and move forward three marks/segments. Place a dot on that specific mark to represent the fraction.\n\n**Practice Problem:**\n\nDraw a number line from 0 to 1. Divide the line into 5 equal segments and plot the point representing the fraction $\\frac{2}{5}$.",
-      "scores": {
-        "standards_accuracy": 5,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 5
-      }
+      "left": "standardgraph",
+      "right": "both",
+      "winner": "both"
     },
     {
       "topic": "Understanding a fraction as a number on the number line",
       "standard_id": "CCSS.MATH.3.NF.2",
-      "condition": "standardgraph",
-      "text": "**Objective:** Students will be able to represent and locate fractions as specific points on a number line by dividing intervals into equal parts.\n\n**Teaching Steps:**\n\n1.  **Identify the Denominator:** Draw a number line from 0 to 1. Explain that the denominator tells you how many equal segments the interval between 0 and 1 must be divided into. For the fraction $\\frac{3}{4}$, divide the space into four equal sections using tick marks.\n2.  **Locate the Numerator:** Explain that the numerator tells you how many segments to count starting from zero. For $\\frac{3}{4}$, start at 0 and move forward three tick marks.\n3.  **Mark the Point:** Place a distinct dot on the third tick mark to demonstrate that $\\frac{3}{4}$ is the specific value located at that position on the line.\n\n**Practice Problem:**\nDraw a number line from 0 to 1 and accurately plot the fraction $\\frac{2}{5}$.",
-      "scores": {
-        "standards_accuracy": 5,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 5
-      }
+      "left": "none",
+      "right": "both",
+      "winner": "both"
     },
     {
       "topic": "Understanding a fraction as a number on the number line",
       "standard_id": "CCSS.MATH.3.NF.2",
-      "condition": "both",
-      "text": "**Objective:** Students will be able to represent and locate fractions on a number line by dividing the interval between 0 and 1 into equal parts.\n\n**Teaching Steps:**\n\n1.  **Identify the Denominator (The Segments):** Draw a number line starting at 0 and ending at 1. Explain that the denominator tells us how many equal segments the space between 0 and 1 must be divided into. For example, to represent $\\frac{3}{4}$, divide the line into 4 equal sections using 3 tick marks between 0 and 1.\n2.  **Identify the Numerator (The Position):** Explain that the numerator tells us how many segments to count starting from zero. To locate $\\frac{3}{4}$, start at 0 and move forward 3 marks. The position of the third mark represents the value $\\frac{3}{4}$.\n\n**Practice Problem:**\n\nDraw a number line from 0 to 1 and accurately plot the fraction $\\frac{2}{5}$.",
-      "scores": {
-        "standards_accuracy": 5,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 5
-      }
+      "left": "none",
+      "right": "standardgraph",
+      "winner": "none"
     },
     {
       "topic": "Place value: a digit is ten times the place to its right",
       "standard_id": "CCSS.MATH.4.NBT.A.1",
-      "condition": "none",
-      "text": "**Objective:** Students will understand that a digit in one place value position is ten times the value of the same digit in the position to its immediate right.\n\n**Teaching Steps:**\n1. **Visual Modeling:** Use base-ten blocks to demonstrate that 10 individual units (ones) are required to create 1 rod (ten). Show that 10 rods (tens) are required to create 1 flat (hundred).\n2. **Numerical Patterning:** Write the sequence 5, 50, 500, 5,000 on the board. Demonstrate that moving one place to the left is achieved by multiplying the previous number by 10 (e.g., $5 \\times 10 = 50$; $50 \\times 10 = 500$).\n\n**Practice Problem:**\nIn the number 6,632, how many times greater is the value of the 6 in the thousands place than the 6 in the hundreds place?",
-      "scores": {
-        "standards_accuracy": 5,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 5
-      }
+      "left": "both",
+      "right": "standardgraph",
+      "winner": "both"
     },
     {
       "topic": "Place value: a digit is ten times the place to its right",
       "standard_id": "CCSS.MATH.4.NBT.A.1",
-      "condition": "standardgraph",
-      "text": "**Objective**\nStudents will recognize and demonstrate that a digit in one place value position represents ten times the value of the digit to its immediate right.\n\n**Teaching Steps**\n1. **Visualizing the Shift:** Use a place value chart to show that 10 ones are equal to 1 ten, and 10 tens are equal to 1 hundred. Demonstrate that moving one position to the left on the chart always requires a group of ten of the previous unit.\n2. **Numerical Comparison:** Compare the digit 5 in the tens place (50) to the digit 5 in the hundreds place (500). Show the mathematical relationship using division: $500 \\div 50 = 10$. This proves the 5 in the hundreds place is exactly ten times larger than the 5 in the tens place.\n\n**Practice Problem**\nIn the number 8,824, how many times greater is the value of the 8 in the thousands place than the value of the 8 in the hundreds place?",
-      "scores": {
-        "standards_accuracy": 5,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 5
-      }
+      "left": "none",
+      "right": "both",
+      "winner": "none"
     },
     {
       "topic": "Place value: a digit is ten times the place to its right",
       "standard_id": "CCSS.MATH.4.NBT.A.1",
-      "condition": "both",
-      "text": "**Objective:** Students will recognize that a digit in one place represents ten times the value of the same digit in the place to its right.\n\n**Teaching Steps:**\n\n1.  **Visualize the Relationship:** Use a place value chart to compare digits. For example, look at the digit $5$ in the numbers $50$ and $500$. In $50$, the $5$ is in the tens place (value: $50$). In $500$, the $5$ is in the hundreds place (value: $500$). Because $500 \\div 50 = 10$, the $5$ in the hundreds place is $10$ times greater than the $5$ in the tens place.\n2.  **Identify the Multiplier:** Demonstrate that moving any single place to the left always involves a multiplier of $10$. If you have a $4$ in the ones place ($4$) and a $4$ in the tens place ($40$), the value increases by a factor of $10$ ($4 \\times 10 = 40$). Conversely, moving one place to the right makes the value $10$ times smaller.\n\n**Practice Problem:**\n\nIn the number $3,342$, how many times greater is the value of the $3$ in the thousands place than the value of the $3$ in the hundreds place?",
-      "scores": {
-        "standards_accuracy": 5,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 5
-      }
+      "left": "none",
+      "right": "standardgraph",
+      "winner": "none"
     },
     {
       "topic": "Dividing unit fractions by whole numbers",
       "standard_id": "CCSS.MATH.5.NF.B.7",
-      "condition": "none",
-      "text": "**Objective:** Students will be able to divide unit fractions by whole numbers using visual models and the reciprocal algorithm.\n\n**Teaching Steps:**\n\n1.  **Visual Modeling:** Represent the unit fraction $\\frac{1}{3}$ as a shaded rectangle. Divide the shaded portion into 2 equal parts. Observe that each new part is $\\frac{1}{6}$ of the original whole, demonstrating that $\\frac{1}{3} \\div 2 = \\frac{1}{6}$.\n2.  **The Reciprocal Method:** Explain that dividing by a whole number is equivalent to multiplying by its reciprocal. To solve $\\frac{1}{4} \\div 3$, rewrite the whole number $3$ as $\\frac{3}{1}$. Multiply the first fraction by the reciprocal of the second: $\\frac{1}{4} \\times \\frac{1}{3} = \\frac{1}{12}$.\n\n**Practice Problem:**\nSolve: $\\frac{1}{5} \\div 4$",
-      "scores": {
-        "standards_accuracy": 5,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 5
-      }
+      "left": "both",
+      "right": "standardgraph",
+      "winner": "both"
     },
     {
       "topic": "Dividing unit fractions by whole numbers",
       "standard_id": "CCSS.MATH.5.NF.B.7",
-      "condition": "standardgraph",
-      "text": "**Objective:** Students will be able to divide unit fractions by whole numbers using visual models and the relationship between multiplication and division.\n\n**Teaching Steps:**\n\n1.  **Visual Modeling:** Model the problem $\\frac{1}{3} \\div 2$. Draw a rectangle and divide it into 3 equal parts, shading 1 part to represent $\\frac{1}{3}$. Now, divide that shaded part into 2 equal pieces. Observe that each new piece is $\\frac{1}{6}$ of the original whole.\n2.  **Inverse Relationship:** Explain the connection to multiplication. Show that $\\frac{1}{3} \\div 2 = \\frac{1}{6}$ because $\\frac{1}{6} \\times 2 = \\frac{1}{3}$. Demonstrate the rule: to divide a unit fraction by a whole number, multiply the denominator by the whole number (e.g., $3 \\times 2 = 6$, so the new denominator is $6$).\n\n**Practice Problem:**\nA baker has $\\frac{1}{5}$ of a pound of flour left. If they want to split this flour equally into 4 small containers, how much flour will be in each container? Show your work using a fraction equation.",
-      "scores": {
-        "standards_accuracy": 5,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 5
-      }
+      "left": "none",
+      "right": "both",
+      "winner": "none"
     },
     {
       "topic": "Dividing unit fractions by whole numbers",
       "standard_id": "CCSS.MATH.5.NF.B.7",
-      "condition": "both",
-      "text": "**Objective:** Students will be able to interpret and compute the quotient of a unit fraction divided by a whole number using visual models and the relationship between multiplication and division.\n\n**Teaching Steps:**\n\n1.  **Visual Modeling:** Start with a visual representation of a unit fraction, such as $\\frac{1}{3}$ of a chocolate bar. To solve $\\frac{1}{3} \\div 2$, divide that $\\frac{1}{3}$ section into $2$ equal parts. By looking at the whole bar, each new piece represents $\\frac{1}{6}$ of the total.\n2.  **Using Reciprocals:** Demonstrate that dividing by a whole number is the same as multiplying by its reciprocal. To calculate $\\frac{1}{3} \\div 2$, rewrite $2$ as the fraction $\\frac{2}{1}$. Multiply the first fraction by the reciprocal of the second:\n    $$\\frac{1}{3} \\div \\frac{2}{1} = \\frac{1}{3} \\times \\frac{1}{2} = \\frac{1}{6}$$\n3.  **Verifying with Multiplication:** Show the inverse relationship to confirm the answer. If $\\frac{1}{3} \\div 2 = \\frac{1}{6}$, then $\\frac{1}{6} \\times 2$ must equal $\\frac{1}{3}$. Since $\\frac{2}{6}$ simplifies to $\\frac{1}{3}$, the quotient is correct.\n\n**Practice Problem:**\nA gardener has $\\frac{1}{5}$ of a bag of fertilizer left. If they want to split this remaining amount equally into $3$ different flower pots, what fraction of the whole bag will each pot receive?",
-      "scores": {
-        "standards_accuracy": 5,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 5
-      }
+      "left": "none",
+      "right": "standardgraph",
+      "winner": "none"
     },
     {
       "topic": "Ratio and rate reasoning to solve problems",
       "standard_id": "CCSS.MATH.6.RP.3",
-      "condition": "none",
-      "text": "**Objective:** Students will apply ratio and unit rate reasoning to solve real-world proportional problems.\n\n**Teaching Steps:**\n\n1.  **Identify the Unit Rate:** Demonstrate how to find the value of a single unit by dividing the first quantity by the second. \n    *   *Example:* If a grocery store sells 5 apples for \\$3.00, find the cost per apple.\n    *   *Calculation:* $\\$3.00 \\div 5 = \\$0.60$ per apple.\n2.  **Apply the Unit Rate to a New Quantity:** Show how to use the calculated unit rate to solve for an unknown amount.\n    *   *Example:* Using the same rate, how much would 12 apples cost?\n    *   *Calculation:* $12 \\text{ apples} \\times \\$0.60 = \\$7.20$.\n\n**Practice Problem:**\nA printer can print 45 pages in 3 minutes. At this same rate, how many pages can the printer print in 10 minutes?",
-      "scores": {
-        "standards_accuracy": 5,
-        "content_accuracy": 4,
-        "pedagogical_coherence": 4
-      }
+      "left": "standardgraph",
+      "right": "both",
+      "winner": "both"
     },
     {
       "topic": "Ratio and rate reasoning to solve problems",
       "standard_id": "CCSS.MATH.6.RP.3",
-      "condition": "standardgraph",
-      "text": "**Objective:** Students will be able to calculate unit rates and use them to solve real-world problems involving constant speed and quantity.\n\n**Teaching Steps:**\n\n1.  **Finding the Unit Rate:** Demonstrate how to reduce a ratio to a single unit. \n    *   *Example:* If a car travels 150 miles in 3 hours, find the speed per hour. \n    *   *Work:* Divide the total distance by the total time: $150 \\div 3 = 50$. The unit rate is 50 miles per hour.\n2.  **Using Unit Rates to Predict Quantities:** Show how to use the unit rate to solve for a new value.\n    *   *Example:* Using the rate from Step 1, how far will the car travel in 7 hours?\n    *   *Work:* Multiply the unit rate by the new time: $50 \\text{ mph} \\times 7 \\text{ hours} = 350 \\text{ miles}$.\n\n**Practice Problem:**\nA grocery store sells a 5-pound bag of apples for $7.50. At this same rate, how much would a 12-pound bag of apples cost?",
-      "scores": {
-        "standards_accuracy": 5,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 5
-      }
+      "left": "none",
+      "right": "both",
+      "winner": "none"
     },
     {
       "topic": "Ratio and rate reasoning to solve problems",
       "standard_id": "CCSS.MATH.6.RP.3",
-      "condition": "both",
-      "text": "**Lesson Plan: Ratio and Rate Reasoning**\n\n**Objective**\nStudents will be able to distinguish between ratios and rates and translate word phrases into algebraic fractions to represent real-world quantities.\n\n**Teaching Steps**\n\n1.  **Distinguish Ratio vs. Rate:** \n    Explain that both ratios and rates are expressed as fractions, but they differ in their units. \n    *   **Ratio:** Compares quantities with the *same* units (e.g., 10 boys to 12 girls $\\rightarrow \\frac{10 \\text{ boys}}{12 \\text{ girls}}$).\n    *   **Rate:** Compares quantities with *different* units (e.g., 60 miles per 2 hours $\\rightarrow \\frac{60 \\text{ miles}}{2 \\text{ hours}}$).\n\n2.  **Translate Keywords to Fractions:** \n    Demonstrate how to use specific \"comparison words\" to build algebraic expressions. \n    *   **Keywords for Ratios:** \"to,\" \"compared to,\" \"in relation to.\" \n        *   *Example:* $x$ students to $8$ buses $\\rightarrow \\frac{x \\text{ students}}{8 \\text{ buses}}$.\n    *   **Keywords for Rates:** \"per,\" \"for,\" \"on,\" \"at.\" \n        *   *Example:* $d$ dollars for $9$ minutes $\\rightarrow \\frac{d \\text{ dollars}}{9 \\text{ minutes}}$.\n\n3.  **Extracting Data from Context:** \n    Show how to identify values from a description to create a ratio.\n    *   *Example:* If a park has 15 people in line for a roller coaster and 4 people in line for the slingshot, the ratio of roller coaster fans to slingshot fans is $\\frac{15}{4}$.\n\n**Practice Problem**\nA grocery store sells a bag of 5 oranges for $3.00. \n1. Write this relationship as a rate in fraction form.\n2. Calculate the unit rate (the cost per single orange).",
-      "scores": {
-        "standards_accuracy": 5,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 5
-      }
+      "left": "standardgraph",
+      "right": "none",
+      "winner": "none"
     },
     {
       "topic": "Dividing fractions by fractions",
       "standard_id": "CCSS.MATH.6.NS.1",
-      "condition": "none",
-      "text": "**Objective:** Students will be able to divide one fraction by another using the \"Keep-Change-Flip\" method.\n\n**Teaching Steps:**\n\n1. **Introduce the KCF Rule:** Explain that to divide fractions, follow three steps:\n    * **K**eep the first fraction exactly as it is.\n    * **C**hange the division sign ($\\div$) to a multiplication sign ($\\times$).\n    * **F**lip the second fraction (use its reciprocal).\n\n2. **Worked Example 1 (Basic):** Solve $\\frac{1}{3} \\div \\frac{2}{5}$.\n    * **Keep** $\\frac{1}{3}$, **Change** $\\div$ to $\\times$, **Flip** $\\frac{2}{5}$ to $\\frac{5}{2}$.\n    * $\\frac{1}{3} \\times \\frac{5}{2} = \\frac{1 \\times 5}{3 \\times 2} = \\frac{5}{6}$.\n\n3. **Worked Example 2 (With Simplification):** Solve $\\frac{3}{4} \\div \\frac{9}{10}$.\n    * **Keep** $\\frac{3}{4}$, **Change** $\\div$ to $\\times$, **Flip** $\\frac{9}{10}$ to $\\frac{10}{9}$.\n    * $\\frac{3}{4} \\times \\frac{10}{9} = \\frac{30}{36}$.\n    * Simplify by dividing the numerator and denominator by 6: $\\frac{5}{6}$.\n\n**Practice Problem:**\nSolve $\\frac{2}{5} \\div \\frac{3}{4}$.",
-      "scores": {
-        "standards_accuracy": 5,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 4
-      }
+      "left": "standardgraph",
+      "right": "both",
+      "winner": "standardgraph"
     },
     {
       "topic": "Dividing fractions by fractions",
       "standard_id": "CCSS.MATH.6.NS.1",
-      "condition": "standardgraph",
-      "text": "**Objective:** Students will be able to compute the quotient of two fractions by applying the reciprocal method (invert and multiply) and understand the relationship between multiplication and division.\n\n**Teaching Steps:**\n\n1.  **Conceptual Connection:** Explain that dividing by a fraction is equivalent to multiplying by its reciprocal. Use the example $\\frac{2}{3} \\div \\frac{3}{4}$. Explain that we are looking for a value that, when multiplied by $\\frac{3}{4}$, results in $\\frac{2}{3}$.\n2.  **The \"Keep-Change-Flip\" Algorithm:** Demonstrate the procedural steps using $\\frac{2}{3} \\div \\frac{3}{4}$:\n    *   **Keep** the first fraction: $\\frac{2}{3}$\n    *   **Change** the division sign to multiplication: $\\times$\n    *   **Flip** the second fraction to its reciprocal: $\\frac{4}{3}$\n    *   **Multiply:** $\\frac{2}{3} \\times \\frac{4}{3} = \\frac{8}{9}$\n3.  **Verification:** Show that the result is correct by reversing the operation: $\\frac{8}{9} \\times \\frac{3}{4} = \\frac{24}{36}$, which simplifies to $\\frac{2}{3}$.\n\n**Practice Problem:**\nSolve the following: $\\frac{3}{5} \\div \\frac{2}{3}$",
-      "scores": {
-        "standards_accuracy": 3,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 4
-      }
+      "left": "none",
+      "right": "both",
+      "winner": "none"
     },
     {
       "topic": "Dividing fractions by fractions",
       "standard_id": "CCSS.MATH.6.NS.1",
-      "condition": "both",
-      "text": "**Lesson Plan: Dividing Fractions by Fractions**\n\n**Objective**\nStudents will be able to compute the quotient of two fractions using visual models (fraction tiles or number lines) and the reciprocal multiplication method.\n\n**Teaching Steps**\n\n1.  **Conceptual Modeling (The \"How Many\" Approach):** \n    Explain that dividing fractions is finding how many times the divisor fits into the dividend. Use fraction tiles to demonstrate $\\frac{1}{2} \\div \\frac{1}{6}$. By placing $\\frac{1}{6}$ tiles inside a $\\frac{1}{2}$ tile, students can visually count that exactly $3$ tiles fit, therefore $\\frac{1}{2} \\div \\frac{1}{6} = 3$.\n\n2.  **Procedural Fluency (Keep, Change, Flip):** \n    Introduce the algorithm for dividing fractions using the relationship between multiplication and division. To solve $\\frac{2}{3} \\div \\frac{3}{4}$, follow these steps:\n    *   **Keep** the first fraction: $\\frac{2}{3}$\n    *   **Change** the division sign to multiplication: $\\times$\n    *   **Flip** the second fraction to its reciprocal: $\\frac{4}{3}$\n    *   **Multiply:** $\\frac{2}{3} \\times \\frac{4}{3} = \\frac{8}{9}$\n\n3.  **Verification via Number Line:** \n    Demonstrate how to verify a quotient using a number line. To solve $\\frac{8}{3} \\div \\frac{1}{3}$, plot $\\frac{8}{3}$ on a number line. Count how many \"jumps\" of size $\\frac{1}{3}$ are required to move from $0$ to $\\frac{8}{3}$. Since it takes $8$ jumps, the quotient is $8$.\n\n**Practice Problem**\nSolve the following using the reciprocal method:\n$\\frac{3}{5} \\div \\frac{2}{3} = ?$",
-      "scores": {
-        "standards_accuracy": 1,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 5
-      }
+      "left": "none",
+      "right": "standardgraph",
+      "winner": "standardgraph"
     },
     {
       "topic": "Positive and negative integers on the number line",
       "standard_id": "CCSS.MATH.6.NS.5",
-      "condition": "none",
-      "text": "**Objective:** Students will be able to identify, represent, and plot positive and negative integers on a horizontal number line.\n\n**Teaching Steps:**\n\n1.  **The Origin and Direction:** Define $0$ as the origin (the starting point). Explain that moving to the right of $0$ represents positive integers (increasing value), while moving to the left of $0$ represents negative integers (decreasing value).\n2.  **Plotting Integers:** Demonstrate how to locate a specific value. To plot $-4$, start at $0$ and move $4$ units to the left. To plot $3$, start at $0$ and move $3$ units to the right.\n\n**Practice Problem:**\n\nDraw a number line from $-5$ to $5$ and plot the following integers: $-3, 0, \\text{and } 4$.",
-      "scores": {
-        "standards_accuracy": 4,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 5
-      }
+      "left": "both",
+      "right": "standardgraph",
+      "winner": "standardgraph"
     },
     {
       "topic": "Positive and negative integers on the number line",
       "standard_id": "CCSS.MATH.6.NS.5",
-      "condition": "standardgraph",
-      "text": "**Objective:** Students will be able to represent positive and negative integers on a number line and interpret their meaning in real-world contexts (e.g., temperature, elevation).\n\n**Teaching Steps:**\n\n1.  **Defining the Origin and Direction:** Introduce $0$ as the \"origin\" or neutral starting point. Explain that moving to the right (or up) represents positive values (e.g., gaining money, climbing a mountain), while moving to the left (or down) represents negative values (e.g., spending money, diving below sea level).\n2.  **Mapping Opposites:** Demonstrate how to plot integers on a horizontal number line. Show that $-3$ and $3$ are \"opposites\" because they are the same distance from zero but located in opposite directions. Use temperature to illustrate: $5^\\circ\\text{F}$ is $5$ units to the right of $0$, and $-5^\\circ\\text{F}$ is $5$ units to the left of $0$.\n\n**Practice Problem:**\n\nA submarine is located at $-40$ meters (40 meters below sea level), and a seagull is flying at $+20$ meters (20 meters above sea level). Draw a vertical number line, plot both the submarine and the seagull, and determine which is closer to sea level ($0$ meters).",
-      "scores": {
-        "standards_accuracy": 5,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 5
-      }
+      "left": "both",
+      "right": "none",
+      "winner": "both"
     },
     {
       "topic": "Positive and negative integers on the number line",
       "standard_id": "CCSS.MATH.6.NS.5",
-      "condition": "both",
-      "text": "**Objective:** Students will be able to represent, locate, and interpret positive and negative integers on a number line and apply them to real-world contexts such as temperature and elevation.\n\n**Teaching Steps:**\n\n1.  **Defining the Number Line and Zero:** Introduce zero as the origin (the starting point). Explain that positive numbers represent values to the right of zero (or \"above\" zero), while negative numbers represent values to the left of zero (or \"below\" zero). \n    *   *Worked Example:* To plot $3$, start at $0$ and move $3$ units to the right. To plot $-3$, start at $0$ and move $3$ units to the left.\n\n2.  **Connecting Integers to Real-World Contexts:** Demonstrate how integers describe opposite directions or values. \n    *   *Worked Example (Temperature):* If the temperature is $10^\\circ\\text{F}$, it is $10$ degrees above zero (positive). If the temperature is $-10^\\circ\\text{F}$, it is $10$ degrees below zero (negative).\n    *   *Worked Example (Elevation):* Sea level is represented by $0$. An airplane at $5,000$ feet is a positive integer, while a submarine at $5,000$ feet below sea level is represented by the negative integer $-5,000$.\n\n**Practice Problem:**\n\nA hiker is at an elevation of $20$ meters above sea level, and a diver is at an elevation of $20$ meters below sea level. \n1. Write an integer to represent the hiker's elevation.\n2. Write an integer to represent the diver's elevation.\n3. On a horizontal number line, which person would be located to the left of zero?",
-      "scores": {
-        "standards_accuracy": 5,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 5
-      }
+      "left": "standardgraph",
+      "right": "none",
+      "winner": "standardgraph"
     },
     {
       "topic": "Adding and subtracting rational numbers",
       "standard_id": "CCSS.MATH.7.NS.1",
-      "condition": "none",
-      "text": "**Objective:** Students will be able to add and subtract rational numbers (decimals and fractions) by applying the rules for signed integers.\n\n**Teaching Steps:**\n\n1.  **Addition Rules:** \n    *   If the signs are the same, add the absolute values and keep the common sign. \n    *   If the signs are different, subtract the smaller absolute value from the larger and use the sign of the number with the larger absolute value.\n    *   *Example:* $-4.5 + 2.1 = -2.4$\n\n2.  **Subtraction via Additive Inverse:** \n    *   Convert subtraction problems into addition problems by adding the opposite of the subtrahend (the \"Keep-Change-Change\" method).\n    *   *Example:* $\\frac{1}{2} - (-\\frac{3}{4}) \\rightarrow \\frac{1}{2} + \\frac{3}{4} = \\frac{2}{4} + \\frac{3}{4} = \\frac{5}{4}$\n\n**Practice Problem:**\nSolve: $-12.5 - (-4.2) + 3.8$",
-      "scores": {
-        "standards_accuracy": 5,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 5
-      }
+      "left": "standardgraph",
+      "right": "both",
+      "winner": "both"
     },
     {
       "topic": "Adding and subtracting rational numbers",
       "standard_id": "CCSS.MATH.7.NS.1",
-      "condition": "standardgraph",
-      "text": "**Objective**\nStudents will be able to add and subtract rational numbers by applying the rules of additive inverses and interpreting operations as movement on a number line.\n\n**Teaching Steps**\n\n1.  **Addition as Movement:** Explain that $p + q$ represents the position reached by starting at $p$ and moving a distance of $|q|$ units. If $q$ is positive, move right; if $q$ is negative, move left.\n    *   *Worked Example:* $-3.5 + 5 = 1.5$ (Start at $-3.5$, move $5$ units to the right).\n2.  **Subtraction as Adding the Opposite:** Define subtraction as adding the additive inverse: $p - q = p + (-q)$. This transforms every subtraction problem into an addition problem.\n    *   *Worked Example:* $-4 - (-9) \\rightarrow -4 + 9 = 5$.\n3.  **Applying Properties:** Use the concept of additive inverses (where $a + (-a) = 0$) to simplify expressions.\n    *   *Worked Example:* $7.2 + (-7.2) + (-3) = 0 + (-3) = -3$.\n\n**Practice Problem**\nEvaluate the following expression:\n$-12.5 - 4.2 + (-3.3)$",
-      "scores": {
-        "standards_accuracy": 5,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 5
-      }
+      "left": "none",
+      "right": "both",
+      "winner": "both"
     },
     {
       "topic": "Adding and subtracting rational numbers",
       "standard_id": "CCSS.MATH.7.NS.1",
-      "condition": "both",
-      "text": "**Objective:** Students will be able to add and subtract rational numbers by applying the concept of additive inverses and interpreting subtraction as adding the opposite.\n\n**Teaching Steps:**\n\n1.  **Addition via Number Line Movement:** To add rational numbers, treat the first number as your starting point on a number line. Adding a positive number moves you to the right, while adding a negative number moves you to the left.\n    *   *Worked Example:* $-5 + 8$\n    *   Start at $-5$ on the number line. Move $8$ units to the right. You land on $3$.\n    *   Result: $-5 + 8 = 3$.\n\n2.  **Subtraction as Adding the Opposite:** Subtraction can be rewritten as the addition of an additive inverse. Use the rule $p - q = p + (-q)$. This transforms every subtraction problem into an addition problem.\n    *   *Worked Example:* $4 - (-3)$\n    *   Rewrite the subtraction by changing the sign of the second number: $4 + 3$.\n    *   Start at $4$ on the number line and move $3$ units to the/right. You land on $7$.\n    *   Result: $4 - (-3) = 7$.\n\n**Practice Problem:**\nEvaluate: $-2 - 5$",
-      "scores": {
-        "standards_accuracy": 5,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 5
-      }
+      "left": "none",
+      "right": "standardgraph",
+      "winner": "standardgraph"
     },
     {
       "topic": "Solving two-step linear equations",
       "standard_id": "CCSS.MATH.7.EE.4",
-      "condition": "none",
-      "text": "**Objective:** Students will be able to solve two-step linear equations by applying inverse operations to isolate the variable.\n\n**Teaching Steps:**\n\n1.  **Undo Addition or Subtraction:** Identify the constant term on the same side as the variable. Apply the inverse operation to both sides of the equation to isolate the variable term. \n    *   *Example:* In $3x + 5 = 17$, subtract $5$ from both sides to get $3x = 12$.\n2.  **Undo Multiplication or Division:** Identify the coefficient attached to the variable. Apply the inverse operation to both sides to solve for the variable.\n    *   *Example:* In $3x = 12$, divide both sides by $3$ to get $x = 4$.\n\n**Practice Problem:**\nSolve for $y$: $5y - 7 = 18$",
-      "scores": {
-        "standards_accuracy": 5,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 3
-      }
+      "left": "both",
+      "right": "standardgraph",
+      "winner": "standardgraph"
     },
     {
       "topic": "Solving two-step linear equations",
       "standard_id": "CCSS.MATH.7.EE.4",
-      "condition": "standardgraph",
-      "text": "**Objective:** Students will be able to solve two-step linear equations of the form $px + q = r$ by applying inverse operations to isolate the variable.\n\n**Teaching Steps:**\n\n1.  **Identify the Operations:** Analyze the equation to determine which operations are being applied to the variable. For example, in the equation $3x + 5 = 17$, the variable $x$ is first multiplied by $3$ and then increased by $5$.\n2.  **Apply Inverse Operations (Reverse PEMDAS):** To isolate the variable, undo the operations in reverse order. Start by undoing addition or subtraction, then undo multiplication or division.\n    *   *Example:* Solve $3x + 5 = 17$.\n    *   *Step 1 (Undo addition):* Subtract $5$ from both sides $\\rightarrow 3x = 12$.\n    *   *Step 2 (Undo multiplication):* Divide both sides by $3 \\rightarrow x = 4$.\n3.  **Verify the Solution:** Substitute the calculated value back into the original equation to ensure the equality holds true.\n    *   *Check:* $3(4) + 5 = 12 + 5 = 17$. (Correct)\n\n**Practice Problem:**\nSolve for $y$: $4y - 7 = 13$",
-      "scores": {
-        "standards_accuracy": 5,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 5
-      }
+      "left": "none",
+      "right": "both",
+      "winner": "both"
     },
     {
       "topic": "Solving two-step linear equations",
       "standard_id": "CCSS.MATH.7.EE.4",
-      "condition": "both",
-      "text": "**Objective**\nStudents will be able to translate real-world word problems into two-step linear equations ($px + q = r$) and solve them using inverse operations.\n\n**Teaching Steps**\n\n1.  **Translate and Name:** Read the problem to identify the unknown quantity. Assign a variable (e.g., $x$) to represent that quantity. Identify the constant ($q$) and the coefficient ($p$) within the text.\n    *   *Example:* A rental shop charges a $10 flat fee plus $5 per hour. If the total bill was $35, how many hours ($h$) were rented?\n    *   *Equation:* $5h + 10 = 35$\n\n2.  **Solve using Inverse Operations:** Isolate the variable by performing the inverse of the operations in the equation, working from the \"outside in\" (undo addition/subtraction first, then undo multiplication/division).\n    *   *Step A (Undo Addition):* Subtract 10 from both sides: $5h = 25$.\n    *   *Step B (Undo Multiplication):* Divide both sides by 5: $h = 5$.\n\n3.  **Verify and Conclude:** Substitute the solution back into the original equation to check for accuracy, then state the answer in a complete sentence.\n    *   *Check:* $5(5) + 10 = 25 + 10 = 35$. (Correct)\n    *   *Answer:* The duration of the rental was 5 hours.\n\n**Practice Problem**\nA student buys 4 identical notebooks and a $3 folder. The total cost of the purchase is $15. Write and solve an equation to find the cost of one notebook.",
-      "scores": {
-        "standards_accuracy": 5,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 5
-      }
+      "left": "standardgraph",
+      "right": "none",
+      "winner": "standardgraph"
     },
     {
       "topic": "Properties of integer exponents",
       "standard_id": "CCSS.MATH.8.EE.1",
-      "condition": "none",
-      "text": "**Lesson Plan: Properties of Integer Exponents**\n\n**Objective:** Students will be able to simplify algebraic expressions by applying the product, quotient, and power of a power rules.\n\n**Teaching Steps:**\n\n1.  **Product Rule ($a^m \\cdot a^n = a^{m+n}$):** When multiplying expressions with the same base, add the exponents.\n    *   *Example:* $x^5 \\cdot x^3 = x^{5+3} = x^8$\n2.  **Quotient Rule ($\\frac{a^m}{a^n} = a^{m-n}$):** When dividing expressions with the same base, subtract the exponent of the denominator from the exponent of the numerator.\n    *   *Example:* $\\frac{y^{10}}{y^4} = y^{10-4} = y^6$\n3.  **Power of a Power Rule ($(a^m)^n = a^{m \\cdot n}$):** To raise a power to another power, multiply the exponents.\n    *   *Example:* $(z^3)^4 = z^{3 \\cdot 4} = z^{12}$\n\n**Practice Problem:**\n\nSimplify the following expression completely:\n$$\\frac{(m^4)^2 \\cdot m^5}{m^3}$$",
-      "scores": {
-        "standards_accuracy": 5,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 4
-      }
+      "left": "standardgraph",
+      "right": "both",
+      "winner": "both"
     },
     {
       "topic": "Properties of integer exponents",
       "standard_id": "CCSS.MATH.8.EE.1",
-      "condition": "standardgraph",
-      "text": "**Objective:** Students will be able to apply the product, quotient, and power of a power rules to simplify expressions involving integer exponents.\n\n**Teaching Steps:**\n\n1.  **Product Rule:** When multiplying powers with the same base, add the exponents ($a^m \\cdot a^n = a^{m+n}$).\n    *   *Example:* $5^6 \\cdot 5^{-4} = 5^{6 + (-4)} = 5^2 = 25$\n2.  **Quotient Rule:** When dividing powers with the same base, subtract the exponent of the denominator from the exponent of the numerator ($\\frac{a^m}{a^n} = a^{m-n}$).\n    *   *Example:* $\\frac{2^3}{2^7} = 2^{3-7} = 2^{-4} = \\frac{1}{2^4} = \\frac{1}{16}$\n3.  **Power of a Power Rule:** To raise a power to another power, multiply the exponents ($(a^m)^n = a^{m \\cdot n}$).\n    *   *Example:* $(3^2)^4 = 3^{2 \\cdot 4} = 3^8$\n\n**Practice Problem:**\n\nSimplify the following expression and write your answer using only positive exponents:\n$$\\frac{(x^5)^2 \\cdot x^{-3}}{x^{-4}}$$",
-      "scores": {
-        "standards_accuracy": 5,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 5
-      }
+      "left": "none",
+      "right": "both",
+      "winner": "both"
     },
     {
       "topic": "Properties of integer exponents",
       "standard_id": "CCSS.MATH.8.EE.1",
-      "condition": "both",
-      "text": "**Objective:** Students will be able to simplify algebraic expressions by applying the Product, Power, and Product to a Power properties of exponents.\n\n**Teaching Steps:**\n\n1.  **The Product Property ($a^m \\cdot a^n = a^{m+n}$):** Demonstrate that when multiplying like bases, you add the exponents. \n    *   *Example:* $x^2 \\cdot x^3 = (x \\cdot x) \\cdot (x \\cdot x \\cdot x) = x^5$. Since $2 + 3 = 5$, we can simply add the exponents.\n\n2.  **The Power Property ($(a^m)^n = a^{m \\cdot n}$):** Demonstrate that when raising a power to another power, you multiply the exponents.\n    *   *Example:* $(x^4)^3 = x^4 \\cdot x^4 \\cdot x^4 = x^{4+4+4} = x^{12}$. Since $4 \\cdot 3 = 12$, we can simply multiply the exponents.\n\n3.  **The Product to a Power Property ($(ab)^m = a^m b^m$):** Demonstrate that an exponent outside a parenthesis applies to every factor inside.\n    *   *Example:* $(2y^3)^4 = 2^4 \\cdot (y^3)^4 = 16 \\cdot y^{3 \\cdot 4} = 16y^{12}$.\n\n**Practice Problem:**\n\nSimplify the following expression: $(3x^5)^2 \\cdot x^4$",
-      "scores": {
-        "standards_accuracy": 5,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 5
-      }
+      "left": "standardgraph",
+      "right": "none",
+      "winner": "standardgraph"
     },
     {
       "topic": "Understanding functions as inputs and outputs",
       "standard_id": "CCSS.MATH.8.F.1",
-      "condition": "none",
-      "text": "**Objective:** Students will be able to identify inputs and outputs and evaluate a function for a given input using function notation.\n\n**Teaching Steps:**\n\n1.  **The Function Machine Analogy:** Define a function as a \"machine\" that takes an input ($x$), applies a specific rule, and produces exactly one output ($f(x)$ or $y$). \n    *   *Example:* If the rule is \"add 5,\" an input of $2$ results in an output of $7$.\n\n2.  **Demonstrating Substitution:** Show how to use function notation to calculate an output.\n    *   *Example:* Given $f(x) = 3x - 4$, find $f(5)$.\n    *   *Step 1:* Replace $x$ with $5 \\rightarrow f(5) = 3(5) - 4$\n    *   *Step 2:* Multiply $\\rightarrow 15 - 4$\n    *   *Step 3:* Subtract $\\rightarrow 11$. The output is $11$.\n\n**Practice Problem:**\n\nEvaluate the function $g(x) = x^2 + 2$ for $x = 4$.",
-      "scores": {
-        "standards_accuracy": 5,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 5
-      }
+      "left": "standardgraph",
+      "right": "both",
+      "winner": "both"
     },
     {
       "topic": "Understanding functions as inputs and outputs",
       "standard_id": "CCSS.MATH.8.F.1",
-      "condition": "standardgraph",
-      "text": "**Objective:** Students will be able to identify whether a relation is a function by determining if each input maps to exactly one output.\n\n**Teaching Steps:**\n\n1.  **The Function Machine Analogy:** Introduce a function as a \"machine\" that follows a specific rule. An **input** ($x$) enters the machine, a rule is applied, and an **output** ($y$) is produced. \n    *   *Example:* Rule: \"Multiply by 3.\" \n    *   Input $2 \\rightarrow$ Output $6$. \n    *   Input $5 \\rightarrow$ Output $15$.\n\n2.  **The Rule of Uniqueness:** Define the core requirement of a function: every input must have **exactly one** output. \n    *   *Function Example:* $\\{(1, 5), (2, 10), (3, 15)\\}$ is a function because each $x$-value is unique.\n    *   *Non-Function Example:* $\\{(1, 5), (1, 10), (3, 15)\\}$ is **not** a function because the input $1$ results in two different outputs ($5$ and $10$).\n\n3.  **Mapping Inputs to Ordered Pairs:** Show that functions are represented as sets of ordered pairs $(x, y)$, where $x$ is the input and $y$ is the output. Emphasize that while different inputs can share the same output (e.g., $(2, 5)$ and $(3, 5)$), one input cannot point to multiple outputs.\n\n**Practice Problem:**\n\nDetermine if the following set of ordered pairs represents a function. Explain your reasoning.\n$\\{(4, 7), (5, 8), (4, 10), (6, 12)\\}$",
-      "scores": {
-        "standards_accuracy": 5,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 5
-      }
+      "left": "both",
+      "right": "none",
+      "winner": "both"
     },
     {
       "topic": "Understanding functions as inputs and outputs",
       "standard_id": "CCSS.MATH.8.F.1",
-      "condition": "both",
-      "text": "**Objective:** Students will be able to identify whether a relation is a function by determining if each input ($x$) is assigned to exactly one output ($y$).\n\n**Teaching Steps:**\n\n1.  **The \"One Output\" Rule:** Define a function as a rule where every input has exactly one output. Use the \"Birthday Analogy\": Every person (input) has exactly one birthday (output). While two different people can share the same birthday, one person cannot have two different birthdays. If an input maps to two different outputs, it is not a function.\n2.  **Analyzing Ordered Pairs:** To check a set of ordered pairs, look specifically at the $x$-values. If an $x$-value repeats with a different $y$-value, the relation fails the definition. \n    *   *Example:* $\\{(1, 5), (2, 10), (3, 15)\\}$ is a function.\n    *   *Example:* $\\{(1, 5), (1, 8), (3, 15)\\}$ is **not** a function because the input $1$ has two different outputs ($5$ and $8$).\n3.  **The Vertical Line Test (VLT):** To check a graph, imagine drawing vertical lines through it. If any vertical line intersects the graph at more than one point, the relation is not a function because that specific $x$-value is paired with multiple $y$-values.\n\n**Practice Problem:**\n\nDetermine if the following relation is a function. Explain your reasoning.\n$\\{(4, 7), (2, 3), (4, 9), (8, 1)\\}$",
-      "scores": {
-        "standards_accuracy": 5,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 5
-      }
+      "left": "none",
+      "right": "standardgraph",
+      "winner": "none"
     },
     {
       "topic": "Solving systems of linear inequalities by graphing",
       "standard_id": "CCSS.MATH.HSA.REI.D.12",
-      "condition": "none",
-      "text": "**Objective:** Students will be able to identify the solution set of a system of linear inequalities by graphing individual boundaries and locating the overlapping shaded region.\n\n**Teaching Steps:**\n\n1.  **Graph Individual Inequalities:** For each inequality in the system, graph the boundary line. Use a **dashed line** for $<$ or $>$ and a **solid line** for $\\le$ or $\\ge$. Shade the side of the line that makes the inequality true (use a test point, such as $(0,0)$, to verify the shading direction).\n2.  **Identify the Intersection:** Locate the specific region on the coordinate plane where the shaded areas of all inequalities overlap. This overlapping area represents the set of all points that satisfy every inequality in the system simultaneously.\n\n**Practice Problem:**\n\nGraph the following system of inequalities and shade the solution region:\n$y < 2x - 3$\n$y \\ge -x + 2$",
-      "scores": {
-        "standards_accuracy": 5,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 5
-      }
+      "left": "standardgraph",
+      "right": "both",
+      "winner": "standardgraph"
     },
     {
       "topic": "Solving systems of linear inequalities by graphing",
       "standard_id": "CCSS.MATH.HSA.REI.D.12",
-      "condition": "standardgraph",
-      "text": "**Objective**\nStudents will be able to identify the solution set of a system of linear inequalities by graphing individual half-planes and finding their intersection.\n\n**Teaching Steps**\n1. **Graph the Boundary Lines:** For each inequality in the system, graph the corresponding linear equation. Use a **dashed line** for strict inequalities ($<$ or $>$) to indicate the boundary is not included, and a **solid line** for non-strict inequalities ($\\leq$ or $\\geq$) to indicate the boundary is included.\n2. **Shade the Half-Planes:** Determine which side of each boundary line contains the solutions by using a test point (e.g., $(0,0)$). If the test point makes the inequality true, shade the side containing that point; if false, shade the opposite side.\n3. **Identify the Intersection:** Locate the region on the coordinate plane where the shaded areas of all inequalities overlap. This overlapping region represents the solution set for the entire system.\n\n**Practice Problem**\nGraph the following system of inequalities and shade the solution set:\n$y < 2x + 1$\n$y \\geq -x + 4$",
-      "scores": {
-        "standards_accuracy": 5,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 5
-      }
+      "left": "both",
+      "right": "none",
+      "winner": "both"
     },
     {
       "topic": "Solving systems of linear inequalities by graphing",
       "standard_id": "CCSS.MATH.HSA.REI.D.12",
-      "condition": "both",
-      "text": "**Objective:** Students will be able to solve a system of linear inequalities by graphing individual boundary lines and identifying the overlapping region (the intersection) of their half-planes.\n\n**Teaching Steps:**\n\n1.  **Graph the Boundary Lines:** For each inequality in the system, treat it as an equation to graph the boundary line. Determine the line type: use a **dashed line** for strict inequalities ($<$ or $>$) to show the boundary is not included, and a **solid line** for non-strict inequalities ($\\le$ or $\\ge$) to show the boundary is included.\n2.  **Shade the Half-Planes:** Determine which side of each boundary line contains the solutions by testing a point not on the line (the origin $(0,0)$ is often the easiest). Plug the coordinates into the inequality; if the statement is true, shade the side containing that point. If false, shade the opposite side.\n3.  **Identify the Intersection:** Locate the region on the coordinate plane where the shaded areas from all inequalities overlap. This overlapping area represents the solution set for the entire system.\n\n**Practice Problem:**\n\nGraph the following system of inequalities and identify the solution region:\n1. $y > x - 2$\n2. $y \\le -x + 4$",
-      "scores": {
-        "standards_accuracy": 5,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 5
-      }
+      "left": "standardgraph",
+      "right": "none",
+      "winner": "standardgraph"
     },
     {
       "topic": "Average rate of change of a function",
       "standard_id": "CCSS.MATH.HSF.IF.B.6",
-      "condition": "none",
-      "text": "**Objective:** Students will be able to calculate the average rate of change of a function $f(x)$ over a closed interval $[a, b]$ using the formula $\\frac{f(b) - f(a)}{b - a}$.\n\n**Teaching Steps:**\n\n1.  **Define the Formula:** Explain that the average rate of change represents the slope of the secant line connecting two points on a curve. Introduce the formula:\n    $$\\text{Average Rate of Change} = \\frac{f(b) - f(a)}{b - a}$$\n\n2.  **Worked Example:** Find the average rate of change for $f(x) = x^2$ on the interval $[1, 4]$.\n    *   **Identify $a$ and $b$:** $a = 1, b = 4$.\n    *   **Evaluate the function at the endpoints:**\n        $f(1) = (1)^2 = 1$\n        $f(4) = (4)^2 = 16$\n    *   **Apply the formula:**\n        $\\frac{16 - 1}{4 - 1} = \\frac{15}{3} = 5$\n\n**Practice Problem:**\n\nFind the average rate of change for the function $f(x) = 3x^2 - 2$ on the interval $[0, 2]$.",
-      "scores": {
-        "standards_accuracy": 4,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 4
-      }
+      "left": "standardgraph",
+      "right": "both",
+      "winner": "both"
     },
     {
       "topic": "Average rate of change of a function",
       "standard_id": "CCSS.MATH.HSF.IF.B.6",
-      "condition": "standardgraph",
-      "text": "**Objective**\nStudents will be able to calculate the average rate of change of a function over a specified interval using algebraic formulas and tabular data.\n\n**Teaching Steps**\n\n**Step 1: Algebraic Calculation (The Formula)**\nIntroduce the average rate of change as the slope of the secant line connecting two points on a curve. Use the formula:\n$$\\text{Average Rate of Change} = \\frac{f(b) - f(a)}{b - a}$$\n*Example:* Find the average rate of change for $f(x) = x^2 + 3$ on the interval $[1, 4]$.\n1. Identify $a = 1$ and $b = 4$.\n2. Calculate $f(1) = (1)^ 2 + 3 = 4$.\n3. Calculate $f(4) = (4)^ 2 + 3 = 19$.\n4. Apply formula: $\\frac{19 - 4}{4 - 1} = \\frac{15}{3} = 5$.\n\n**Step 2: Calculation from a Table**\nDemonstrate how to extract $y$-values from a data set to find the rate of change over a specific $x$-interval.\n*Example:* Find the average rate of change on the interval $[2, 5]$ using this table:\n| $x$ | 2 | 3 | 5 |\n| :--- | :--- | :--- | :--- |\n| $f(x)$ | 10 | 14 | 22 |\n\n1. Identify the coordinates for the interval: $(2, 10)$ and $(5, 22)$.\n2. Apply the slope formula: $\\frac{22 - 10}{5 - 2} = \\frac{12}{3} = 4$.\n\n**Practice Problem**\nFind the average rate of change for the function $f(x) = 3x^2 - 5$ on the interval $[-2, 2]$.",
-      "scores": {
-        "standards_accuracy": 5,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 5
-      }
+      "left": "both",
+      "right": "none",
+      "winner": "both"
     },
     {
       "topic": "Average rate of change of a function",
       "standard_id": "CCSS.MATH.HSF.IF.B.6",
-      "condition": "both",
-      "text": "**Objective**\nStudents will be able to calculate and interpret the average rate of change of a function over a specified interval using coordinates, tables, or symbolic notation.\n\n**Teaching Steps**\n\n**Step 1: Define the Average Rate of Change**\nExplain that the average rate of change measures how much the output ($y$) changes relative to the change in the input ($x$) over a specific interval. Introduce the formula, which is identical to the slope formula:\n$$\\text{Average Rate of Change} = \\frac{y_2 - y_1}{x_2 - x_1}$$\n\n**Step 2: Calculating from a Table**\nDemonstrate how to identify the necessary $x$ and $y$ values from a dataset.\n*   **Example:** Find the average rate of change between $x = -2$ and $x = 8$ using the following table:\n    | $x$ | -2 | 8 |\n    | :--- | :--- | :--- |\n    | $y$ | 3 | -2 |\n*   **Work:**\n    1. Identify points: $(-2, 3)$ and $(8, -2)$.\n    2. Apply formula: $\\frac{-2 - 3}{8 - (-2)} = \\frac{-5}{10} = -0.5$\n    3. **Interpretation:** For every 1 unit increase in $x$, $y$ decreases by $0.5$ on average.\n\n**Step 3: Calculating from a Function (Symbolic)**\nDemonstrate how to find the rate of change when only the function and interval are provided.\n*   **Example:** Find the average rate of change for $f(x) = x^2$ on the interval $[1, 4]$.\n*   **Work:**\n    1. Find $y_1$: $f(1) = (1)^2 = 1$.\n    2. Find $y_2$: $f(4) = (4)^2 = 16$.\n    3. Apply formula: $\\frac{16 - 1}{4 - 1} = \\frac{15}{3} = 5$.\n\n**Practice Problem**\nFind the average rate of change for a function $g(x)$ over the interval $[3, 7]$ if $g(3) = -10$ and $g(7) = 2$.",
-      "scores": {
-        "standards_accuracy": 5,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 5
-      }
+      "left": "standardgraph",
+      "right": "none",
+      "winner": "standardgraph"
     },
     {
       "topic": "Rewriting expressions with rational exponents and radicals",
       "standard_id": "CCSS.MATH.HSN.RN.A.2",
-      "condition": "none",
-      "text": "**Objective:** Students will be able to convert between rational exponent notation and radical notation using the rule $a^{\\frac{m}{n}} = \\sqrt[n]{a^m}$.\n\n**Teaching Steps:**\n\n1.  **Identify the Components:** Define the parts of the expression. In the fraction $\\frac{m}{n}$, the numerator ($m$) represents the **power**, and the denominator ($n$) represents the **index** (the root).\n2.  **Convert Exponent to Radical:** Demonstrate how to transform $x^{\\frac{3}{5}}$ into radical form. \n    *   Identify the index: $5$\n    *   Identify the power: $3$\n    *   Result: $\\sqrt[5]{x^3}$\n3.  **Convert Radical to Exponent:** Demonstrate how to transform $\\sqrt[4]{y^7}$ into exponential form.\n    *   Identify the index: $4$ (becomes the denominator)\n    *   Identify the power: $7$ (becomes the numerator)\n    *   Result: $y^{\\frac{7}{4}}$\n\n**Practice Problem:**\n\nRewrite the following expression in radical notation: $w^{\\frac{2}{9}}$",
-      "scores": {
-        "standards_accuracy": 4,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 5
-      }
+      "left": "standardgraph",
+      "right": "both",
+      "winner": "both"
     },
     {
       "topic": "Rewriting expressions with rational exponents and radicals",
       "standard_id": "CCSS.MATH.HSN.RN.A.2",
-      "condition": "standardgraph",
-      "text": "**Objective:** Students will be able to convert between radical notation and rational exponent notation using the property $\\sqrt[n]{x^m} = x^{m/n}$.\n\n**Teaching Steps:**\n\n1.  **Introduce the Rule:** Define the relationship between the index, the power, and the fraction. Explain that in the expression $\\sqrt[n]{x^m}$, the index ($n$) becomes the denominator of the exponent, and the power ($m$) becomes the numerator.\n2.  **Example 1 (Radical to Exponent):** Demonstrate how to rewrite $\\sqrt[3]{w^5}$. Identify the index as $3$ and the power as $5$, resulting in $w^{5/3}$.\n3.  **Example 2 (Exponent to Radical):** Demonstrate how to rewrite $y^{2/7}$. Identify the numerator $2$ as the power and the denominator $7$ as the index, resulting in $\\sqrt[7]{y^2}$.\n\n**Practice Problem:**\n\nRewrite the following expression using a rational exponent: $\\sqrt[4]{z^3}$",
-      "scores": {
-        "standards_accuracy": 5,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 5
-      }
+      "left": "both",
+      "right": "none",
+      "winner": "both"
     },
     {
       "topic": "Rewriting expressions with rational exponents and radicals",
       "standard_id": "CCSS.MATH.HSN.RN.A.2",
-      "condition": "both",
-      "text": "**Lesson Plan: Rewriting Expressions with Rational Exponents and Radicals**\n\n**Objective**\nStudents will be able to convert expressions between radical notation and rational exponent notation and simplify expressions using the properties of exponents.\n\n**Teaching Steps**\n\n**Step 1: Understand the Relationship between Radicals and Rational Exponents**\nIntroduce the fundamental rule that a rational exponent represents a root: $a^{\\frac{1}{n}} = \\sqrt[n]{a}$. \n*   *Example:* Rewrite $25^{\\frac{1}{2}}$ in radical form and evaluate.\n    *   $25^{\\frac{1}{2}} = \\sqrt{25} = 5$.\n\n**Step 2: Apply the Power Property to Simplify**\nDemonstrate how to use the Power Property, $(a^m)^n = a^{m \\cdot n}$, to rewrite or solve expressions.\n*   *Example:* Rewrite $\\sqrt[3]{x^5}$ using rational exponents.\n    *   The index of the radical (3) becomes the denominator, and the power (5) becomes the numerator: $x^{\\frac{5}{3}}$.\n\n**Step 3: Use Exponent Laws to Simplify Expressions**\nShow how to use the Product or Quotient Properties to simplify expressions involving rational exponents.\n*   *Example:* Simplify $x^{\\frac{1}{2}} \\cdot x^{\\frac{1}{3}}$.\n    *   Apply the Product Property ($a^m \\cdot a^n = a^{m+n}$):\n    *   $x^{\\frac{1}{2} + \\frac{1}{3}} = x^{\\frac{3}{6} + \\frac{2}{6}} = x^{\\frac{5}{6}}$.\n\n**Practice Problem**\nSimplify the following expression and write your final answer in radical notation:\n$$\\frac{y^{\\frac{3}{4}}}{y^{\\frac{1}{4}}}$$\n\n*(Answer: $y^{\\frac{3}{4} - \\frac{1}{4}} = y^{\\frac{2}{4}} = y^{\\frac{1}{2}} = \\sqrt{y}$)*",
-      "scores": {
-        "standards_accuracy": 5,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 5
-      }
+      "left": "none",
+      "right": "standardgraph",
+      "winner": "standardgraph"
     },
     {
       "topic": "Representing data with dot plots, histograms, and box plots",
       "standard_id": "CCSS.MATH.HSS.ID.1",
-      "condition": "none",
-      "text": "**Objective:** Students will be able to differentiate between and construct dot plots, histograms, and box plots to represent various numerical datasets.\n\n**Teaching Steps:**\n\n1.  **Dot Plots (Frequency of Discrete Values):** Demonstrate how to plot individual data points on a number line. For the dataset $\\{2, 3, 3, 5, 8\\}$, place a dot above each number on the axis. Explain that dots represent the frequency of specific, individual values.\n2.  **Histograms (Frequency of Intervals):** Show how to group continuous data into \"bins\" or ranges. For a dataset of ages $\\{5, 7, 12, 15, 22, 25\\}$, create intervals (e.g., $0-10, 11-20, 21-30$) and draw bars where the height represents how many values fall into each range.\n3.  **Box Plots (Distribution and Spread):** Introduce the five-number summary: Minimum, First Quartile (Q1), Median, Third Quartile (Q3), and Maximum. Demonstrate drawing a box from Q1 to Q3 with a line at the median, and \"whiskers\" extending to the Min and Max to show data spread.\n\n**Practice Problem:**\n\nGiven the following dataset representing test scores: $\\{65, 70, 75, 80, 85, 90, 95\\}$.\n\n1.  Create a **dot plot** for this data.\n2.  Identify the **median** value that would be marked in a **box plot**.",
-      "scores": {
-        "standards_accuracy": 5,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 5
-      }
+      "left": "both",
+      "right": "standardgraph",
+      "winner": "both"
     },
     {
       "topic": "Representing data with dot plots, histograms, and box plots",
       "standard_id": "CCSS.MATH.HSS.ID.1",
-      "condition": "standardgraph",
-      "text": "**Objective:** Students will be able to distinguish between and construct dot plots, histograms, and box plots to represent various datasets.\n\n**Teaching Steps:**\n\n1.  **Dot Plots (Discrete Data):** Use a small dataset, such as $\\{2, 3, 3, 5, 8\\}$. Draw a number line and place a dot above each value on the line. This visually represents the frequency of individual data points.\n2.  **Histograms (Grouped Data):** Use a larger dataset, such as test scores $\\{72, 75, 82, 88, 91, 95\\}$. Divide the range into intervals (e.g., $70-79, 80-89, 90-100$). Draw vertical bars where the height of each bar represents the number of values falling within that interval.\n3.  **Box Plots (Distribution):** Using a dataset, identify the five-number summary: Minimum, First Quartile ($Q_1$), Median, Third Quartile ($Q_3$), and Maximum. Draw a number line, a box from $Q_1$ to $Q_3$, and \"whiskers\" extending from the box to the Min and Max.\n\n**Practice Problem:**\n\nGiven the following dataset representing hours studied: $\\{1, 3, 3, 4, 6, 7, 9\\}$. \n1. Create a dot plot for this data.\n2. Identify the five-number summary required to create a box plot.",
-      "scores": {
-        "standards_accuracy": 5,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 5
-      }
+      "left": "none",
+      "right": "both",
+      "winner": "both"
     },
     {
       "topic": "Representing data with dot plots, histograms, and box plots",
       "standard_id": "CCSS.MATH.HSS.ID.1",
-      "condition": "both",
-      "text": "**Objective:** Students will be able to distinguish between and construct dot plots, histograms, and box plots to represent different types of datasets.\n\n**Teaching Steps:**\n\n1. **Dot Plots (Discrete Data):** Demonstrate using a small dataset (e.g., number of siblings: 0, 1, 1, 2, 4). Draw a number line and place a dot above each value on the line to represent frequency.\n2. **Histograms (Continuous/Grouped Data):** Demonstrate grouping larger datasets into intervals (bins). For example, with test scores (72, 75, 88, 92, 95), create bins like 70\u201379, 80\u201389, and 90\u2013100. Draw bars where the height represents the number of values in each range.\n3. **Box Plots (Distribution/Five-Number Summary):** Demonstrate how to find the five key values in a dataset: Minimum, First Quartile (Q1), Median, Third Quartile (Q3), and Maximum. Draw a rectangular box from Q1 to Q3 with \"whiskers\" extending to the Min and Max.\n\n**Practice Problem:**\nGiven the following dataset representing daily temperatures: **12, 15, 15, 17, 20, 22, 25**.\n1. Create a dot plot for this data.\n2. Identify the median temperature.",
-      "scores": {
-        "standards_accuracy": 5,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 4
-      }
+      "left": "none",
+      "right": "standardgraph",
+      "winner": "standardgraph"
     },
     {
       "topic": "Deriving the equation of a circle",
       "standard_id": "CCSS.MATH.HSG.GPE.A.1",
-      "condition": "none",
-      "text": "**Objective:** Students will be able to derive the standard form equation of a circle, $(x - h)^2 + (y - k)^2 = r^2$, using the distance formula.\n\n**Teaching Steps:**\n\n1.  **Define the Circle:** Define a circle as the set of all points $(x, y)$ that are a fixed distance $r$ (the radius) from a central point $(h, k)$.\n2.  **Apply the Distance Formula:** Use the distance formula to express the distance between the center $(h, k)$ and any arbitrary point $(x, y)$ on the circle:\n    $$r = \\sqrt{(x - h)^2 + (y - k)^2}$$\n3.  **Algebraic Derivation:** Square both sides of the equation to eliminate the radical, resulting in the standard form:\n    $$(x - h)^2 + (y - k)^2 = r^2$$\n\n**Practice Problem:**\nWrite the equation of a circle centered at $(4, -7)$ with a radius of $3$.",
-      "scores": {
-        "standards_accuracy": 5,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 5
-      }
+      "left": "both",
+      "right": "standardgraph",
+      "winner": "both"
     },
     {
       "topic": "Deriving the equation of a circle",
       "standard_id": "CCSS.MATH.HSG.GPE.A.1",
-      "condition": "standardgraph",
-      "text": "**Objective**\nStudents will derive the standard form equation of a circle $(x - h)^2 + (y - k)^2 = r^2$ using the Pythagorean Theorem and use completing the square to identify the center and radius from a general form equation.\n\n**Teaching Steps**\n\n1.  **Derivation via Pythagorean Theorem:** \n    Represent a circle with center $(h, k)$ and radius $r$. For any point $(x, y)$ on the circle, draw a right triangle where the hypotenuse is the radius $r$. The horizontal leg length is $|x - h|$ and the vertical leg length is $|y - k|$. Applying the Pythagorean Theorem ($a^2 + b^2 = c^2$), we get:\n    $(x - h)^2 + (y - k)^2 = r^2$.\n\n2.  **Finding Center and Radius (Completing the Square):**\n    To find the center and radius from the equation $x^2 + y^2 - 6x + 8y + 9 = 0$:\n    *   **Group terms and move the constant:** $(x^2 - 6x) + (y^2 + 8y) = -9$.\n    *   **Complete the square:** Add $(\\frac{-6}{2})^2 = 9$ and $(\\frac{8}{2})^2 = 16$ to both sides.\n    *   **Simplify:** $(x^2 - 6x + 9) + (y^2 + 8y + 16) = -9 + 9 + 16 \\rightarrow (x - 3)^2 + (y + 4)^2 = 16$.\n    *   **Identify:** Center $(3, -4)$, Radius $\\sqrt{16} = 4$.\n\n**Practice Problem**\nDetermine the center and radius of the circle given by the equation:\n$x^2 + y^2 + 10x - 4y - 7 = 0$",
-      "scores": {
-        "standards_accuracy": 5,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 5
-      }
+      "left": "both",
+      "right": "none",
+      "winner": "both"
     },
     {
       "topic": "Deriving the equation of a circle",
       "standard_id": "CCSS.MATH.HSG.GPE.A.1",
-      "condition": "both",
-      "text": "**Objective:** Students will be able to derive the standard form equation of a circle given its center and radius (or a point on the circle) using the distance formula and the Pythagorean Theorem.\n\n**Teaching Steps:**\n\n1.  **Identify the Standard Form:** Introduce the standard equation $(x - h)^2 + (y - k)^2 = r^2$, where $(h, k)$ represents the center and $r$ represents the radius. Demonstrate substitution using a known center and radius: For center $(-1, 3)$ and $r = 2$, the equation becomes $(x - (-1))^2 + (y - 3)^2 = 2^2$, which simplifies to $(x + 1)^2 + (y - 3)^2 = 4$.\n2.  **Calculate Radius via Distance Formula:** Explain that if a point on the circle is provided instead of the radius, the distance between the center $(x_1, y_1)$ and the point $(x_2, y_2)$ must be calculated using $r = \\sqrt{(x_2 - x_1)^2 + (y_2 - y_1)^2}$. For example, if the center is $(2, 4)$ and it passes through $(-2, 1)$:\n    $r = \\sqrt{(-2 - 2)^2 + (1 - 4)^2}$\n    $r = \\sqrt{(-4)^2 + (-3)^2}$\n    $r = \\sqrt{16 + 9} = \\sqrt{25} = 5$.\n3.  **Assemble the Final Equation:** Once the radius is found, substitute the center and the squared radius back into the standard form. Using the $r=5$ and center $(2, 4)$ from the previous step:\n    $(x - 2)^2 + (y - 4)^2 = 5^2 \\rightarrow (x - 2)^2 + (y - 4)^2 = 25$.\n\n**Practice Problem:**\nWrite the standard form equation of a circle with center $(0, -5)$ that passes through the point $(3, -1)$.",
-      "scores": {
-        "standards_accuracy": 5,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 3
-      }
+      "left": "standardgraph",
+      "right": "none",
+      "winner": "standardgraph"
     },
     {
       "topic": "Multiplying multi-digit whole numbers",
       "standard_id": "CCSS.MATH.5.NBT.B.5",
-      "condition": "none",
-      "text": "**Objective:** Students will be able to multiply multi-digit whole numbers using the standard algorithm.\n\n**Teaching Steps:**\n\n1.  **Align and Multiply Ones:** Write the numbers vertically, aligning the place values. Multiply the ones digit of the bottom number by each digit of the top number, carrying any tens to the next column.\n    *   *Example: $43 \\times 25 \\rightarrow 5 \\times 3 = 15$ (write 5, carry 1); $5 \\times 4 = 20 + 1 = 21$. First partial product: $215$.*\n2.  **Place Placeholder and Multiply Tens:** Place a zero in the ones column of the second row to represent the tens place. Multiply the tens digit of the bottom number by each digit of the top number.\n    *   *Example: $20 \\times 43 \\rightarrow 2 \\times 3 = 6$; $2 \\times 4 = 8$. Second partial product: $860$.*\n3.  **Sum the Partial Products:** Add the two partial products together to find the final product.\n    *   *Example: $215 + 860 = 1,075$.*\n\n**Practice Problem:**\nCalculate: $67 \\times 34$",
-      "scores": {
-        "standards_accuracy": 5,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 4
-      }
+      "left": "standardgraph",
+      "right": "both",
+      "winner": "standardgraph"
     },
     {
       "topic": "Multiplying multi-digit whole numbers",
       "standard_id": "CCSS.MATH.5.NBT.B.5",
-      "condition": "standardgraph",
-      "text": "**Objective:** Students will fluently multiply multi-digit whole numbers using the standard algorithm.\n\n**Teaching Steps:**\n\n1.  **Align and Multiply Ones:** Write the numbers vertically, aligning place values. Multiply the ones digit of the bottom number by each digit of the top number. For example, in $43 \\times 26$, multiply $6 \\times 3 = 18$ (write $8$, carry $1$) and $6 \\times 4 = 24$ ($+ 1$ carried $= 25$). The first partial product is $258$.\n2.  **Place Holder and Multiply Tens:** Place a $0$ in the ones column of the second row to represent multiplying by the tens place. Multiply the tens digit of the bottom number by each digit of the top number. In $43 \\times 26$, multiply $2 \\times 3 = 6$ and $2 \\times 4 = 8$. The second partial product is $860$.\n3.  **Sum Partial Products:** Add the partial products together to find the final product. $258 + 860 = 1,118$.\n\n**Practice Problem:**\nCalculate $57 \\times 34$ using the standard algorithm.",
-      "scores": {
-        "standards_accuracy": 5,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 5
-      }
+      "left": "none",
+      "right": "both",
+      "winner": "none"
     },
     {
       "topic": "Multiplying multi-digit whole numbers",
       "standard_id": "CCSS.MATH.5.NBT.B.5",
-      "condition": "both",
-      "text": "**Objective:** Students will fluently multiply multi-digit whole numbers using the standard algorithm.\n\n**Teaching Steps:**\n\n1.  **Multiply by the ones digit:** Align the numbers vertically. Multiply the ones digit of the bottom number by each digit of the top number, carrying any tens to the next column. \n    *   *Example:* For $32 \\times 18$, multiply $8 \\times 2 = 16$. Write the $6$ and carry the $1$. Then, multiply $8 \\times 3 = 24$, and add the carried $1$ to get $25$. The first partial product is $256$.\n2.  **Multiply by the tens digit using a placeholder:** Multiply the tens digit of the bottom number by each digit of the top number. Before calculating, place a $0$ in the ones column of the second row to act as a placeholder, representing that you are multiplying by a multiple of ten.\n    *   *Example:* For $32 \\times 18$, multiply $1$ (which represents $10$) by $2$ to get $2$, and $1$ by $3$ to get $3$. With the placeholder $0$, the second partial product is $320$.\n3.  **Sum the partial products:** Add the partial products from the previous steps together to find the final product.\n    *   *Example:* $256 + 320 = 576$.\n\n**Practice Problem:**\nCalculate $47 \\times 23$ using the standard algorithm.",
-      "scores": {
-        "standards_accuracy": 5,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 5
-      }
+      "left": "standardgraph",
+      "right": "none",
+      "winner": "none"
     },
     {
       "topic": "Solving real-world problems with percentages",
       "standard_id": "CCSS.MATH.7.RP.3",
-      "condition": "none",
-      "text": "**Objective:** Students will be able to calculate the final cost of an item by applying percentage discounts and adding sales tax.\n\n**Teaching Steps:**\n\n1.  **Find the Discount Amount:** Convert the percentage to a decimal and multiply it by the original price.\n    *   *Example:* A $50 shirt is 20% off. \n    *   $50 \\times 0.20 = \\$10$ (discount amount).\n2.  **Calculate the Sale Price:** Subtract the discount amount from the original price.\n    *   *Example:* $\\$50 - \\$10 = \\$40$ (sale price).\n3.  **Calculate the Final Total with Tax:** Convert the tax rate to a decimal, multiply it by the sale price, and add that amount to the sale price.\n    *   *Example:* If tax is 8%, calculate $\\$40 \\times 0.08 = \\$3.20$. \n    *   Final Total: $\\$40 + \\$3.20 = \\$43.20$.\n\n**Practice Problem:**\n\nA pair of headphones costs $80. They are currently on sale for 25% off. If the sales tax is 5%, what is the final total price of the headphones?",
-      "scores": {
-        "standards_accuracy": 5,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 5
-      }
+      "left": "standardgraph",
+      "right": "both",
+      "winner": "both"
     },
     {
       "topic": "Solving real-world problems with percentages",
       "standard_id": "CCSS.MATH.7.RP.3",
-      "condition": "standardgraph",
-      "text": "**Objective:** Students will be able to calculate the final total of a transaction by applying percentage increases (tax/tip) and decreases (discounts) to an original amount.\n\n**Teaching Steps:**\n\n1.  **Convert the Percent to a Decimal:** Transform the percentage into a decimal by dividing by 100 or moving the decimal point two places to the left (e.g., $15\\% = 0.15$).\n2.  **Calculate the Change Amount:** Multiply the original price by the decimal to find the specific dollar amount of the tax, tip, or discount (e.g., $\\$60 \\times 0.15 = \\$9.00$).\n3.  **Find the Final Total:** \n    *   For **increases** (tax, tip, markup), **add** the change amount to the original price ($\\$60 + \\$9 = \\$69$).\n    *   For **decreases** (discounts, markdowns), **subtract** the change amount from the original price ($\\$60 - \\$9 = \\$51$).\n\n**Practice Problem:**\nA jacket originally costs $85.00. The store is offering a 30% discount. What is the final sale price of the jacket before tax?",
-      "scores": {
-        "standards_accuracy": 5,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 5
-      }
+      "left": "none",
+      "right": "both",
+      "winner": "both"
     },
     {
       "topic": "Solving real-world problems with percentages",
       "standard_id": "CCSS.MATH.7.RP.3",
-      "condition": "both",
-      "text": "**Lesson Plan: Solving Real-World Problems with Percentages**\n\n**Objective:** \nStudents will be able to calculate the final cost of an item after applying a percentage increase (tax or markup) or a percentage decrease (discount) using proportional reasoning.\n\n**Teaching Steps:**\n\n1.  **Convert the Percent to a Decimal:** \n    Explain that a percentage represents a constant ratio (a unit rate). To use this rate in a calculation, convert the percentage to a decimal by dividing by 100 (e.g., $7\\% = 0.07$ or $25\\% = 0.25$).\n\n2.  **Calculate the Amount of Change:** \n    Use the proportional relationship $y = kx$, where $x$ is the original price and $k$ is the decimal rate. Multiply the original price by the decimal rate to find the specific dollar amount of the tax, markup, or discount.\n    *   *Example:* For a $\\$50$ item with $8\\%$ tax: $\\$50 \\times 0.08 = \\$4.00$ (tax amount).\n\n3.  **Find the Final Total:** \n    Apply the change to the original price. \n    *   **For Increases (Tax/Markup):** Add the change to the original price ($Original + Change = Total$).\n    *   **For Decreases (Discount/Markdown):** Subtract the change from the original price ($Original - Change = Total$).\n    *   *Example:* $\\$50 + \\$4.00 = \\$54.00$ (final total).\n\n**Practice Problem:**\n\nA laptop is originally priced at $\\$600$. The store is offering a $15\\%$ discount for a holiday sale. What is the final sale price of the laptop before tax?",
-      "scores": {
-        "standards_accuracy": 5,
-        "content_accuracy": 5,
-        "pedagogical_coherence": 5
-      }
+      "left": "none",
+      "right": "standardgraph",
+      "winner": "standardgraph"
     }
   ]
 }
