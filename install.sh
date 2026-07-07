@@ -39,13 +39,13 @@ echo; echo "${bold}OER MCP installer${reset}"
 echo "Open-licensed curriculum content + released assessment items, standards-aligned, for Claude"; echo
 
 # 1. uv
+export PATH="$HOME/.cargo/bin:$HOME/.local/bin:$PATH"  # pick up a prior uv install before checking
 info "Checking for uv..."
 if ! command -v uv &>/dev/null; then
     curl -LsSf https://astral.sh/uv/install.sh | sh || true  # ignore shell-profile permission errors
     export PATH="$HOME/.cargo/bin:$HOME/.local/bin:$PATH"
 fi
 UVX="$(command -v uvx 2>/dev/null || true)"
-[ -z "$UVX" ] && { export PATH="$HOME/.cargo/bin:$HOME/.local/bin:$PATH"; UVX="$(command -v uvx)"; }
 [ -z "$UVX" ] && fail "uvx not found after uv install. Restart your terminal and re-run."
 ok "uv found at $(command -v uv)"
 
