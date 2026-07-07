@@ -41,7 +41,7 @@ echo "Open-licensed curriculum content + released assessment items, standards-al
 # 1. uv
 info "Checking for uv..."
 if ! command -v uv &>/dev/null; then
-    curl -LsSf https://astral.sh/uv/install.sh | sh
+    curl -LsSf https://astral.sh/uv/install.sh | sh || true  # ignore shell-profile permission errors
     export PATH="$HOME/.cargo/bin:$HOME/.local/bin:$PATH"
 fi
 UVX="$(command -v uvx 2>/dev/null || true)"
