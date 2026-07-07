@@ -6,7 +6,7 @@ requires-python = ">=3.11"
 dependencies = [
     "oer-shared",
     "oer-ingestion",
-    "oer-server",
+    "oer-mcp",
 ]
 
 [dependency-groups]
@@ -21,7 +21,7 @@ members = ["packages/*"]
 [tool.uv.sources]
 oer-shared = { workspace = true }
 oer-ingestion = { workspace = true }
-oer-server = { workspace = true }
+oer-mcp = { workspace = true }
 
 [tool.pytest.ini_options]
 testpaths = ["packages"]

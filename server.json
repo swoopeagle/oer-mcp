@@ -1,0 +1,51 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.swoopeagle/oer-mcp",
+  "description": "23,700+ K-12 math content chunks + released assessment items (OpenStax, IM, Khan, SBAC, NAEP, Regents, MCAS, AP FRQ), aligned to CCSS.",
+  "title": "OER MCP",
+  "websiteUrl": "https://github.com/swoopeagle/oer-mcp",
+  "repository": {
+    "url": "https://github.com/swoopeagle/oer-mcp",
+    "source": "github"
+  },
+  "version": "1.0.0",
+  "packages": [
+    {
+      "registryType": "pypi",
+      "registryBaseUrl": "https://pypi.org",
+      "identifier": "oer-mcp",
+      "version": "1.0.0",
+      "runtimeHint": "uvx",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "OER_CORE_DB_PATH",
+          "description": "Path to oer_core.db (CC BY / public domain content). Downloaded by install.sh to ~/.oer-mcp/oer_core.db",
+          "isRequired": true
+        },
+        {
+          "name": "OER_ADDON_DB_PATH",
+          "description": "Path to oer_ncsa.db (Khan Academy + OpenMiddle, CC BY-NC-SA). Optional add-on.",
+          "isRequired": false
+        },
+        {
+          "name": "OER_STATE_DB_PATH",
+          "description": "Path to oer_state.db (NY Regents + MCAS, educational use). Optional add-on.",
+          "isRequired": false
+        },
+        {
+          "name": "OER_AP_DB_PATH",
+          "description": "Path to oer_ap.db (AP free-response, © College Board, educational use). Optional add-on.",
+          "isRequired": false
+        },
+        {
+          "name": "OLLAMA_BASE_URL",
+          "description": "Ollama base URL for semantic search (requires nomic-embed-text). Defaults to http://localhost:11434. Omit to use FTS5 keyword search only.",
+          "isRequired": false
+        }
+      ]
+    }
+  ]
+}

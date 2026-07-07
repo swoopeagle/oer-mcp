@@ -93,9 +93,9 @@ fi
 info "Configuring Claude Desktop..."
 [ -f "$CLAUDE_CONFIG" ] || { mkdir -p "$(dirname "$CLAUDE_CONFIG")"; echo '{"mcpServers":{}}' > "$CLAUDE_CONFIG"; }
 
-python3 - "$CLAUDE_CONFIG" "$UVX" "$CORE_DB" "$ADDON_DB" "$REPO" "$WITH_KHAN" "$STATE_DB" "$WITH_STATE" "$AP_DB" "$WITH_AP" <<'PYEOF'
+python3 - "$CLAUDE_CONFIG" "$UVX" "$CORE_DB" "$ADDON_DB" "$WITH_KHAN" "$STATE_DB" "$WITH_STATE" "$AP_DB" "$WITH_AP" <<'PYEOF'
 import json, os, shutil, sys
-cfg_path, uvx, core_db, addon_db, repo, with_khan, state_db, with_state, ap_db, with_ap = sys.argv[1:11]
+cfg_path, uvx, core_db, addon_db, with_khan, state_db, with_state, ap_db, with_ap = sys.argv[1:10]
 with open(cfg_path) as f: cfg = json.load(f)
 env = {"OER_CORE_DB_PATH": core_db}
 if with_khan == "1":  env["OER_ADDON_DB_PATH"] = addon_db
@@ -103,7 +103,7 @@ if with_state == "1": env["OER_STATE_DB_PATH"] = state_db
 if with_ap == "1":    env["OER_AP_DB_PATH"] = ap_db
 cfg.setdefault("mcpServers", {})["oer-mcp"] = {
     "command": uvx,
-    "args": ["--from", f"git+https://github.com/{repo}@main", "oer-mcp"],
+    "args": ["oer-mcp"],
     "env": env,
 }
 if os.path.exists(cfg_path): shutil.copy2(cfg_path, cfg_path + ".bak")

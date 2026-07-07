@@ -1,0 +1,59 @@
+name: oer-mcp
+description: >
+  23,700+ K-12 math content chunks + real released assessment items — OpenStax,
+  Illustrative Mathematics, Khan Academy, Smarter Balanced, NAEP, NY Regents,
+  MCAS, and AP free-response — chunked by concept and aligned to CCSS standards.
+  Companion to StandardGraph: StandardGraph knows what students must learn;
+  OER MCP knows what content teaches it and how it's assessed.
+
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    properties:
+      dbPath:
+        type: string
+        description: >
+          Absolute path to the core database file (CC BY / public domain content).
+          Run the installer first: curl -fsSL https://raw.githubusercontent.com/swoopeagle/oer-mcp/main/install.sh | bash
+        default: ""
+      ncsaDbPath:
+        type: string
+        description: >
+          Absolute path to the NC-SA add-on database (Khan Academy + OpenMiddle, CC BY-NC-SA).
+          Install with: ... | bash -s -- --with-khan
+        default: ""
+      stateDbPath:
+        type: string
+        description: >
+          Absolute path to the state exam database (NY Regents + MCAS, educational use).
+          Install with: ... | bash -s -- --with-state
+        default: ""
+      apDbPath:
+        type: string
+        description: >
+          Absolute path to the AP free-response database (© College Board, educational use).
+          Install with: ... | bash -s -- --with-ap
+        default: ""
+      ollamaUrl:
+        type: string
+        description: >
+          Ollama base URL for semantic search (requires nomic-embed-text model).
+          Leave blank to use FTS5 keyword search only.
+        default: "http://localhost:11434"
+    required: []
+  commandFunction: |-
+    (config) => {
+      const home = process.env.HOME || process.env.USERPROFILE || "";
+      const dbPath = config.dbPath || `${home}/.oer-mcp/oer_core.db`;
+      const env = { OER_CORE_DB_PATH: dbPath };
+      if (config.ncsaDbPath) env.OER_ADDON_DB_PATH = config.ncsaDbPath;
+      if (config.stateDbPath) env.OER_STATE_DB_PATH = config.stateDbPath;
+      if (config.apDbPath) env.OER_AP_DB_PATH = config.apDbPath;
+      if (config.ollamaUrl) env.OLLAMA_BASE_URL = config.ollamaUrl;
+      return {
+        command: "uvx",
+        args: ["oer-mcp"],
+        env
+      };
+    }
