@@ -59,7 +59,7 @@ scripts/
 - **AP FRQ adapter:** PDF extraction from College Board (apstudents.collegeboard.org index, apcentral.collegeboard.org media host for the actual PDFs — different subdomains). Covers Calc AB/BC, Statistics, Precalculus (2023-2026). © College Board → partitioned oer_ap.db.
 - **NY Regents adapter:** 1,672 questions from 70 released exams (Algebra I/Geometry/Algebra II, 2015-2026) at nysedregents.org. PDF text extraction needs a font-aware remap (`adapters/_pdf.py:extract_pdf_text_mathpi`) — NYSED's Mathematical Pi fonts have wrong ToUnicode maps, so `+`/`−`/`=`/`≤` etc. extract as digit glyphs via plain pypdf; pdfminer.six + per-character font inspection fixes it. MC answer keys parsed from companion `-sk.pdf` scoring keys (816/1,108 MC items). 9 pre-2018 Geometry Common Core exams (`geomcc*` filename variant) fetch but yield 0 chunks — an even-older PDF layout the remap table doesn't cover; not chased further. © NYSED → oer_state.db.
 - **MCAS adapter:** 366 released items (grades 3-8, 10; 2023 & 2025) from the Cognia Item Library API (mcas.cognia.org/item-catalog — sessionless JSON). Full item text + choices decoded from Lighthouse's URL-encoded prompt/distractor JSON; answer keys from `ScoringRubric`. 100% publisher MA-framework standard alignment (mapped to CCSS IDs). © MA DESE → oer_state.db.
-- **HuggingFace dataset:** `swoopeagle/oer-mcp` (files: `oer_core.db`, `oer_ncsa.db`) — NEEDS RE-UPLOAD after 2026-07-04 build; consider also publishing `oer_state.db`
+- **HuggingFace dataset:** `swoopeagle/oer-mcp` (files: `oer_core.db`, `oer_ncsa.db`, `oer_state.db`, `oer_ap.db`) — uploaded 2026-07-07 after the 2026-07-04 build
 
 ## Tailscale devices
 

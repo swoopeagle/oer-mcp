@@ -55,7 +55,7 @@ Every content response carries an **attribution string** to preserve downstream.
 | NY Regents | 1,672 released exam questions (Algebra I/Geometry/Algebra II) | state copyright, educational use | state |
 | MCAS | 366 released items (grades 3-8, 10) | state copyright, educational use | state |
 | AP free-response | 85 FRQs (Calc AB/BC, Stats, Precalc, 2023-2026) | © College Board, educational use | ap |
-| SAT/ACT-style | Claude-authored style items with answer keys | not verbatim; MIT | core |
+| SAT/ACT-style | Gemma-authored style items with answer keys | not verbatim; MIT | core |
 
 Assessment items carry `item_type`, `dok_level`, `answer_key`, `exam_series`, `exam_year`, and `difficulty` where the source provides them.
 
