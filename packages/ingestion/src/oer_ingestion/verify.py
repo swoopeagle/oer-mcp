@@ -23,7 +23,7 @@ from oer_shared.ollama_client import complete
 
 VERIFIED_SCORE = 0.90
 MAX_RETRIES = 3
-GEN_TIMEOUT = 120.0  # local gemma answers in seconds; long enough to absorb a cold load
+GEN_TIMEOUT = 300.0  # 5 min: absorbs cold load + queue wait when 2-3 workers share one endpoint
 
 PROMPT = """You are checking curriculum alignment. Reply with exactly one word: YES or NO.
 
@@ -53,7 +53,7 @@ def _ask(prompt: str, client: httpx.Client) -> bool | None:
             if u.startswith("NO"):
                 return False
             return None  # empty/unclear → skip, leave flagged for another pass
-        except httpx.HTTPError:
+        except (httpx.HTTPError, httpx.TransportError):
             if attempt < MAX_RETRIES:
                 time.sleep(2 * attempt)
     return None

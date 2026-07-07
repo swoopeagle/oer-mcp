@@ -30,7 +30,8 @@ def complete(
         return resp.json()["message"]["content"].strip()
     resp = client.post(
         f"{config.OLLAMA_BASE_URL}/api/generate",
-        json={"model": model, "prompt": prompt, "stream": False, "options": opts},
+        json={"model": model, "prompt": prompt, "stream": False,
+              "think": False, "options": opts},
         timeout=timeout,
     )
     resp.raise_for_status()
