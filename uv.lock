@@ -5,8 +5,8 @@ requires-python = ">=3.11"
 [manifest]
 members = [
     "oer-ingestion",
+    "oer-mcp",
     "oer-mcp-workspace",
-    "oer-server",
     "oer-shared",
 ]
 
@@ -936,7 +936,7 @@ wheels = [
 
 [[package]]
 name = "oer-ingestion"
-version = "0.1.0"
+version = "1.0.0"
 source = { editable = "packages/ingestion" }
 dependencies = [
     { name = "httpx" },
@@ -966,37 +966,8 @@ dev = [
 ]
 
 [[package]]
-name = "oer-mcp-workspace"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "oer-ingestion" },
-    { name = "oer-server" },
-    { name = "oer-shared" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "pytest" },
-    { name = "pytest-asyncio" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "oer-ingestion", editable = "packages/ingestion" },
-    { name = "oer-server", editable = "packages/server" },
-    { name = "oer-shared", editable = "packages/shared" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "pytest", specifier = ">=8.0" },
-    { name = "pytest-asyncio", specifier = ">=0.23" },
-]
-
-[[package]]
-name = "oer-server"
-version = "0.1.0"
+name = "oer-mcp"
+version = "1.0.1"
 source = { editable = "packages/server" }
 dependencies = [
     { name = "fastmcp" },
@@ -1014,8 +985,37 @@ requires-dist = [
 ]
 
 [[package]]
+name = "oer-mcp-workspace"
+version = "1.0.1"
+source = { editable = "." }
+dependencies = [
+    { name = "oer-ingestion" },
+    { name = "oer-mcp" },
+    { name = "oer-shared" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "oer-ingestion", editable = "packages/ingestion" },
+    { name = "oer-mcp", editable = "packages/server" },
+    { name = "oer-shared", editable = "packages/shared" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "pytest", specifier = ">=8.0" },
+    { name = "pytest-asyncio", specifier = ">=0.23" },
+]
+
+[[package]]
 name = "oer-shared"
-version = "0.1.0"
+version = "1.0.1"
 source = { editable = "packages/shared" }
 dependencies = [
     { name = "numpy" },

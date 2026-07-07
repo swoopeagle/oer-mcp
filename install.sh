@@ -15,7 +15,11 @@ CORE_DB="$DB_DIR/oer_core.db"
 ADDON_DB="$DB_DIR/oer_ncsa.db"
 STATE_DB="$DB_DIR/oer_state.db"
 AP_DB="$DB_DIR/oer_ap.db"
-CLAUDE_CONFIG="$HOME/Library/Application Support/Claude/claude_desktop_config.json"
+case "$(uname -s)" in
+    Darwin) CLAUDE_CONFIG="$HOME/Library/Application Support/Claude/claude_desktop_config.json" ;;
+    Linux)  CLAUDE_CONFIG="$HOME/.config/Claude/claude_desktop_config.json" ;;
+    *)      CLAUDE_CONFIG="$HOME/.config/Claude/claude_desktop_config.json" ;;
+esac
 WITH_KHAN=0; WITH_STATE=0; WITH_AP=0
 for arg in "$@"; do case "$arg" in
     --with-khan)  WITH_KHAN=1 ;;

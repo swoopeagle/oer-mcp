@@ -1,12 +1,19 @@
 [project]
 name = "oer-shared"
-version = "1.0.0"
+version = "1.0.1"
 description = "Shared config, database helpers, and models for the OER MCP"
 requires-python = ">=3.11"
+license = "MIT"
+authors = [{ name = "swoopeagle" }]
 dependencies = [
     "pydantic>=2.0",
     "numpy>=1.26",
 ]
+
+[project.urls]
+Homepage = "https://github.com/swoopeagle/oer-mcp"
+Repository = "https://github.com/swoopeagle/oer-mcp"
+"Bug Tracker" = "https://github.com/swoopeagle/oer-mcp/issues"
 
 [build-system]
 requires = ["hatchling"]

@@ -1,14 +1,32 @@
 [project]
 name = "oer-mcp"
-version = "1.0.0"
-description = "OER MCP stdio server — curriculum content retrieval tools for LLMs"
+version = "1.0.1"
+description = "Open-licensed K-12 math content + released assessment items as an MCP server for Claude"
+readme = "README.md"
 requires-python = ">=3.11"
+license = "MIT"
+authors = [{ name = "swoopeagle" }]
+keywords = ["mcp", "education", "curriculum", "oer", "math", "k12", "ccss", "openstack", "khan-academy", "claude"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Education",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Education",
+]
 dependencies = [
-    "oer-shared>=1.0.0",
+    "oer-shared>=1.0.1",
     "fastmcp>=2.0",
     "httpx>=0.27",
     "numpy>=1.26",
 ]
+
+[project.urls]
+Homepage = "https://github.com/swoopeagle/oer-mcp"
+Repository = "https://github.com/swoopeagle/oer-mcp"
+"Bug Tracker" = "https://github.com/swoopeagle/oer-mcp/issues"
 
 [project.scripts]
 oer-mcp = "oer_server.server:main"
