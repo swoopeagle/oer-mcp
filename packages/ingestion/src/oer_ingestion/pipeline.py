@@ -96,6 +96,22 @@ SCIENCE_BOOKS = {
         "osbooks-biology-bundle", "biology-2e", "9-12",
         subject="science", class_profile="science",
     ),
+    "chemistry-2e": BookSpec(
+        "osbooks-chemistry-bundle", "chemistry-2e", "9-12",
+        subject="science", class_profile="science",
+    ),
+    "college-physics-2e": BookSpec(
+        "osbooks-college-physics-bundle", "college-physics-2e", "9-12",
+        subject="science", class_profile="science-section",
+    ),
+    "university-physics-volume-1": BookSpec(
+        "osbooks-university-physics-bundle", "university-physics-volume-1", "college",
+        subject="science", class_profile="science-key-concepts",
+    ),
+    "university-physics-volume-2": BookSpec(
+        "osbooks-university-physics-bundle", "university-physics-volume-2", "college",
+        subject="science", class_profile="science-key-concepts",
+    ),
 }
 
 

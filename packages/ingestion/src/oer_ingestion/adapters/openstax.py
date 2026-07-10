@@ -77,10 +77,17 @@ CLASS_PROFILES = {
         ("critical-thinking", "multiple-choice", "exercises",
          "problems", "self-check-questions", "review-questions"),
     ),
-    # Physics family (college/university/HS) — different class names, same roles.
+    # College Physics — different class names, same roles.
     "science-section": ClassProfile(
         "section-summary", None,
         ("problems-exercises", "conceptual-questions", "ap-test-prep", "check-understanding"),
+    ),
+    # University Physics — reuses "key-concepts" (like math) but exercises are
+    # flat, not a nested "section-exercises" container.
+    "science-key-concepts": ClassProfile(
+        "key-concepts", None,
+        ("review-problems", "review-conceptual-questions",
+         "review-additional-problems", "review-challenge", "check-understanding"),
     ),
 }
 
