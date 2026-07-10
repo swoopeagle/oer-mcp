@@ -100,6 +100,52 @@
     {"standard_id": "CCSS.MATH.6",     "exam_series": "Smarter Balanced Grade 6", "skill_domain": "Grade 6 Mathematics", "notes": "All Gr 6 CCSS domains", "source_url": "https://sampleitems.smarterbalanced.org/"},
     {"standard_id": "CCSS.MATH.7",     "exam_series": "Smarter Balanced Grade 7", "skill_domain": "Grade 7 Mathematics", "notes": "All Gr 7 CCSS domains", "source_url": "https://sampleitems.smarterbalanced.org/"},
     {"standard_id": "CCSS.MATH.8",     "exam_series": "Smarter Balanced Grade 8", "skill_domain": "Grade 8 Mathematics", "notes": "All Gr 8 CCSS domains", "source_url": "https://sampleitems.smarterbalanced.org/"},
-    {"standard_id": "CCSS.MATH.HS",    "exam_series": "Smarter Balanced Grade 11", "skill_domain": "High School Mathematics", "notes": "HS CCSS domains (Gr 11 summative)", "source_url": "https://sampleitems.smarterbalanced.org/"}
+    {"standard_id": "CCSS.MATH.HS",    "exam_series": "Smarter Balanced Grade 11", "skill_domain": "High School Mathematics", "notes": "HS CCSS domains (Gr 11 summative)", "source_url": "https://sampleitems.smarterbalanced.org/"},
+
+    // ── NY Regents Algebra I (NYSED course framework conceptual categories) ────
+    // Source: https://www.nysedregents.org/algebraone/
+    {"standard_id": "CCSS.MATH.HSN.RN", "exam_series": "NY Regents Algebra I", "skill_domain": "Number and Quantity", "notes": "Real number system, rational exponents", "source_url": "https://www.nysedregents.org/algebraone/"},
+    {"standard_id": "CCSS.MATH.HSN.Q",  "exam_series": "NY Regents Algebra I", "skill_domain": "Number and Quantity", "notes": "Quantities and units in modeling", "source_url": "https://www.nysedregents.org/algebraone/"},
+    {"standard_id": "CCSS.MATH.HSA.SSE","exam_series": "NY Regents Algebra I", "skill_domain": "Algebra", "notes": "Seeing structure in expressions", "source_url": "https://www.nysedregents.org/algebraone/"},
+    {"standard_id": "CCSS.MATH.HSA.APR","exam_series": "NY Regents Algebra I", "skill_domain": "Algebra", "notes": "Arithmetic with polynomials", "source_url": "https://www.nysedregents.org/algebraone/"},
+    {"standard_id": "CCSS.MATH.HSA.CED","exam_series": "NY Regents Algebra I", "skill_domain": "Algebra", "notes": "Creating equations", "source_url": "https://www.nysedregents.org/algebraone/"},
+    {"standard_id": "CCSS.MATH.HSA.REI","exam_series": "NY Regents Algebra I", "skill_domain": "Algebra", "notes": "Reasoning with equations and inequalities", "source_url": "https://www.nysedregents.org/algebraone/"},
+    {"standard_id": "CCSS.MATH.HSF.IF", "exam_series": "NY Regents Algebra I", "skill_domain": "Functions", "notes": "Interpreting functions", "source_url": "https://www.nysedregents.org/algebraone/"},
+    {"standard_id": "CCSS.MATH.HSF.BF", "exam_series": "NY Regents Algebra I", "skill_domain": "Functions", "notes": "Building functions", "source_url": "https://www.nysedregents.org/algebraone/"},
+    {"standard_id": "CCSS.MATH.HSF.LE", "exam_series": "NY Regents Algebra I", "skill_domain": "Functions", "notes": "Linear, quadratic, exponential models", "source_url": "https://www.nysedregents.org/algebraone/"},
+    {"standard_id": "CCSS.MATH.HSS.ID", "exam_series": "NY Regents Algebra I", "skill_domain": "Statistics and Probability", "notes": "Interpreting categorical and quantitative data", "source_url": "https://www.nysedregents.org/algebraone/"},
+
+    // ── NY Regents Geometry (NYSED course framework conceptual categories) ─────
+    // Source: https://www.nysedregents.org/geometry/
+    {"standard_id": "CCSS.MATH.HSG.CO", "exam_series": "NY Regents Geometry", "skill_domain": "Congruence", "notes": "Rigid motions, triangle congruence proofs", "source_url": "https://www.nysedregents.org/geometry/"},
+    {"standard_id": "CCSS.MATH.HSG.SRT","exam_series": "NY Regents Geometry", "skill_domain": "Similarity, Right Triangles, and Trigonometry", "notes": "Dilations, similarity, trig ratios", "source_url": "https://www.nysedregents.org/geometry/"},
+    {"standard_id": "CCSS.MATH.HSG.C",  "exam_series": "NY Regents Geometry", "skill_domain": "Circles", "notes": "Circle theorems, arcs, sectors", "source_url": "https://www.nysedregents.org/geometry/"},
+    {"standard_id": "CCSS.MATH.HSG.GPE","exam_series": "NY Regents Geometry", "skill_domain": "Expressing Geometric Properties with Equations", "notes": "Coordinate geometry", "source_url": "https://www.nysedregents.org/geometry/"},
+    {"standard_id": "CCSS.MATH.HSG.GMD","exam_series": "NY Regents Geometry", "skill_domain": "Geometric Measurement and Dimension", "notes": "Volume formulas, cross-sections", "source_url": "https://www.nysedregents.org/geometry/"},
+    {"standard_id": "CCSS.MATH.HSG.MG", "exam_series": "NY Regents Geometry", "skill_domain": "Modeling with Geometry", "notes": "Density, design problems", "source_url": "https://www.nysedregents.org/geometry/"},
+
+    // ── NY Regents Algebra II (NYSED course framework conceptual categories) ───
+    // Source: https://www.nysedregents.org/algebratwo/
+    {"standard_id": "CCSS.MATH.HSN.CN", "exam_series": "NY Regents Algebra II", "skill_domain": "Number and Quantity", "notes": "Complex numbers", "source_url": "https://www.nysedregents.org/algebratwo/"},
+    {"standard_id": "CCSS.MATH.HSA.SSE","exam_series": "NY Regents Algebra II", "skill_domain": "Algebra", "notes": "Polynomial and rational expressions", "source_url": "https://www.nysedregents.org/algebratwo/"},
+    {"standard_id": "CCSS.MATH.HSA.APR","exam_series": "NY Regents Algebra II", "skill_domain": "Algebra", "notes": "Polynomial identities and division", "source_url": "https://www.nysedregents.org/algebratwo/"},
+    {"standard_id": "CCSS.MATH.HSA.REI","exam_series": "NY Regents Algebra II", "skill_domain": "Algebra", "notes": "Polynomial and rational equations", "source_url": "https://www.nysedregents.org/algebratwo/"},
+    {"standard_id": "CCSS.MATH.HSF.IF", "exam_series": "NY Regents Algebra II", "skill_domain": "Functions", "notes": "Function analysis, end behavior", "source_url": "https://www.nysedregents.org/algebratwo/"},
+    {"standard_id": "CCSS.MATH.HSF.BF", "exam_series": "NY Regents Algebra II", "skill_domain": "Functions", "notes": "Inverse functions, composition", "source_url": "https://www.nysedregents.org/algebratwo/"},
+    {"standard_id": "CCSS.MATH.HSF.LE", "exam_series": "NY Regents Algebra II", "skill_domain": "Functions", "notes": "Exponential and logarithmic models", "source_url": "https://www.nysedregents.org/algebratwo/"},
+    {"standard_id": "CCSS.MATH.HSF.TF", "exam_series": "NY Regents Algebra II", "skill_domain": "Functions", "notes": "Trigonometric functions", "source_url": "https://www.nysedregents.org/algebratwo/"},
+    {"standard_id": "CCSS.MATH.HSS.ID", "exam_series": "NY Regents Algebra II", "skill_domain": "Statistics and Probability", "notes": "Data distributions, normal curve", "source_url": "https://www.nysedregents.org/algebratwo/"},
+    {"standard_id": "CCSS.MATH.HSS.IC", "exam_series": "NY Regents Algebra II", "skill_domain": "Statistics and Probability", "notes": "Making inferences, justifying conclusions", "source_url": "https://www.nysedregents.org/algebratwo/"},
+    {"standard_id": "CCSS.MATH.HSS.CP", "exam_series": "NY Regents Algebra II", "skill_domain": "Statistics and Probability", "notes": "Conditional probability", "source_url": "https://www.nysedregents.org/algebratwo/"},
+
+    // ── MCAS Mathematics (Massachusetts Curriculum Framework, grade-level) ─────
+    // Source: https://www.doe.mass.edu/frameworks/math/2017-06.pdf
+    {"standard_id": "CCSS.MATH.3",  "exam_series": "MCAS Grade 3",  "skill_domain": "Grade 3 Mathematics",  "notes": "All Gr 3 MA framework domains", "source_url": "https://www.doe.mass.edu/frameworks/math/2017-06.pdf"},
+    {"standard_id": "CCSS.MATH.4",  "exam_series": "MCAS Grade 4",  "skill_domain": "Grade 4 Mathematics",  "notes": "All Gr 4 MA framework domains", "source_url": "https://www.doe.mass.edu/frameworks/math/2017-06.pdf"},
+    {"standard_id": "CCSS.MATH.5",  "exam_series": "MCAS Grade 5",  "skill_domain": "Grade 5 Mathematics",  "notes": "All Gr 5 MA framework domains", "source_url": "https://www.doe.mass.edu/frameworks/math/2017-06.pdf"},
+    {"standard_id": "CCSS.MATH.6",  "exam_series": "MCAS Grade 6",  "skill_domain": "Grade 6 Mathematics",  "notes": "All Gr 6 MA framework domains", "source_url": "https://www.doe.mass.edu/frameworks/math/2017-06.pdf"},
+    {"standard_id": "CCSS.MATH.7",  "exam_series": "MCAS Grade 7",  "skill_domain": "Grade 7 Mathematics",  "notes": "All Gr 7 MA framework domains", "source_url": "https://www.doe.mass.edu/frameworks/math/2017-06.pdf"},
+    {"standard_id": "CCSS.MATH.8",  "exam_series": "MCAS Grade 8",  "skill_domain": "Grade 8 Mathematics",  "notes": "All Gr 8 MA framework domains", "source_url": "https://www.doe.mass.edu/frameworks/math/2017-06.pdf"},
+    {"standard_id": "CCSS.MATH.HS", "exam_series": "MCAS Grade 10", "skill_domain": "High School Mathematics", "notes": "Algebra I / Geometry HS framework domains (Gr 10 summative)", "source_url": "https://www.doe.mass.edu/frameworks/math/2017-06.pdf"}
   ]
 }
