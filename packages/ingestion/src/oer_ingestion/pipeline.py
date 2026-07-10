@@ -96,6 +96,14 @@ SCIENCE_BOOKS = {
         "osbooks-biology-bundle", "biology-2e", "9-12",
         subject="science", class_profile="science",
     ),
+    # AP-tagged edition: near-entirely distinct module IDs from biology-2e (1 of
+    # 259 shared) — genuinely separate content, not a re-tagging of the same
+    # modules as first assumed. Carries College Board Learning Objective tags
+    # baked into CNXML classes (aplo-N-M) -> publisher_guide alignments.
+    "biology-ap-courses": BookSpec(
+        "osbooks-biology-bundle", "biology-ap-courses", "9-12",
+        subject="science", class_profile="science", ap_lo_system="ap-bio",
+    ),
     "chemistry-2e": BookSpec(
         "osbooks-chemistry-bundle", "chemistry-2e", "9-12",
         subject="science", class_profile="science",
@@ -140,9 +148,11 @@ def run_openstax(slugs: list[str], db_path: Path, snapshot_root: Path) -> None:
     conn = connect(db_path, create=True)
     load_catalog(conn, adapter.catalog())
     counts = load_chunks(conn, chunks, snapshot_paths=snaps)
+    acounts = load_alignments(conn, chunks)
     record_run(conn, adapter.source_id, counts, warnings=result.warnings)
     total = conn.execute("SELECT COUNT(*) FROM chunks").fetchone()[0]
-    print(f"[load] added={counts['added']} updated={counts['updated']} | db total={total}")
+    print(f"[load] added={counts['added']} updated={counts['updated']} | "
+          f"publisher alignments={acounts['added']}+{acounts['updated']} | db total={total}")
     conn.close()
 
 

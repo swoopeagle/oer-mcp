@@ -21,6 +21,7 @@ License is read per-book from collection.xml md:license (2e = CC BY-NC-SA,
 from __future__ import annotations
 
 import io
+import re
 import tarfile
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -28,7 +29,7 @@ from datetime import datetime, timezone
 import httpx
 from lxml import etree
 
-from oer_shared.models import ContentChunk, ContentType
+from oer_shared.models import ContentChunk, ContentType, StandardAlignment
 
 from ..cnxml import NS, element_text, word_count
 from .base import RawContent, SourceAdapter, ValidationResult
@@ -72,10 +73,13 @@ CLASS_PROFILES = {
          "reflection-questions", "own-words", "section-quiz", "short-answer"),
     ),
     # Biology, Chemistry (plain non-AP-tagged editions) — verified against modules.
+    # Also covers biology-ap-courses ("review"/"science-practice" added for its
+    # Review Questions / Science Practice Challenge Questions sections).
     "science": ClassProfile(
         "summary", None,
         ("critical-thinking", "multiple-choice", "exercises",
-         "problems", "self-check-questions", "review-questions"),
+         "problems", "self-check-questions", "review-questions",
+         "review", "science-practice"),
     ),
     # College Physics — different class names, same roles.
     "science-section": ClassProfile(
@@ -96,6 +100,32 @@ def _q(elem) -> str:
     return etree.QName(elem).localname
 
 
+_APLO_RE = re.compile(r"aplo-(\d+)-(\d+)")
+
+
+def _ap_standard_id(system: str, big_idea: str, lo: str) -> str:
+    # "ap-bio" -> "AP_BIO"; matches StandardGraph's ap-bio id format exactly
+    # (e.g. "AP.AP_BIO.2.1.A") — stored coarser (no subpart letter) since the
+    # CNXML tag alone can't disambiguate .A vs .B; existing prefix-match query
+    # logic (fetch_for_standard, check_coverage) already resolves this to
+    # whichever leaf standards actually exist.
+    return f"AP.{system.upper().replace('-', '_')}.{big_idea}.{lo}"
+
+
+def _extract_ap_lo_codes(elem) -> set[str]:
+    """Scan an element subtree for College Board Learning Objective tags
+    (`ost-tag-lo-apbio-...-aplo-2-1` -> "2.1"). Verified against actual
+    biology-bundle CNXML — not present in other book families checked so far."""
+    codes: set[str] = set()
+    for e in elem.iter():
+        cls = e.get("class")
+        if not cls:
+            continue
+        for m in _APLO_RE.finditer(cls):
+            codes.add(f"{int(m.group(1))}.{int(m.group(2))}")
+    return codes
+
+
 @dataclass
 class BookSpec:
     """One OpenStax book within a bundle repo."""
@@ -108,6 +138,13 @@ class BookSpec:
     # / "section-exercises" nested groups; social studies: flat "summary" /
     # "review-questions" / "critical-thinking" sections). See ClassProfile below.
     class_profile: str = "math"
+    # StandardGraph system to emit publisher_guide alignments for, e.g. "ap-bio".
+    # Set only for books whose CNXML has College Board standard tags baked in
+    # (verified: osbooks-biology-bundle modules carry `aplo-N-M` class tokens
+    # regardless of which collection/edition references them — biology-2e's
+    # modules already have them, no need to ingest the separate "-ap-courses-"
+    # edition). None = no publisher tags, alignment is embedding-only.
+    ap_lo_system: str | None = None
 
 
 @dataclass
@@ -129,6 +166,7 @@ class _BookTree:
     license: str
     subject: str = "mathematics"
     class_profile: str = "math"
+    ap_lo_system: str | None = None
     places: dict[str, _ModulePlace] = field(default_factory=dict)
     order: list[str] = field(default_factory=list)
 
@@ -210,6 +248,7 @@ class OpenStaxAdapter(SourceAdapter):
             license=lic,
             subject=spec.subject,
             class_profile=spec.class_profile,
+            ap_lo_system=spec.ap_lo_system,
         )
 
         content = col.find(f"{{{COL}}}content")
@@ -282,12 +321,14 @@ class OpenStaxAdapter(SourceAdapter):
             if place is None or place.chapter_num is None:
                 continue  # skip front matter / unplaced modules in v1
             profile = CLASS_PROFILES[tree.class_profile]
-            chunks.extend(self._split_module(slug, mid, item.payload, place, item.url, profile))
+            chunks.extend(self._split_module(
+                slug, mid, item.payload, place, item.url, profile, tree.ap_lo_system,
+            ))
         return chunks
 
     def _split_module(
         self, slug: str, mid: str, cnxml: str, place: _ModulePlace, url: str,
-        profile: ClassProfile,
+        profile: ClassProfile, ap_lo_system: str | None = None,
     ) -> list[ContentChunk]:
         doc = etree.fromstring(cnxml.encode())
         content = doc.find("c:content", NS)
@@ -301,10 +342,22 @@ class OpenStaxAdapter(SourceAdapter):
         ch, sec = place.chapter_num, place.section_num
         sec_label = f"{ch}.{sec}" if ch and sec else (ch or "")
 
-        def mk(suffix: str, title: str, body: str, ctype: ContentType):
+        def mk(suffix: str, title: str, body: str, ctype: ContentType, src_elem=None):
             body = body.strip()
             if not body:
                 return
+            aligns = []
+            if ap_lo_system and src_elem is not None:
+                aligns = [
+                    StandardAlignment(
+                        standard_id=_ap_standard_id(ap_lo_system, big_idea, lo),
+                        standard_system=ap_lo_system,
+                        alignment_score=0.95, alignment_source="publisher_guide",
+                        coverage_notes="OpenStax AP Connection: tagged to this Learning Objective.",
+                    )
+                    for code in _extract_ap_lo_codes(src_elem)
+                    for big_idea, lo in [code.split(".", 1)]
+                ]
             out.append(
                 ContentChunk(
                     id=f"{prefix}-{suffix}",
@@ -323,31 +376,38 @@ class OpenStaxAdapter(SourceAdapter):
                         f"{('Section ' + sec_label + ': ') if sec_label else ''}"
                         f"{mod_title}, {place.license}"
                     ),
+                    standard_alignments=aligns,
                 )
             )
 
         expo_n = ex_n = set_n = 0
         for section in content.findall("c:section", NS):
-            cls = section.get("class")
+            # class-membership, not exact string equality: some books (e.g. the
+            # AP-tagged biology-ap-courses edition) combine multiple classes on
+            # one element, e.g. class="summary ost-reading-discard".
+            cls_tokens = (section.get("class") or "").split()
             stitle_el = section.find("c:title", NS)
             stitle = (stitle_el.text or "").strip() if stitle_el is not None else ""
 
-            if cls == profile.summary_class:
+            if profile.summary_class in cls_tokens:
                 mk("summary", f"{mod_title} — Key Concepts",
-                   element_text(section), "summary")
+                   element_text(section), "summary", src_elem=section)
                 continue
-            if profile.nested_exercise_class and cls == profile.nested_exercise_class:
+            if profile.nested_exercise_class and profile.nested_exercise_class in cls_tokens:
                 for grp in section.findall("c:section", NS):
                     set_n += 1
                     gt_el = grp.find("c:title", NS)
                     gt = (gt_el.text or "").strip() if gt_el is not None else "Exercises"
                     mk(f"set{set_n}", f"{mod_title} — {gt}",
-                       element_text(grp), "exercise_set")
+                       element_text(grp), "exercise_set", src_elem=grp)
                 continue
-            if cls in profile.flat_exercise_classes:
+            matched_exercise = next(
+                (t for t in cls_tokens if t in profile.flat_exercise_classes), None,
+            )
+            if matched_exercise:
                 set_n += 1
-                mk(f"set{set_n}", f"{mod_title} — {stitle or cls.replace('-', ' ').title()}",
-                   element_text(section), "exercise_set")
+                mk(f"set{set_n}", f"{mod_title} — {stitle or matched_exercise.replace('-', ' ').title()}",
+                   element_text(section), "exercise_set", src_elem=section)
                 continue
 
             # content subsection: lift <example>s out as worked_example chunks,
@@ -356,11 +416,11 @@ class OpenStaxAdapter(SourceAdapter):
             for exmpl in examples:
                 ex_n += 1
                 mk(f"ex{ex_n}", f"{mod_title} — Example {ex_n}",
-                   element_text(exmpl), "worked_example")
+                   element_text(exmpl), "worked_example", src_elem=exmpl)
                 exmpl.getparent().remove(exmpl)
             expo_n += 1
             etitle = f"{mod_title}: {stitle}" if stitle else mod_title
-            mk(f"expo{expo_n}", etitle, element_text(section), "exposition")
+            mk(f"expo{expo_n}", etitle, element_text(section), "exposition", src_elem=section)
 
         return out
 
