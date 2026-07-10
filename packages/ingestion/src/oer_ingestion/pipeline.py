@@ -128,6 +128,10 @@ SCIENCE_BOOKS = {
         "osbooks-university-physics-bundle", "university-physics-volume-2", "college",
         subject="science", class_profile="science-key-concepts",
     ),
+    "university-physics-volume-3": BookSpec(
+        "osbooks-university-physics-bundle", "university-physics-volume-3", "college",
+        subject="science", class_profile="science-key-concepts",
+    ),
 }
 
 
