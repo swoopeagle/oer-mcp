@@ -2,7 +2,7 @@
 
 ## What this is
 
-FastMCP server exposing open-licensed K–12 math content (OpenStax textbooks + Khan Academy transcripts + Illustrative Mathematics) as five MCP tools for Claude Desktop. Content is chunked by concept, embedded, and aligned to CCSS standards at build time. Companion to StandardGraph: StandardGraph knows *what students must learn*; OER MCP knows *what content teaches it*.
+FastMCP server exposing open-licensed K–12 content across **math, science, and social studies** (OpenStax textbooks + Khan Academy transcripts + Illustrative Mathematics + released exam items) as eight MCP tools for Claude Desktop. Content is chunked by concept, embedded, and aligned to **300+ curriculum standards** (CCSS, AP, state frameworks, C3, etc.) at build time. Companion to StandardGraph: StandardGraph knows *what students must learn* across 7 subjects; OER MCP knows *what content teaches it and how it's assessed*.
 
 ## Architecture
 
@@ -39,18 +39,16 @@ scripts/
   eval/e2e_benchmark.py       → LLM-judge benchmark (bench.json)
 ```
 
-## Key facts
+## Key facts (2026-07-10, multi-subject expansion complete)
 
-- **Core DB (CC BY / public domain):** OpenStax (13 books) + Illustrative Mathematics K–12 + Smarter Balanced + NAEP + style-generated assessments
-- **NC-SA DB (CC BY-NC-SA):** Khan Academy transcripts + OpenMiddle
-- **State DB (state copyright, educational-reproduction permission):** NY Regents + MCAS
-- **AP DB (College Board copyright, educational use):** AP FRQ
-- **Chunks (local `data/oer_core.db`, 2026-07-04):** 17,684 (14,065 OpenStax + 1,796 IM K-5/6-8/HS + 525 SBAC + 1,269 NAEP + 29 style-gen). All embedded.
-- **NC-SA chunks (local `data/oer_ncsa.db`, 2026-07-04):** 3,919 (3,322 Khan transcripts + 597 OpenMiddle DOK-3 problems). All embedded + aligned.
-- **State chunks (local `data/oer_state.db`, 2026-07-04):** 2,038 (1,672 NY Regents Algebra I/Geometry/Algebra II questions + 366 MCAS released items). All embedded + aligned.
-- **AP chunks (local `data/oer_ap.db`, 2026-07-04):** 85 AP FRQ questions (Calc AB/BC, Stats, Precalculus) from 2023-2026.
-- **CCSS coverage (local build):** core 486 distinct standards, ncsa 485, state 312
-- **Alignments (local build):** core 47,880 + ncsa 14,704 + state 5,087 = **67,671 total** across 4 DBs; confidence hierarchy: `human` > `publisher_guide` > `llm_verified` > `embedding`
+- **Core DB (CC BY / public domain):** OpenStax math (13 books, 14,065 chunks) + Illustrative Mathematics K–12 (1,796) + Smarter Balanced (525) + NAEP (1,269) + style-generated assessments (29). ~17,684 chunks.
+- **NC-SA DB (CC BY-NC-SA):** Science (5 books: biology/chemistry/physics, ~4,600 chunks) + social studies (8 books: gov/history/econ/etc., ~5,200 chunks) + Khan Academy transcripts (3,322) + OpenMiddle (597). **~13,719 chunks**, 55K+ alignments across 12 systems (ccss, ap-bio, ap-chem, ap-phys-*, ap-us-gov, ap-us-history, ap-psych, ap-macro/micro-econ, c3, ap-world-history).
+- **State DB (state copyright, educational-reproduction permission):** NY Regents (1,672 Algebra I/Geometry/Algebra II questions) + MCAS (366 items grades 3-8, 10). ~2,038 chunks.
+- **AP DB (College Board copyright, educational use):** AP FRQ questions (Calc AB/BC, Stats, Precalc, 2023-2026). 85 chunks.
+- **Total chunks:** ~33,500 (math + science + social studies + assessments)
+- **Total standard alignments:** ~55,926 (all systems: CCSS, AP, C3, state standards)
+- **Coverage:** 486 distinct CCSS standards (core), 485 (ncsa), 312 (state), plus 113 ap-bio, 113 ap-chem, ~230 ap-phys, ~200 ap-social-studies, etc.
+- **All chunks embedded and aligned at build time**. Query layer parametrized by `system` to route to correct curriculum framework.
 - **IM adapter:** Full K-12 coverage — K-5, 6-8, and HS. All carry `publisher_guide` alignments (CCSS "Addressing" tags per lesson); no LLM verify needed. K-5 tags are often cluster-level (e.g. `CCSS.MATH.3.MD.B`); `fetch_for_standard` does parent-prefix matching.
 - **Khan adapter:** Kolibri channel DB → VTT transcript → exposition chunks. No CCSS tags in export → aligned via embedding (555 strong alignments ≥0.78 across 150 standards).
 - **SBAC adapter:** 525 math items (grades 3-8 + HS) from sampleitems.smarterbalanced.org API — search endpoint returns full metadata inline (CCSS standard, DOK, interaction type); item text itself is QTI-rendered and not extractable, so chunks carry metadata + a link. 310 carry publisher CCSS alignment; all 525 have DOK.
