@@ -71,6 +71,17 @@ CLASS_PROFILES = {
         ("review-questions", "critical-thinking", "check-understanding",
          "reflection-questions", "own-words", "section-quiz", "short-answer"),
     ),
+    # Biology, Chemistry (plain non-AP-tagged editions) — verified against modules.
+    "science": ClassProfile(
+        "summary", None,
+        ("critical-thinking", "multiple-choice", "exercises",
+         "problems", "self-check-questions", "review-questions"),
+    ),
+    # Physics family (college/university/HS) — different class names, same roles.
+    "science-section": ClassProfile(
+        "section-summary", None,
+        ("problems-exercises", "conceptual-questions", "ap-test-prep", "check-understanding"),
+    ),
 }
 
 

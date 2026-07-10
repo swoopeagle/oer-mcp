@@ -89,8 +89,17 @@ SOCIAL_STUDIES_BOOKS = {
     ),
 }
 
+# Science pilot (D23): all CC BY-NC-SA → oer_ncsa.db. Slugs/licenses/class
+# conventions verified 2026-07-10 against collection.xml + CNXML on GitHub.
+SCIENCE_BOOKS = {
+    "biology-2e": BookSpec(
+        "osbooks-biology-bundle", "biology-2e", "9-12",
+        subject="science", class_profile="science",
+    ),
+}
 
-ALL_OPENSTAX_BOOKS = {**OPENSTAX_BOOKS, **SOCIAL_STUDIES_BOOKS}
+
+ALL_OPENSTAX_BOOKS = {**OPENSTAX_BOOKS, **SOCIAL_STUDIES_BOOKS, **SCIENCE_BOOKS}
 
 
 def run_openstax(slugs: list[str], db_path: Path, snapshot_root: Path) -> None:
