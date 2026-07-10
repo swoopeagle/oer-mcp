@@ -351,20 +351,20 @@ def fetch_for_standard(
 _BAND_RANK = {"none": 0, "light": 1, "moderate": 2, "strong": 3}
 
 
-def _cluster_standards(sg_conn, standard_id: str) -> list[tuple[str, str]]:
+def _cluster_standards(sg_conn, standard_id: str, system: str = "ccss") -> list[tuple[str, str]]:
     """Authoritative (id, text) list for a standard or its cluster, from
     StandardGraph. Handles SG's inconsistent cluster-letter ID format: exact
     standard → its whole domain+cluster; otherwise prefix match (tolerating a
     trailing cluster letter like the '.A' in 'CCSS.MATH.6.RP.A')."""
     exact = sg_conn.execute(
-        "SELECT domain, cluster FROM standards WHERE id = ? AND system = 'ccss'",
-        (standard_id,),
+        "SELECT domain, cluster FROM standards WHERE id = ? AND system = ?",
+        (standard_id, system),
     ).fetchone()
     if exact:
         rows = sg_conn.execute(
-            "SELECT id, standard_text FROM standards WHERE system='ccss' "
+            "SELECT id, standard_text FROM standards WHERE system=? "
             "AND domain = ? AND cluster = ? ORDER BY id",
-            (exact["domain"], exact["cluster"]),
+            (system, exact["domain"], exact["cluster"]),
         ).fetchall()
         return [(r["id"], r["standard_text"]) for r in rows]
     prefix = standard_id
@@ -372,9 +372,9 @@ def _cluster_standards(sg_conn, standard_id: str) -> list[tuple[str, str]]:
     if len(parts[-1]) == 1 and parts[-1].isupper():  # trailing cluster letter
         prefix = ".".join(parts[:-1])
     rows = sg_conn.execute(
-        "SELECT id, standard_text FROM standards WHERE system='ccss' "
+        "SELECT id, standard_text FROM standards WHERE system=? "
         "AND id LIKE ? ORDER BY id",
-        (prefix + "%",),
+        (system, prefix + "%"),
     ).fetchall()
     return [(r["id"], r["standard_text"]) for r in rows]
 
@@ -407,6 +407,7 @@ def check_coverage(
     *,
     sg_db_path=None,
     source: str | None = None,
+    system: str = "ccss",
 ) -> dict:
     """Report how completely indexed OER content covers a standard or cluster.
     Uses StandardGraph (read-only) to enumerate the cluster's standards so that
@@ -422,7 +423,7 @@ def check_coverage(
     if sg_db_path and Path(sg_db_path).exists():
         sg = _sql.connect(f"file:{sg_db_path}?mode=ro", uri=True)
         sg.row_factory = _sql.Row
-        standards = _cluster_standards(sg, standard_id)
+        standards = _cluster_standards(sg, standard_id, system=system)
         sg.close()
         if not standards:
             return {"standard_id": standard_id, "result": "unknown_standard"}
@@ -584,6 +585,7 @@ def get_learning_path(
     depth: int = 1,
     content_per_standard: int = 2,
     include_content: bool = False,
+    system: str = "ccss",
 ) -> dict:
     """Return a prerequisite-aware content path for a standard, grounded in OER.
 
@@ -610,8 +612,8 @@ def get_learning_path(
         sg.row_factory = _sql.Row
 
         target_row = sg.execute(
-            "SELECT id, standard_text FROM standards WHERE id = ? AND system = 'ccss'",
-            (standard_id,),
+            "SELECT id, standard_text FROM standards WHERE id = ? AND system = ?",
+            (standard_id, system),
         ).fetchone()
         if target_row is None:
             sg.close()
@@ -624,8 +626,8 @@ def get_learning_path(
         while queue:
             current_id, current_depth = queue.popleft()
             row = sg.execute(
-                "SELECT standard_text FROM standards WHERE id = ? AND system = 'ccss'",
-                (current_id,),
+                "SELECT standard_text FROM standards WHERE id = ? AND system = ?",
+                (current_id, system),
             ).fetchone()
             text = row["standard_text"] if row else None
             path_standards[current_id] = (text, current_depth)
@@ -633,8 +635,8 @@ def get_learning_path(
             if current_depth < depth:
                 prereqs = sg.execute(
                     "SELECT target_id FROM standard_relationships "
-                    "WHERE source_id = ? AND relationship = 'prerequisite' AND system = 'ccss'",
-                    (current_id,),
+                    "WHERE source_id = ? AND relationship = 'prerequisite' AND system = ?",
+                    (current_id, system),
                 ).fetchall()
                 for prereq_row in prereqs:
                     pid = prereq_row["target_id"]

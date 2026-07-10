@@ -116,7 +116,7 @@ def search_content(
 
 
 @mcp.tool()
-def check_coverage(standard_id: str, source: str | None = None) -> dict:
+def check_coverage(standard_id: str, source: str | None = None, system: str = "ccss") -> dict:
     """Report how completely indexed OER content covers a standard or cluster
     (e.g. 'CCSS.MATH.6.RP.3' or a cluster prefix). Returns per-standard coverage
     bands (strong/moderate/light/none) and surfaces gaps — standards with no
@@ -127,7 +127,7 @@ def check_coverage(standard_id: str, source: str | None = None) -> dict:
     try:
         return queries.check_coverage(
             get_conn(), standard_id,
-            sg_db_path=config.STANDARDGRAPH_DB_PATH, source=source,
+            sg_db_path=config.STANDARDGRAPH_DB_PATH, source=source, system=system,
         )
     except Exception as exc:
         return _error(exc)
@@ -177,6 +177,7 @@ def get_learning_path(
     depth: int = 1,
     content_per_standard: int = 2,
     include_content: bool = False,
+    system: str = "ccss",
 ) -> dict:
     """Return a prerequisite-aware learning path for a curriculum standard.
 
@@ -205,6 +206,7 @@ def get_learning_path(
             depth=depth,
             content_per_standard=content_per_standard,
             include_content=include_content,
+            system=system,
         )
     except Exception as exc:
         return _error(exc)
