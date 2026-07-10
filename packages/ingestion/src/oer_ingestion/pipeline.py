@@ -341,12 +341,16 @@ def run_migrate(db_path: Path) -> None:
     print(f"[migrate] assessment columns: {'migrated' if did_assess else 'already current'}")
 
 
-def run_embed_align(db_path: Path, sg_db: Path, system: str = "ccss") -> None:
+def run_embed_align(
+    db_path: Path, sg_db: Path, system: str = "ccss", book_ids: list[str] | None = None,
+) -> None:
     """Stages 4–5: embed chunks, then align to a StandardGraph system (default
-    CCSS math). Needs Ollama + SG DB."""
+    CCSS math). Needs Ollama + SG DB. Pass book_ids when the DB mixes subjects
+    (e.g. oer_ncsa.db holds both math and social-studies books) so alignment
+    doesn't spuriously match unrelated content against the new system."""
     conn = connect(db_path, create=True)
     embed_chunks(conn)
-    align_chunks(conn, sg_db, system=system)
+    align_chunks(conn, sg_db, system=system, book_ids=book_ids)
     conn.close()
 
 
@@ -471,7 +475,8 @@ def main() -> None:
     elif args.source == "migrate":
         run_migrate(Path(args.db))
     elif args.source == "embed-align":
-        run_embed_align(Path(args.db), Path(args.sg_db), system=args.system)
+        book_ids = [f"openstax-{s}" for s in args.books] if args.books else None
+        run_embed_align(Path(args.db), Path(args.sg_db), system=args.system, book_ids=book_ids)
     elif args.source == "annotate":
         run_annotate(Path(args.db), Path(args.sg_db), args.limit, shard)
     elif args.source == "verify":

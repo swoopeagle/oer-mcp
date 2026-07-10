@@ -72,16 +72,29 @@ def align_chunks(
     schema: str = "main",
     top_k: int = TOP_K,
     system: str = "ccss",
+    book_ids: list[str] | None = None,
 ) -> dict[str, int]:
-    """Align every embedded chunk in `schema` against the given SG standard
-    system (default 'ccss' for existing math content). Returns counts."""
+    """Align embedded chunks in `schema` against the given SG standard system
+    (default 'ccss' for existing math content). Once a DB holds content for
+    more than one subject/system, pass `book_ids` to scope alignment to the
+    books that actually belong to `system` — otherwise unrelated chunks (e.g.
+    Khan math transcripts) get spurious alignments purely from stray embedding
+    similarity. Returns counts."""
     std_ids, std_grades, std_mat = _load_standards(Path(sg_db), system)
+
+    book_filter = ""
+    params: list[str] = []
+    if book_ids:
+        placeholders = ",".join("?" * len(book_ids))
+        book_filter = f" AND c.book_id IN ({placeholders})"
+        params = list(book_ids)
 
     rows = conn.execute(
         f"""SELECT ce.chunk_id, ce.vector, c.grade_band, c.content_type, c.title
             FROM {schema}.chunk_embeddings ce
             JOIN {schema}.chunks c ON c.id = ce.chunk_id
-            WHERE c.stale = 0"""
+            WHERE c.stale = 0{book_filter}""",
+        params,
     ).fetchall()
     if not rows:
         print("[align] no embedded chunks")
