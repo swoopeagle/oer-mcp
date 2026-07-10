@@ -36,7 +36,7 @@ Return only the description. No preamble."""
 
 def _standard_context(sg: sqlite3.Connection, sid: str) -> tuple[str, str] | None:
     row = sg.execute(
-        "SELECT standard_text FROM standards WHERE id=? AND system='ccss'", (sid,)
+        "SELECT standard_text FROM standards WHERE id=?", (sid,)
     ).fetchone()
     if row is None:
         return None

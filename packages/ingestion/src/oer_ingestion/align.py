@@ -45,18 +45,19 @@ def _is_generic_exercise(content_type: str, title: str) -> bool:
     )
 
 
-def _load_standards(sg_db: Path) -> tuple[list[str], list[str | None], np.ndarray]:
-    """Return (ids, grades, normalized matrix [N,768]) for CCSS standards."""
+def _load_standards(sg_db: Path, system: str) -> tuple[list[str], list[str | None], np.ndarray]:
+    """Return (ids, grades, normalized matrix [N,768]) for the given SG standard system."""
     conn = sqlite3.connect(f"file:{sg_db}?mode=ro", uri=True)
     conn.row_factory = sqlite3.Row
     rows = conn.execute(
         """SELECT e.standard_id, e.vector, s.grade
            FROM embeddings e JOIN standards s ON s.id = e.standard_id
-           WHERE s.system = 'ccss'"""
+           WHERE s.system = ?""",
+        (system,),
     ).fetchall()
     conn.close()
     if not rows:
-        raise RuntimeError(f"no CCSS embeddings in StandardGraph DB at {sg_db}")
+        raise RuntimeError(f"no {system!r} embeddings in StandardGraph DB at {sg_db}")
     ids = [r["standard_id"] for r in rows]
     grades = [r["grade"] for r in rows]
     mat = np.vstack([np.frombuffer(r["vector"], dtype=np.float32) for r in rows])
@@ -70,9 +71,11 @@ def align_chunks(
     *,
     schema: str = "main",
     top_k: int = TOP_K,
+    system: str = "ccss",
 ) -> dict[str, int]:
-    """Align every embedded chunk in `schema` against CCSS. Returns counts."""
-    std_ids, std_grades, std_mat = _load_standards(Path(sg_db))
+    """Align every embedded chunk in `schema` against the given SG standard
+    system (default 'ccss' for existing math content). Returns counts."""
+    std_ids, std_grades, std_mat = _load_standards(Path(sg_db), system)
 
     rows = conn.execute(
         f"""SELECT ce.chunk_id, ce.vector, c.grade_band, c.content_type, c.title
@@ -118,13 +121,13 @@ def align_chunks(
                 f"""INSERT INTO {schema}.standard_alignments
                       (chunk_id, standard_id, standard_system, alignment_score,
                        alignment_source, flagged_for_review)
-                    VALUES (?, ?, 'ccss', ?, 'embedding', ?)
+                    VALUES (?, ?, ?, ?, 'embedding', ?)
                     ON CONFLICT(chunk_id, standard_id) DO UPDATE SET
                       alignment_score=excluded.alignment_score,
                       flagged_for_review=excluded.flagged_for_review,
                       stale=0
                     WHERE standard_alignments.alignment_source != 'human'""",
-                (r["chunk_id"], std_ids[idx], round(score, 4), flag),
+                (r["chunk_id"], std_ids[idx], system, round(score, 4), flag),
             )
             inserted += 1
             to_annotate += flag

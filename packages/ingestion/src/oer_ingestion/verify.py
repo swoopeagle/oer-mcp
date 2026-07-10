@@ -89,7 +89,7 @@ def verify(
             sid = row["standard_id"]
             if sid not in stext_cache:
                 r = sg.execute(
-                    "SELECT standard_text FROM standards WHERE id=? AND system='ccss'",
+                    "SELECT standard_text FROM standards WHERE id=?",
                     (sid,),
                 ).fetchone()
                 stext_cache[sid] = r["standard_text"] if r else ""

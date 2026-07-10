@@ -48,6 +48,21 @@ _LICENSE_NAMES = {
     "by-sa": "CC BY-SA 4.0",
 }
 
+# Per-discipline CNXML section @class conventions (verified against actual
+# modules — math and social-studies books use different class names for the
+# same structural roles, and social-studies exercise groups aren't nested
+# inside a container the way math's "section-exercises" subsections are).
+@dataclass
+class ClassProfile:
+    summary_class: str
+    nested_exercise_class: str | None  # container whose <section> children get split out
+    flat_exercise_classes: tuple[str, ...]  # standalone exercise-like sections
+
+CLASS_PROFILES = {
+    "math": ClassProfile("key-concepts", "section-exercises", ()),
+    "social-studies": ClassProfile("summary", None, ("review-questions", "critical-thinking")),
+}
+
 
 def _q(elem) -> str:
     return etree.QName(elem).localname
@@ -60,6 +75,11 @@ class BookSpec:
     repo: str  # "osbooks-prealgebra-bundle"
     slug: str  # "prealgebra-2e"
     grade_band: str | None = None
+    subject: str = "mathematics"
+    # CNXML uses different section @class names per discipline (math: "key-concepts"
+    # / "section-exercises" nested groups; social studies: flat "summary" /
+    # "review-questions" / "critical-thinking" sections). See ClassProfile below.
+    class_profile: str = "math"
 
 
 @dataclass
@@ -79,6 +99,8 @@ class _BookTree:
     slug: str
     title: str
     license: str
+    subject: str = "mathematics"
+    class_profile: str = "math"
     places: dict[str, _ModulePlace] = field(default_factory=dict)
     order: list[str] = field(default_factory=list)
 
@@ -158,6 +180,8 @@ class OpenStaxAdapter(SourceAdapter):
             slug=spec.slug,
             title=(title_el.text if title_el is not None else spec.slug),
             license=lic,
+            subject=spec.subject,
+            class_profile=spec.class_profile,
         )
 
         content = col.find(f"{{{COL}}}content")
@@ -203,7 +227,7 @@ class OpenStaxAdapter(SourceAdapter):
                     "id": f"openstax-{spec.slug}",
                     "source_id": self.source_id,
                     "title": tree.title,
-                    "subject": "mathematics",
+                    "subject": tree.subject,
                     "grade_band": spec.grade_band,
                     "license": tree.license,
                     "url": f"https://openstax.org/details/books/{spec.slug}",
@@ -229,11 +253,13 @@ class OpenStaxAdapter(SourceAdapter):
             place = tree.places.get(mid)
             if place is None or place.chapter_num is None:
                 continue  # skip front matter / unplaced modules in v1
-            chunks.extend(self._split_module(slug, mid, item.payload, place, item.url))
+            profile = CLASS_PROFILES[tree.class_profile]
+            chunks.extend(self._split_module(slug, mid, item.payload, place, item.url, profile))
         return chunks
 
     def _split_module(
-        self, slug: str, mid: str, cnxml: str, place: _ModulePlace, url: str
+        self, slug: str, mid: str, cnxml: str, place: _ModulePlace, url: str,
+        profile: ClassProfile,
     ) -> list[ContentChunk]:
         doc = etree.fromstring(cnxml.encode())
         content = doc.find("c:content", NS)
@@ -278,17 +304,22 @@ class OpenStaxAdapter(SourceAdapter):
             stitle_el = section.find("c:title", NS)
             stitle = (stitle_el.text or "").strip() if stitle_el is not None else ""
 
-            if cls == "key-concepts":
+            if cls == profile.summary_class:
                 mk("summary", f"{mod_title} — Key Concepts",
                    element_text(section), "summary")
                 continue
-            if cls == "section-exercises":
+            if profile.nested_exercise_class and cls == profile.nested_exercise_class:
                 for grp in section.findall("c:section", NS):
                     set_n += 1
                     gt_el = grp.find("c:title", NS)
                     gt = (gt_el.text or "").strip() if gt_el is not None else "Exercises"
                     mk(f"set{set_n}", f"{mod_title} — {gt}",
                        element_text(grp), "exercise_set")
+                continue
+            if cls in profile.flat_exercise_classes:
+                set_n += 1
+                mk(f"set{set_n}", f"{mod_title} — {stitle or cls.replace('-', ' ').title()}",
+                   element_text(section), "exercise_set")
                 continue
 
             # content subsection: lift <example>s out as worked_example chunks,

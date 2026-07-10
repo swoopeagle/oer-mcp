@@ -52,9 +52,21 @@ EXPANSION_BOOKS = [
     "contemporary-mathematics", "calculus-volume-2", "calculus-volume-3",
 ]
 
+# Social-studies pilot (D22): all CC BY-NC-SA → oer_ncsa.db, same tier as Khan/
+# OpenMiddle. Slugs/licenses verified 2026-07-10 against collection.xml on GitHub.
+SOCIAL_STUDIES_BOOKS = {
+    "american-government-4e": BookSpec(
+        "osbooks-american-government", "american-government-4e", "9-12",
+        subject="social-studies", class_profile="social-studies",
+    ),
+}
+
+
+ALL_OPENSTAX_BOOKS = {**OPENSTAX_BOOKS, **SOCIAL_STUDIES_BOOKS}
+
 
 def run_openstax(slugs: list[str], db_path: Path, snapshot_root: Path) -> None:
-    specs = [OPENSTAX_BOOKS[s] for s in slugs]
+    specs = [ALL_OPENSTAX_BOOKS[s] for s in slugs]
     adapter = OpenStaxAdapter(specs)
 
     print(f"[fetch] {len(specs)} book(s): {', '.join(slugs)}")
@@ -329,11 +341,12 @@ def run_migrate(db_path: Path) -> None:
     print(f"[migrate] assessment columns: {'migrated' if did_assess else 'already current'}")
 
 
-def run_embed_align(db_path: Path, sg_db: Path) -> None:
-    """Stages 4–5: embed chunks, then align to CCSS. Needs Ollama + SG DB."""
+def run_embed_align(db_path: Path, sg_db: Path, system: str = "ccss") -> None:
+    """Stages 4–5: embed chunks, then align to a StandardGraph system (default
+    CCSS math). Needs Ollama + SG DB."""
     conn = connect(db_path, create=True)
     embed_chunks(conn)
-    align_chunks(conn, sg_db)
+    align_chunks(conn, sg_db, system=system)
     conn.close()
 
 
@@ -382,6 +395,9 @@ def main() -> None:
     p.add_argument("--snapshots", default=str(config.DATA_DIR / "raw" / "snapshots"))
     p.add_argument("--sg-db", default=str(config.STANDARDGRAPH_DB_PATH),
                    help="StandardGraph DB (build-time only, for alignment/annotate)")
+    p.add_argument("--system", default="ccss",
+                   help="StandardGraph standard system to align against (embed-align); "
+                        "e.g. 'ccss' (default, math) or 'ap-us-gov' (social studies)")
     p.add_argument("--limit", type=int, default=None, help="cap (annotate)")
     p.add_argument("--shard", default=None,
                    help="annotate work split 'N/M' — process rows where id %% M == N")
@@ -455,7 +471,7 @@ def main() -> None:
     elif args.source == "migrate":
         run_migrate(Path(args.db))
     elif args.source == "embed-align":
-        run_embed_align(Path(args.db), Path(args.sg_db))
+        run_embed_align(Path(args.db), Path(args.sg_db), system=args.system)
     elif args.source == "annotate":
         run_annotate(Path(args.db), Path(args.sg_db), args.limit, shard)
     elif args.source == "verify":
