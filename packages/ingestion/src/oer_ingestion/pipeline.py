@@ -59,6 +59,34 @@ SOCIAL_STUDIES_BOOKS = {
         "osbooks-american-government", "american-government-4e", "9-12",
         subject="social-studies", class_profile="social-studies",
     ),
+    "us-history": BookSpec(
+        "osbooks-us-history", "us-history", "9-12",
+        subject="social-studies", class_profile="social-studies",
+    ),
+    "psychology-2e": BookSpec(
+        "osbooks-psychology", "psychology-2e", "9-12",
+        subject="social-studies", class_profile="social-studies",
+    ),
+    "principles-macroeconomics-ap-courses-2e": BookSpec(
+        "osbooks-principles-economics-bundle", "principles-macroeconomics-ap-courses-2e", "9-12",
+        subject="social-studies", class_profile="social-studies",
+    ),
+    "principles-microeconomics-ap-courses-2e": BookSpec(
+        "osbooks-principles-economics-bundle", "principles-microeconomics-ap-courses-2e", "9-12",
+        subject="social-studies", class_profile="social-studies",
+    ),
+    "introduction-sociology-3e": BookSpec(
+        "osbooks-introduction-sociology", "introduction-sociology-3e", "9-12",
+        subject="social-studies", class_profile="social-studies-section",
+    ),
+    "world-history-volume-1": BookSpec(
+        "osbooks-world-history", "world-history-volume-1", "9-12",
+        subject="social-studies", class_profile="social-studies-section",
+    ),
+    "world-history-volume-2": BookSpec(
+        "osbooks-world-history", "world-history-volume-2", "9-12",
+        subject="social-studies", class_profile="social-studies-section",
+    ),
 }
 
 

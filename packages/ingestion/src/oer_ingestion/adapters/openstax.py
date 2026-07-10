@@ -60,7 +60,17 @@ class ClassProfile:
 
 CLASS_PROFILES = {
     "math": ClassProfile("key-concepts", "section-exercises", ()),
-    "social-studies": ClassProfile("summary", None, ("review-questions", "critical-thinking")),
+    # Government, US History, Psychology, Economics — verified against actual modules.
+    "social-studies": ClassProfile(
+        "summary", None,
+        ("review-questions", "critical-thinking", "problems", "self-check-questions"),
+    ),
+    # Sociology, World History — same structural roles, different class names.
+    "social-studies-section": ClassProfile(
+        "section-summary", None,
+        ("review-questions", "critical-thinking", "check-understanding",
+         "reflection-questions", "own-words", "section-quiz", "short-answer"),
+    ),
 }
 
 
