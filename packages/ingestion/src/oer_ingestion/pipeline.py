@@ -96,13 +96,21 @@ SCIENCE_BOOKS = {
         "osbooks-biology-bundle", "biology-2e", "9-12",
         subject="science", class_profile="science",
     ),
-    # AP-tagged edition: near-entirely distinct module IDs from biology-2e (1 of
-    # 259 shared) — genuinely separate content, not a re-tagging of the same
-    # modules as first assumed. Carries College Board Learning Objective tags
-    # baked into CNXML classes (aplo-N-M) -> publisher_guide alignments.
+    # AP-tagged edition: distinct module IDs from biology-2e (1 of 259 shared),
+    # so genuinely separate content — kept as its own book for its AP-oriented
+    # exposition (aligned to SG ap-bio via embedding like every other book).
+    #
+    # NOT ap_lo_system-tagged: the book's baked-in CNXML tags (aplo-N-M) encode
+    # the RETIRED 2012–2019 AP Biology Curriculum Framework ("Learning Objective
+    # 2.16", 4 Big Ideas + 7 Science Practices), whereas StandardGraph's `ap-bio`
+    # is the 2019+ Course & Exam Description ("2.1.A"). The 2019 redesign
+    # renumbered everything with no 1:1 map, so those tags produce publisher_guide
+    # IDs no SG-backed tool can resolve. Verified 2026-07-10 against the CNXML LO
+    # statement text. The generic ap_lo_system extraction mechanism is retained
+    # (openstax.py) for any future book whose tags match a live SG framework.
     "biology-ap-courses": BookSpec(
         "osbooks-biology-bundle", "biology-ap-courses", "9-12",
-        subject="science", class_profile="science", ap_lo_system="ap-bio",
+        subject="science", class_profile="science",
     ),
     "chemistry-2e": BookSpec(
         "osbooks-chemistry-bundle", "chemistry-2e", "9-12",
