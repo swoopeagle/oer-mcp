@@ -5,6 +5,8 @@
 Companion to [StandardGraph](https://github.com/swoopeagle/standardgraph): StandardGraph knows *what students must learn* (standards across 7 subjects); OER MCP knows *what content teaches it and how it's assessed*.
 
 > **Status:** Live, multi-subject (math, science, social studies). **~16,000 content chunks + ~1,000 assessment chunks** across four license-partitioned databases, **~55,000 standard alignments** across 12+ curriculum systems (CCSS, AP, state, C3 framework, etc.), served through **8 MCP tools**. Real released items from **6+ assessment programs**. Query-layer parametrized by subject/system — single tool invocation works across all curriculum frameworks.
+>
+> **Pre-built databases available on [🤗 HuggingFace](https://huggingface.co/datasets/swoopeagle/oer-mcp)** — download directly or use the installer script below.
 
 ## Install
 
