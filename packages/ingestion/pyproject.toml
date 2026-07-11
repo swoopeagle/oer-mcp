@@ -1,6 +1,6 @@
 [project]
 name = "oer-ingestion"
-version = "1.0.0"
+version = "1.1.0"
 description = "Seven-stage ingestion pipeline and source adapters for the OER MCP"
 requires-python = ">=3.11"
 dependencies = [

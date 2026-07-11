@@ -1,6 +1,6 @@
 [project]
 name = "oer-shared"
-version = "1.0.1"
+version = "1.1.0"
 description = "Shared config, database helpers, and models for the OER MCP"
 requires-python = ">=3.11"
 license = "MIT"
