@@ -1,8 +1,9 @@
 name: oer-mcp
 description: >
-  23,700+ K-12 math content chunks + real released assessment items — OpenStax,
-  Illustrative Mathematics, Khan Academy, Smarter Balanced, NAEP, NY Regents,
-  MCAS, and AP free-response — chunked by concept and aligned to CCSS standards.
+  35,000+ open-licensed K-12 content + real released assessment chunks across
+  math, science, and social studies — OpenStax, Illustrative Mathematics, Khan
+  Academy, Smarter Balanced, NAEP, NY Regents, MCAS, and AP free-response —
+  chunked by concept and aligned to 300+ standards (CCSS, AP, state, C3).
   Companion to StandardGraph: StandardGraph knows what students must learn;
   OER MCP knows what content teaches it and how it's assessed.
 

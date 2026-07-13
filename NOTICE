@@ -2,39 +2,111 @@ OER MCP — content attribution & licensing
 ==========================================
 
 The oer-mcp CODE is MIT-licensed (see LICENSE). The curriculum CONTENT it
-indexes belongs to its original publishers under open licenses, and is
-partitioned by license into two databases (decision D11):
+indexes belongs to its original publishers under their own licenses or terms.
+Content is partitioned into FOUR databases by license so that deployments can
+include only the tiers whose terms they accept (decision D11):
 
-  oer_core.db   — CC BY (and more permissive) content. Default install.
-  oer_ncsa.db   — CC BY-NC-SA content. Optional add-on (`--with-khan`).
+  oer_core.db    CC BY / public domain content.        Default install.
+  oer_ncsa.db    CC BY-NC-SA content.                  Optional (`--with-khan`).
+  oer_state.db   State copyright, educational-use.     Optional (`--with-state`).
+  oer_ap.db      © College Board, educational-use.     Optional (`--with-ap`).
 
-Every content chunk carries a non-nullable attribution string that is
-surfaced in every tool response, so downstream tools propagate attribution
-automatically (decision D4).
+Every content chunk carries a non-nullable attribution string that is surfaced
+in every tool response, so downstream tools propagate attribution
+automatically (decision D4). Per-book license is stored on every chunk.
 
-Sources
--------
+This NOTICE is informational, not legal advice.
 
-OpenStax (https://openstax.org)
-  Math textbooks ingested from the openstax/osbooks-* CNXML repositories.
-  License is per-book: most current 2e editions are CC BY-NC-SA 4.0; some
-  titles (e.g. HS Statistics) are CC BY 4.0. The per-book license is read from
-  each book's collection.xml at ingestion time and stored on every chunk.
-    CC BY 4.0:        https://creativecommons.org/licenses/by/4.0/
-    CC BY-NC-SA 4.0:  https://creativecommons.org/licenses/by-nc-sa/4.0/
 
-Khan Academy (https://www.khanacademy.org)  — optional add-on
+oer_core.db — CC BY / public domain
+-----------------------------------
+
+OpenStax (https://openstax.org) — Rice University
+  Textbook content ingested from the openstax/osbooks-* CNXML repositories.
+  License is per-book, read from each book's collection.xml at ingestion and
+  stored on every chunk. Titles carrying CC BY 4.0 land here; CC BY-NC-SA
+  titles are partitioned into oer_ncsa.db (below).
+    CC BY 4.0: https://creativecommons.org/licenses/by/4.0/
+
+Illustrative Mathematics (https://illustrativemathematics.org)
+  K-12 lessons with publisher "Addressing" CCSS tags. CC BY 4.0.
+    https://creativecommons.org/licenses/by/4.0/
+
+Smarter Balanced (https://smarterbalanced.org)
+  Released sample items (grades 3-8 + HS) from the Smarter Balanced sample-item
+  API, with publisher CCSS + DOK metadata. CC BY 4.0.
+    https://creativecommons.org/licenses/by/4.0/
+
+NAEP — National Assessment of Educational Progress (https://nationsreportcard.gov)
+  Released items (grades 4/8/12, 1990-2024) from the NAEP Questions Tool.
+  Produced by the U.S. Department of Education / NCES; released items are works
+  of the U.S. federal government and treated as public domain.
+
+Style-generated SAT / ACT items
+  Not verbatim exam content. Model-authored practice items generated from a
+  style reference, each carrying its own answer key. These are original works
+  covered by this repository's MIT license (item_generation='style_generated').
+
+
+oer_ncsa.db — CC BY-NC-SA (non-commercial, ShareAlike)
+------------------------------------------------------
+
+OpenStax — CC BY-NC-SA titles
+  Current 2e / AP-course editions carrying CC BY-NC-SA 4.0 (most science and
+  social-studies titles, and some math titles). Per-book license read from
+  collection.xml at ingestion.
+    CC BY-NC-SA 4.0: https://creativecommons.org/licenses/by-nc-sa/4.0/
+
+Khan Academy (https://www.khanacademy.org)
   Video-transcript content obtained via Learning Equality's Kolibri channel
-  ("Khan Academy, English - US curriculum"). Licensed CC BY-NC-SA 4.0:
-  non-commercial use only, attribution required, derivatives ShareAlike.
+  ("Khan Academy, English - US curriculum"). CC BY-NC-SA 4.0.
     https://creativecommons.org/licenses/by-nc-sa/4.0/
+
+OpenMiddle (https://openmiddle.com)
+  DOK-3 constructed-response problems with publisher CCSS tags. CC BY-NC-SA 4.0.
+    https://creativecommons.org/licenses/by-nc-sa/4.0/
+
+
+oer_state.db — state copyright, educational-reproduction basis (NOT Creative Commons)
+-------------------------------------------------------------------------------------
+
+NY Regents — New York State Education Department (https://www.nysedregents.org)
+  Released Regents examination questions (Algebra I / Geometry / Algebra II).
+MCAS — Massachusetts Dept. of Elementary & Secondary Education (https://mcas.cognia.org)
+  Released MCAS items (grades 3-8, 10).
+
+  These items are state copyright. Both agencies publish past exams and release
+  them for educational reproduction; this project indexes them on that basis for
+  a non-commercial, educational grounding use. This is a good-faith educational-
+  use position, NOT a Creative Commons grant or a transfer of rights. The
+  content is partitioned into this separate database and is OPT-IN
+  (`--with-state`), so any deployment can exclude it entirely. If a rights
+  holder objects, open an issue and the affected content will be removed.
+
+
+oer_ap.db — © College Board, educational-use basis (NOT Creative Commons)
+-------------------------------------------------------------------------
+
+AP free-response questions — College Board (https://apcentral.collegeboard.org)
+  Publicly released past AP free-response questions (Calculus AB/BC, Statistics,
+  Precalculus, 2023-2026).
+
+  This content is © College Board. It is indexed here from College Board's own
+  public releases for a non-commercial, educational grounding use. This is a
+  good-faith educational-use position, NOT a license grant, endorsement, or
+  affiliation. "AP" and "College Board" are trademarks of the College Board.
+  The content is partitioned into this separate database and is OPT-IN
+  (`--with-ap`), so any deployment can exclude it entirely. If the College Board
+  objects, open an issue and the affected content will be removed.
+
 
 Note for commercial use
 -----------------------
-The default core database is CC BY content, suitable for commercial reuse with
-attribution. The Khan add-on (oer_ncsa.db) and CC BY-NC-SA OpenStax titles are
-NON-COMMERCIAL. If you build a commercial product, use only CC BY content or
-review each source's terms independently. This NOTICE is informational, not
-legal advice.
+Only oer_core.db (CC BY / public domain) is suitable for commercial reuse, with
+attribution. oer_ncsa.db is NON-COMMERCIAL (CC BY-NC-SA). oer_state.db and
+oer_ap.db are NOT Creative Commons and are indexed under an educational-use
+rationale only — do not use them commercially. If you build a commercial
+product, install core only (the default) or review each source's terms
+independently.
 
 CK-12 was evaluated and NOT included (see docs/spikes/S4-ck12.md).

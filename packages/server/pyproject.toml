@@ -1,12 +1,12 @@
 [project]
 name = "oer-mcp"
 version = "1.1.0"
-description = "Open-licensed K-12 math content + released assessment items as an MCP server for Claude"
+description = "Open-licensed K-12 content + released assessment items across math, science & social studies, as an MCP server for Claude"
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
 authors = [{ name = "swoopeagle" }]
-keywords = ["mcp", "education", "curriculum", "oer", "math", "k12", "ccss", "openstack", "khan-academy", "claude"]
+keywords = ["mcp", "education", "curriculum", "oer", "math", "science", "social-studies", "k12", "ccss", "ap", "openstax", "khan-academy", "claude"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Education",

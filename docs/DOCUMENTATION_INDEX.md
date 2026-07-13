@@ -14,11 +14,8 @@ All work from this session is documented below. Everything is ready to use.
 
 ### Operational Guides
 - **[OPERATIONAL_RUNBOOK.md](OPERATIONAL_RUNBOOK.md)** — How to run everything, troubleshooting
-- **[WORK_SUMMARY.md](WORK_SUMMARY.md)** — Sprint 1 summary (benchmark fix + test audit + schema)
-- **[LOCAL_EXECUTION_SUMMARY.md](LOCAL_EXECUTION_SUMMARY.md)** — Local DB sync + verify/annotate scripts
-- **[COMPREHENSIVE_SPRINT_SUMMARY.md](COMPREHENSIVE_SPRINT_SUMMARY.md)** — Sprint 2 complete (all 7 tasks)
-- **[SESSION_SUMMARY_2026-07-01.md](SESSION_SUMMARY_2026-07-01.md)** — Full embed+align, assessment items, Claude-verify stage, 7 bug fixes (149→156 tests)
-- **[SESSION_SUMMARY_2026-07-02.md](SESSION_SUMMARY_2026-07-02.md)** — Benchmark bug (OER never injected) → fixed → 0.86; retrieval fix; GitHub/HF ops
+
+> Internal build logs (sprint/session summaries, agent task lists) live under [`internal/`](internal/) — kept for provenance, not user-facing docs.
 
 ## 🛠️ Scripts (Ready to Run)
 
@@ -98,9 +95,7 @@ oer-mcp/
 │   ├── TEST_COVERAGE_AUDIT.md
 │   ├── SCHEMA_OPTIMIZATION_AUDIT.md
 │   ├── OPERATIONAL_RUNBOOK.md
-│   ├── WORK_SUMMARY.md
-│   ├── LOCAL_EXECUTION_SUMMARY.md
-│   └── COMPREHENSIVE_SPRINT_SUMMARY.md
+│   └── internal/ (sprint/session build logs, agent task lists)
 ├── scripts/
 │   └── (analysis and pipeline scripts)
 ├── packages/
@@ -108,8 +103,7 @@ oer-mcp/
 │   ├── server/tests/
 │   └── shared/
 ├── CLAUDE.md
-├── README.md
-└── HAIKU_TASKS.md
+└── README.md
 ```
 
 ## 💾 Databases

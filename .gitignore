@@ -18,5 +18,9 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 
+# Build artifacts (published via PyPI, never git)
+dist/
+build/
+
 # OS
 .DS_Store

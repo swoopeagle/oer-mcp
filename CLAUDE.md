@@ -61,14 +61,17 @@ scripts/
 
 ## Tailscale devices
 
-Same fleet as StandardGraph:
+Same fleet as StandardGraph. Concrete Tailscale IPs and SSH usernames are kept
+out of this public repo — see the private, uncommitted `~/.fleet-env` note (or
+`tailscale status`) for the real host/user values referenced below as
+`$STUDIO`, `$MINI2`, `$MINI3`.
 
-| Device | Chip | RAM | IP | SSH user | Role |
-|---|---|---|---|---|---|
-| MacBook Pro | — | — | 100.118.151.10 | `ianwang` | dev machine |
-| Mac Studio | M1 Max | 64 GB | 100.77.63.73 | `ianwangm1max` | Ollama host (gemma4:31b) |
-| Mac mini 2 | M4 Pro | 24 GB | 100.101.100.96 | `devos` | pipeline runner (verify/annotate) |
-| Mac mini 3 | M4 | 16 GB | 100.123.114.101 | `devos` | pipeline runner (verify/annotate) |
+| Device | Chip | RAM | Host | Role |
+|---|---|---|---|---|
+| MacBook Pro | — | — | dev machine | local dev |
+| Mac Studio | M1 Max | 64 GB | `$STUDIO` | Ollama host (gemma4:31b) |
+| Mac mini 2 | M4 Pro | 24 GB | `$MINI2` | pipeline runner (verify/annotate) |
+| Mac mini 3 | M4 | 16 GB | `$MINI3` | pipeline runner (verify/annotate) |
 
 Model roster:
 - **Mac Studio (64 GB):** `gemma4:31b-it-q8_0`, `nomic-embed-text` — annotate/verify heavy lifter
@@ -234,7 +237,7 @@ slot B.
 > working judge that returns parseable A/B/TIE verdicts, unlike `gemma4:31b-it-q8_0`
 > which returned empty judgments. A stronger judge (`qwen2.5:72b` on the Studio)
 > would give a more authoritative number; rerun when the Studio GPU is free:
-> `OLLAMA_BASE_URL=http://100.77.63.73:11434 uv run python -m oer_ingestion.benchmark --db data/oer_core.db --sg-db ~/.standardgraph/common_core.db --gen-model gemma4:12b --judge-model qwen2.5:72b --out bench.json`.
+> `OLLAMA_BASE_URL=http://$STUDIO:11434 uv run python -m oer_ingestion.benchmark --db data/oer_core.db --sg-db ~/.standardgraph/common_core.db --gen-model gemma4:12b --judge-model qwen2.5:72b --out bench.json`.
 > Needs Ollama + the full DB (fleet, not the dev MacBook — which can reach fleet
 > Ollama over HTTP but has no local models).
 
@@ -250,7 +253,7 @@ Risk flags: `token` · `destructive` · `irreversible`
 
 ### Pre-authorized (no per-step approval needed)
 
-- SSH to `devos@100.101.100.96`, `devos@100.123.114.101`, `ianwangm1max@100.77.63.73`
+- SSH to the fleet hosts `$MINI2`, `$MINI3`, `$STUDIO` (real user@ip in `~/.fleet-env`)
 - `git add`, `git commit`, `git push` to `origin main`
 - File edits anywhere in this repo
 - Starting pipeline jobs on the minis (embed, align, verify, annotate)

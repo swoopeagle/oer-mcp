@@ -1,20 +1,20 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.swoopeagle/oer-mcp",
-  "description": "23,700+ K-12 math content chunks + released assessment items (OpenStax, IM, Khan, SBAC, NAEP, Regents, MCAS, AP FRQ), aligned to CCSS.",
+  "description": "35,000+ open-licensed K-12 content + released assessment chunks across math, science & social studies (OpenStax, IM, Khan, SBAC, NAEP, Regents, MCAS, AP FRQ), aligned to 300+ standards (CCSS, AP, state, C3).",
   "title": "OER MCP",
   "websiteUrl": "https://github.com/swoopeagle/oer-mcp",
   "repository": {
     "url": "https://github.com/swoopeagle/oer-mcp",
     "source": "github"
   },
-  "version": "1.0.1",
+  "version": "1.1.0",
   "packages": [
     {
       "registryType": "pypi",
       "registryBaseUrl": "https://pypi.org",
       "identifier": "oer-mcp",
-      "version": "1.0.1",
+      "version": "1.1.0",
       "runtimeHint": "uvx",
       "transport": {
         "type": "stdio"

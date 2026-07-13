@@ -936,7 +936,7 @@ wheels = [
 
 [[package]]
 name = "oer-ingestion"
-version = "1.0.0"
+version = "1.1.0"
 source = { editable = "packages/ingestion" }
 dependencies = [
     { name = "httpx" },
@@ -967,7 +967,7 @@ dev = [
 
 [[package]]
 name = "oer-mcp"
-version = "1.0.1"
+version = "1.1.0"
 source = { editable = "packages/server" }
 dependencies = [
     { name = "fastmcp" },
@@ -986,7 +986,7 @@ requires-dist = [
 
 [[package]]
 name = "oer-mcp-workspace"
-version = "1.0.1"
+version = "1.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "oer-ingestion" },
@@ -1015,7 +1015,7 @@ dev = [
 
 [[package]]
 name = "oer-shared"
-version = "1.0.1"
+version = "1.1.0"
 source = { editable = "packages/shared" }
 dependencies = [
     { name = "numpy" },

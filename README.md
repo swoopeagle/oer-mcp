@@ -1,10 +1,15 @@
 # OER MCP
 
+[![CI](https://github.com/swoopeagle/oer-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/swoopeagle/oer-mcp/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/oer-mcp)](https://pypi.org/project/oer-mcp/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![🤗 Datasets](https://img.shields.io/badge/%F0%9F%A4%97%20datasets-swoopeagle%2Foer--mcp-yellow)](https://huggingface.co/datasets/swoopeagle/oer-mcp)
+
 **A curriculum content + assessment retrieval layer for LLMs.** Open-licensed K–12 content across **math, science, and social studies** (OpenStax textbooks, Khan Academy transcripts, Illustrative Mathematics) *and* real released exam items (Smarter Balanced, NAEP, NY Regents, MCAS, AP free-response) — chunked by concept, aligned to 300+ curriculum standards, and queryable by standard ID and subject. So an LLM tutoring, lesson-planning, or assessment-writing task is grounded in *what students actually read and are tested on*, not a plausible approximation from training data.
 
 Companion to [StandardGraph](https://github.com/swoopeagle/standardgraph): StandardGraph knows *what students must learn* (standards across 7 subjects); OER MCP knows *what content teaches it and how it's assessed*.
 
-> **Status:** Live, multi-subject (math, science, social studies). **~16,000 content chunks + ~1,000 assessment chunks** across four license-partitioned databases, **~55,000 standard alignments** across 12+ curriculum systems (CCSS, AP, state, C3 framework, etc.), served through **8 MCP tools**. Real released items from **6+ assessment programs**. Query-layer parametrized by subject/system — single tool invocation works across all curriculum frameworks.
+> **Status:** Live, multi-subject (math, science, social studies). **~31,500 content chunks + ~3,900 assessment chunks** (~35,500 total) across four license-partitioned databases, **~108,000 standard alignments** across 12+ curriculum systems (CCSS, AP, state, C3 framework, etc.), served through **8 MCP tools**. Real released items from **5 assessment programs** (Smarter Balanced, NAEP, NY Regents, MCAS, AP) plus style-generated SAT/ACT. Query-layer parametrized by subject/system — single tool invocation works across all curriculum frameworks.
 >
 > **Pre-built databases available on [🤗 HuggingFace](https://huggingface.co/datasets/swoopeagle/oer-mcp)** — download directly or use the installer script below.
 
