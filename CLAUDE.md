@@ -41,13 +41,26 @@ scripts/
 
 ## Key facts (2026-07-10, multi-subject expansion complete)
 
+> **2026-07-13 — StandardGraph v1.4.0 sync.** SG grew to 172,579 standards / 310
+> systems (international science/ELA spokes onto NGSS + CCSS-ELA, plus a
+> 2026-07-09 CCSS decomposition adding 190 standards: 110 sub-standard leaves like
+> `3.MD.C.7.a` + 80 Mathematical Practice standards). SG's DB schema is unchanged,
+> so no OER code broke — the intl spokes benefit OER transitively via SG's
+> `map_standard`. Action taken: re-ran `align` on `data/oer_core.db` against the
+> new SG DB → distinct CCSS standards aligned **486 → 662** (176 of the 190 new
+> standards now carry content; MP standards included per decision). `llm_verified`
+> (6,354) and `publisher_guide` (3,124) rows preserved; ~3,079 new embedding rows
+> re-flagged, then verify+annotate re-run. Backup: `oer_core.db.pre-realign-20260713`.
+
 - **Core DB (CC BY / public domain):** OpenStax math (13 books, 14,065 chunks) + Illustrative Mathematics K–12 (1,796) + Smarter Balanced (525) + NAEP (1,269) + style-generated assessments (29). ~17,684 chunks.
-- **NC-SA DB (CC BY-NC-SA):** Science (5 books: biology/chemistry/physics, ~4,600 chunks) + social studies (8 books: gov/history/econ/etc., ~5,200 chunks) + Khan Academy transcripts (3,322) + OpenMiddle (597). **~13,719 chunks**, 55K+ alignments across 12 systems (ccss, ap-bio, ap-chem, ap-phys-*, ap-us-gov, ap-us-history, ap-psych, ap-macro/micro-econ, c3, ap-world-history).
+- **NC-SA DB (CC BY-NC-SA):** Science (7 books: biology ×2, chemistry, college + university-physics vol 1/2/3, ~7,007 chunks) + social studies (8 books: gov/history/econ/etc., ~5,200 chunks) + Khan Academy transcripts (3,322) + OpenMiddle (597). **~13,719 chunks**, 67.7K alignments across **15 systems** (ccss, **ngss**, ap-bio, ap-chem, ap-phys-*, ap-us-gov, ap-us-history, ap-psych, ap-macro/micro-econ, c3, ap-world-history).
+  - **NGSS (2026-07-13):** all 7 science books aligned to NGSS by embedding — **11,438 alignments across 111 distinct NGSS standards** (mostly HS-band; biology→LS, chem/physics→PS). Raw `embedding` source (matches how the existing AP-science alignments are treated — only `ccss` gets an LLM-verify pass). This gives OER science its first non-AP standards hub, so non-US teachers can reach it via SG's NGSS international spokes (`map_standard`).
+  - **university-physics-volume-3** was previously unembedded/unaligned (dead book); 2026-07-13 embedded (454 chunks) and aligned → ap-phys-2 (345) + ngss (114). Backup: `oer_ncsa.db.pre-ngss-20260713`.
 - **State DB (state copyright, educational-reproduction permission):** NY Regents (1,672 Algebra I/Geometry/Algebra II questions) + MCAS (366 items grades 3-8, 10). ~2,038 chunks.
 - **AP DB (College Board copyright, educational use):** AP FRQ questions (Calc AB/BC, Stats, Precalc, 2023-2026). 85 chunks.
 - **Total chunks:** ~33,500 (math + science + social studies + assessments)
-- **Total standard alignments:** ~55,926 (all systems: CCSS, AP, C3, state standards)
-- **Coverage:** 486 distinct CCSS standards (core), 485 (ncsa), 312 (state), plus 113 ap-bio, 113 ap-chem, ~230 ap-phys, ~200 ap-social-studies, etc.
+- **Total standard alignments:** ~131,145 (core 58,349 + ncsa 67,709 + state 5,087; ap FRQ items carry exam metadata, not standard_alignments) across all systems (CCSS, NGSS, AP, C3, state standards)
+- **Coverage:** 662 distinct CCSS standards (core, up from 486 after the 2026-07-13 SG re-align), 485 (ncsa), 312 (state), plus 111 NGSS (ncsa science), 113 ap-bio, 113 ap-chem, ~230 ap-phys, ~200 ap-social-studies, etc.
 - **All chunks embedded and aligned at build time**. Query layer parametrized by `system` to route to correct curriculum framework.
 - **IM adapter:** Full K-12 coverage — K-5, 6-8, and HS. All carry `publisher_guide` alignments (CCSS "Addressing" tags per lesson); no LLM verify needed. K-5 tags are often cluster-level (e.g. `CCSS.MATH.3.MD.B`); `fetch_for_standard` does parent-prefix matching.
 - **Khan adapter:** Kolibri channel DB → VTT transcript → exposition chunks. No CCSS tags in export → aligned via embedding (555 strong alignments ≥0.78 across 150 standards).
